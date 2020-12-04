@@ -47,7 +47,7 @@ from HelpersPackage import WindowsFilenameToWikiPagename, WikiUrlnameToWikiPagen
 #       If a redirect, the redirect name
 
 fancySitePath=r"C:\Users\mlo\Documents\usr\Fancyclopedia\Python\site"   # A local copy of the site maintained by FancyDownloader
-LogOpen("Log", "Error", dated=True)
+LogOpen("Log", "Error")
 
 # The local version of the site is a pair (sometimes also a folder) of files with the Wikidot name of the page.
 # <name>.txt is the text of the current version of the page
@@ -59,7 +59,7 @@ Log("***Querying the local copy of Fancy 3 to create a list of all Fancyclopedia
 Log("   path='"+fancySitePath+"'")
 allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f[-4:] == ".txt"]
 allFancy3PagesFnames = [cn for cn in allFancy3PagesFnames if not cn.startswith("index_")]     # Drop index pages
-#allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "ab"]        # Just to cut down the number of pages for debugging purposes
+allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
 Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
 fancyPagesDictByWikiname={}     # Key is page's canname; Val is a FancyPage class containing all the references on the page
@@ -224,10 +224,12 @@ def add(x, y):
     return x+y
 
 class TagSet():
-    def __init__(self):
+    def __init__(self, tag: Optional[str]=None) -> None:
         self.set=set()
+        if tag is not None:
+            self.set.add(tag)
 
-    def __str__(self):
+    def __str__(self) -> str:
         s=""
         if self.set is None or len(self.set) == 0:
             return ""
@@ -238,16 +240,19 @@ class TagSet():
             s+=x
         return s
 
-    def add(self, val):
+    def add(self, val: str):
         self.set.add(val)
 
 # Create some reports on tags/Categories
-ignoredTags=["Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries, Noend", "Nowebsite",
+adminTags=["Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries", "Noend", "Nowebsite",
              "Hasfiles", "Haslink", "Haswebsite", "Fixme", "Details", "Redirect", "Wikidot", "Multiple",
              "Choice", "Iframe", "Active", "Inactive", "IA", "Map", "Mapped", "Nocountry", "Noend",
-             "Covid-19", "Fancy1", "Fancy2", "Validated"]
+             "Validated"]
+ignoredTags=adminTags.copy()
+ignoredTags.extend(["Fancy1", "Fancy2"])
 tagcounts={}
 tagsetcounts={}
+tagsetcounts["notags"]=0
 Log("Writing: Counts for individual tags.txt")
 with open("Tag counts.txt", "w+", encoding='utf-8') as f:
     for fp in fancyPagesDictByWikiname.values():
@@ -256,15 +261,16 @@ with open("Tag counts.txt", "w+", encoding='utf-8') as f:
             tags=fp.Categories
             if tags is not None:
                 for tag in tags:
-                        if tag not in ignoredTags:
-                            tagset.add(tag)
-                        if tag not in tagcounts.keys():
-                            tagcounts[tag]=0
-                        tagcounts[tag]+=1
+                    if tag not in ignoredTags:
+                        tagset.add(tag)
+                    if tag not in tagcounts.keys():
+                        tagcounts[tag]=0
+                    tagcounts[tag]+=1
                 if str(tagset) not in tagsetcounts.keys():
                     tagsetcounts[str(tagset)]=0
                 tagsetcounts[str(tagset)]+=1
-                i=0
+            else:
+                tagsetcounts["notags"]+=1
 
     for tag, count in tagcounts.items():
         f.write(tag+": "+str(count)+"\n")
@@ -274,6 +280,36 @@ with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
     for tagset, count in tagsetcounts.items():
         f.write(str(tagset)+": "+str(count)+"\n")
 
+# Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
+ignoredTags=adminTags.copy()
+tagsetcounts={}
+for fp in fancyPagesDictByWikiname.values():
+    if not fp.IsRedirectpage:
+        tagpowerset=set()   # of TagSets
+        tags=fp.Categories
+        if tags is not None:
+            # The power set is a set of all the subsets.
+            # For each tag, we double the power set by adding a copy of itself with that tag added to each of the previous sets
+            for tag in tags:
+                if tag not in ignoredTags:
+                    if len(tagpowerset) > 0:
+                        # Duplicate and extend any existing TagSets
+                        temptagpowerset=tagpowerset.copy()
+                        for st in temptagpowerset:
+                            st.add(tag)
+                        tagpowerset=tagpowerset.union(temptagpowerset)
+                    tagpowerset.add(TagSet(tag))  # Then add a TagSet consisting of just the tag, also
+            # Now run through all the members of the power set, incrementing the global counts
+            for ts in tagpowerset:
+                if str(ts) not in tagsetcounts.keys():
+                    tagsetcounts[str(ts)]=0
+                tagsetcounts[str(ts)]+=1
+            i=0
+
+Log("Writing: Counts for tagpowersets.txt")
+with open("Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
+    for tagset, count in tagsetcounts.items():
+        f.write(str(tagset)+": "+str(count)+"\n")
 i=0
 
 
