@@ -244,12 +244,12 @@ class TagSet():
         self.set.add(val)
 
 # Create some reports on tags/Categories
-adminTags=["Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries", "Noend", "Nowebsite",
-             "Hasfiles", "Haslink", "Haswebsite", "Fixme", "Details", "Redirect", "Wikidot", "Multiple",
-             "Choice", "Iframe", "Active", "Inactive", "IA", "Map", "Mapped", "Nocountry", "Noend",
-             "Validated"]
+adminTags={"Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries", "Noend", "Nowebsite", "Hasfiles", "Haslink", "Haswebsite", "Fixme", "Details", "Redirect", "Wikidot", "Multiple",
+           "Choice", "Iframe", "Active", "Inactive", "IA", "Map", "Mapped", "Nocountry", "Noend", "Validated"}
+countryTags={"US", "UK", "Australia", "Ireland", "Europe", "Asia", "Canada"}
 ignoredTags=adminTags.copy()
-ignoredTags.extend(["Fancy1", "Fancy2"])
+ignoredTags.union({"Fancy1", "Fancy2"})
+
 tagcounts={}
 tagsetcounts={}
 tagsetcounts["notags"]=0
@@ -283,6 +283,34 @@ with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
     tagsetcountslist=[(key, val) for key, val in tagsetcounts.items()]
     tagsetcountslist.sort(key=lambda elem: elem[1], reverse=True)
     for tagset, count in tagsetcountslist:
+        f.write(str(tagset)+": "+str(count)+"\n")
+
+
+# From here on out, ignore countries
+ignoredTags=adminTags.copy().union(countryTags)
+tagcounts={}
+tagsetcounts={}
+tagsetcounts["notags"]=0
+for fp in fancyPagesDictByWikiname.values():
+    if not fp.IsRedirectpage:
+        tagset=TagSet()
+        tags=fp.Categories
+        if tags is not None:
+            for tag in tags:
+                if tag not in ignoredTags:
+                    tagset.add(tag)
+                if tag not in tagcounts.keys():
+                    tagcounts[tag]=0
+                tagcounts[tag]+=1
+            if str(tagset) not in tagsetcounts.keys():
+                tagsetcounts[str(tagset)]=0
+            tagsetcounts[str(tagset)]+=1
+        else:
+            tagsetcounts["notags"]+=1
+
+Log("Writing: Counts for tagsets without country.txt")
+with open("Tagset counts without country.txt", "w+", encoding='utf-8') as f:
+    for tagset, count in tagsetcounts.items():
         f.write(str(tagset)+": "+str(count)+"\n")
 
 # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
