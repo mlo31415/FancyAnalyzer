@@ -253,35 +253,39 @@ ignoredTags.extend(["Fancy1", "Fancy2"])
 tagcounts={}
 tagsetcounts={}
 tagsetcounts["notags"]=0
+
+for fp in fancyPagesDictByWikiname.values():
+    if not fp.IsRedirectpage:
+        tagset=TagSet()
+        tags=fp.Categories
+        if tags is not None:
+            for tag in tags:
+                if tag not in ignoredTags:
+                    tagset.add(tag)
+                if tag not in tagcounts.keys():
+                    tagcounts[tag]=0
+                tagcounts[tag]+=1
+            if str(tagset) not in tagsetcounts.keys():
+                tagsetcounts[str(tagset)]=0
+            tagsetcounts[str(tagset)]+=1
+        else:
+            tagsetcounts["notags"]+=1
+
 Log("Writing: Counts for individual tags.txt")
 with open("Tag counts.txt", "w+", encoding='utf-8') as f:
-    for fp in fancyPagesDictByWikiname.values():
-        if not fp.IsRedirectpage:
-            tagset=TagSet()
-            tags=fp.Categories
-            if tags is not None:
-                for tag in tags:
-                    if tag not in ignoredTags:
-                        tagset.add(tag)
-                    if tag not in tagcounts.keys():
-                        tagcounts[tag]=0
-                    tagcounts[tag]+=1
-                if str(tagset) not in tagsetcounts.keys():
-                    tagsetcounts[str(tagset)]=0
-                tagsetcounts[str(tagset)]+=1
-            else:
-                tagsetcounts["notags"]+=1
-
-    for tag, count in tagcounts.items():
+    tagcountslist=[(key, val) for key, val in tagcounts.items()]
+    tagcountslist.sort(key=lambda elem: elem[1], reverse=True)
+    for tag, count in tagcountslist:
         f.write(tag+": "+str(count)+"\n")
 
 Log("Writing: Counts for tagsets.txt")
 with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
-    for tagset, count in tagsetcounts.items():
+    tagsetcountslist=[(key, val) for key, val in tagsetcounts.items()]
+    tagsetcountslist.sort(key=lambda elem: elem[1], reverse=True)
+    for tagset, count in tagsetcountslist:
         f.write(str(tagset)+": "+str(count)+"\n")
 
 # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
-ignoredTags=adminTags.copy()
 tagsetcounts={}
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
