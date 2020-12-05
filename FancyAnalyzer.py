@@ -344,6 +344,24 @@ Log("Writing: Counts for tagpowersets.txt")
 with open("Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
     for tagset, count in tagsetcounts.items():
         f.write(str(tagset)+": "+str(count)+"\n")
-i=0
+
+##############
+# We want apazine and clubzine to be used in addition to fanzine.  Make a list of
+# First make a list of all the pages labelled as "fan" or "pro"
+Log("Writing: Apazines and clubzines that aren't fanzines.txt")
+with open("Apazines and clubzines that aren't fanzines.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if fancyPage.Tags is not None and ("Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags) and "Fanzine" not in fancyPage.Tags:
+            f.write(fancyPage.Name+"\n")
 
 
+
+##################
+# Make a list of all all-upper-case pages which are not tagged initialism.
+Log("Writing: Uppercase name which aren't marked as Initialisms.txt")
+with open("Uppercase names which aren't marked as initialisms.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if fancyPage.Name == fancyPage.Name.upper() and (fancyPage.Tags is None or "Initialism" not in fancyPage.Tags):
+            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
