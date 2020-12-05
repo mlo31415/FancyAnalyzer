@@ -174,6 +174,7 @@ with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
             f.write(key+" --> "+dest+"\n")
 
 
+##################
 # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
 
 # Ambiguous names will often end with something in parenthesis which need to be removed for this particular file
@@ -188,7 +189,6 @@ def IsInterestingName(p: str) -> bool:
         if re.search(" ([A-Z]|de|ha|von|Č)", p) is None:  # We want to ignore "Bob tucker"
             return False
     return True
-
 
 Log("Writing: Peoples names.txt")
 peopleNames=[]
@@ -220,9 +220,8 @@ with open("Peoples names.txt", "w+", encoding='utf-8') as f:
     for name in peopleNames:
         f.write(name+"\n")
 
-def add(x, y):
-    return x+y
 
+##################
 class TagSet():
     def __init__(self, tag: Optional[str]=None) -> None:
         self.set=set()
@@ -286,6 +285,7 @@ with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
         f.write(str(tagset)+": "+str(count)+"\n")
 
 
+##################
 # From here on out, ignore countries
 ignoredTags=adminTags.copy().union(countryTags)
 tagcounts={}
@@ -313,6 +313,8 @@ with open("Tagset counts without country.txt", "w+", encoding='utf-8') as f:
     for tagset, count in tagsetcounts.items():
         f.write(str(tagset)+": "+str(count)+"\n")
 
+
+##################
 # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
 tagsetcounts={}
 for fp in fancyPagesDictByWikiname.values():
