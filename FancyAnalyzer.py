@@ -209,7 +209,7 @@ with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
                     else:
                         Log("Generating Peoples names.txt: "+p+" is not in fancyPagesDictByWikiname")
             else:
-                f.write(p+" Not in inverseRedirects.keys()\n")
+                f.write(fancyPage.Name+" Not in inverseRedirects.keys()\n")
 
 
 # De-dupe it
