@@ -53,7 +53,7 @@ excludedPrefixes=["_admin", "Template;colon"]
 for prefix in excludedPrefixes:
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]     # Drop various tool, admin, etc., pages
 
-excludedPages=["Admin", "Standards"]
+excludedPages=["Admin", "Standards", "Test Templates"]
 allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
 
 Log("   "+str(len(allFancy3PagesFnames))+" pages found")
