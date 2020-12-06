@@ -340,3 +340,36 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
         # Then all the redirects to one of those pages.
         if fancyPage.Name == fancyPage.Name.upper() and (fancyPage.Tags is None or "Initialism" not in fancyPage.Tags):
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+
+##################
+# Compute some special statistics to display at fanac.org
+Log("Writing: Statistics.txt")
+with open("Statistics.txt", "w+", encoding='utf-8') as f:
+    npages=0            # Number of real (non-redirect) pages
+    npeople=0           # Number of people
+    nfans=0
+    nconinstances=0     # Number of convention instances
+    nfanzines=0         # Number of fanzines of all sorts
+    napas=0             # Number of APAs
+    nclubs=0            # Number of clubs
+    for fancyPage in fancyPagesDictByWikiname.values():
+        if not fancyPage.IsRedirectpage:
+            npages+=1
+            if "Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Person" in fancyPage.Tags:
+                npeople+=1
+            if "Fan" in fancyPage.Tags:
+                nfans+=1
+            if "Fanzine" in fancyPage.Tags or "Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags or "Newszine" in fancyPage.Tags or "Fanthology" in fancyPage.Tags:
+                nfanzines+=1
+            if "APA" in fancyPage.Tags:
+                napas+=1
+            if "Club" in fancyPage.Tags:
+                nclubs+=1
+            if "Convention" in fancyPage.Tags:
+                nconinstances+=1
+    f.write("Total pages: " + str(npages) + "\n")
+    f.write("All people: " + str(npeople) + "\n")
+    f.write("Fans: " + str(nfans) + "\n")
+    f.write("APAs: " + str(napas) + "\n")
+    f.write("Clubs: " + str(nclubs) + "\n")
+    f.write("Conventions: " + str(nconinstances) + "\n")
