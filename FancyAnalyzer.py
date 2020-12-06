@@ -5,21 +5,10 @@ import os
 import re
 from functools import reduce
 
-from F3Page import F3Page, DigestPage
+from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiUrlnameToWikiPagename, SearchAndReplace, WikiRedirectToPagename
 
-# The goal of this program is to produce an index to all of the names on Fancy 3 and fanac.org with links to everything interesting about them.
-# We'll construct a master list of names with a preferred name and zero or more variants.
-# This master list will be derived from Fancy with additions from fanac.org
-# The list of interesting links will include all links in Fancy 3, and all non-housekeeping links in fanac.org
-#   A housekeeping link is one where someone is credited as a photographer or having done scanning or the like
-# The links will be sorted by importance
-#   This may be no more than putting the Fancy 3 article first, links to fanzines they edited next, and everything else after that
-
-# The strategy is to start with Fancy 3 and get that working, then bring in fanac.org.
-# This program produces a comprehensive index on Fancy 3, including a list of all people names n Fancy 3.
-# This is written to files which are used as input to the indexer for Fanac.org which produces the final result.
 
 # We'll work entirely on the local copies of the two sites.
 
@@ -221,27 +210,6 @@ with open("Peoples names.txt", "w+", encoding='utf-8') as f:
         f.write(name+"\n")
 
 
-##################
-class TagSet():
-    def __init__(self, tag: Optional[str]=None) -> None:
-        self.set=set()
-        if tag is not None:
-            self.set.add(tag)
-
-    def __str__(self) -> str:
-        s=""
-        if self.set is None or len(self.set) == 0:
-            return ""
-        lst=sorted(list(self.set))
-        for x in lst:
-            if len(s) > 0:
-                s+=", "
-            s+=x
-        return s
-
-    def add(self, val: str):
-        self.set.add(val)
-
 # Create some reports on tags/Categories
 adminTags={"Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries", "Noend", "Nowebsite", "Hasfiles", "Haslink", "Haswebsite", "Fixme", "Details", "Redirect", "Wikidot", "Multiple",
            "Choice", "Iframe", "Active", "Inactive", "IA", "Map", "Mapped", "Nocountry", "Noend", "Validated"}
@@ -256,7 +224,7 @@ tagsetcounts["notags"]=0
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
         tagset=TagSet()
-        tags=fp.Categories
+        tags=fp.Tags
         if tags is not None:
             for tag in tags:
                 if tag not in ignoredTags:
@@ -294,7 +262,7 @@ tagsetcounts["notags"]=0
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
         tagset=TagSet()
-        tags=fp.Categories
+        tags=fp.Tags
         if tags is not None:
             for tag in tags:
                 if tag not in ignoredTags:
@@ -320,7 +288,7 @@ tagsetcounts={}
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
         tagpowerset=set()   # of TagSets
-        tags=fp.Categories
+        tags=fp.Tags
         if tags is not None:
             # The power set is a set of all the subsets.
             # For each tag, we double the power set by adding a copy of itself with that tag added to each of the previous sets
