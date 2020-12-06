@@ -188,9 +188,10 @@ def IsInterestingName(p: str) -> bool:
             return False
     return True
 
-Log("Writing: Peoples names.txt")
+Log("Writing: Peoples rejected names.txt")
 peopleNames=[]
-# First make a list of all the pages labelled as "fan" or "pro"
+# Go through the list of all the pages labelled as Person
+# Build a list of people's names
 with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         if fancyPage.IsPerson():
@@ -205,7 +206,7 @@ with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
                         else:
                             f.write("Uninteresting: "+p+"\n")
                     else:
-                        Log("Generating Peoples names.txt: "+p+" is not in fancyPagesDictByWikiname")
+                        Log("Generating Peoples rejected names.txt: "+p+" is not in fancyPagesDictByWikiname")
             else:
                 f.write(fancyPage.Name+" Not in inverseRedirects.keys()\n")
 
