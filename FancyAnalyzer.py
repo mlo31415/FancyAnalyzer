@@ -62,7 +62,7 @@ fancyPagesDictByWikiname={}     # Key is page's canname; Val is a FancyPage clas
 
 Log("***Scanning local copies of pages for links")
 for pageFname in allFancy3PagesFnames:
-    if pageFname.startswith("Log 202"):     # Ignore Log files in the site directory
+    if pageFname.startswith("Log 2"):     # Ignore Log 2xxx files in the site directory
         continue
     val=DigestPage(fancySitePath, pageFname)
     if val is not None:
