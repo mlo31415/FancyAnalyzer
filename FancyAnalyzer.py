@@ -344,6 +344,36 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
         if fancyPage.Name == fancyPage.Name.upper() and (fancyPage.Tags is None or "Initialism" not in fancyPage.Tags):
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
+
+##################
+# Make a list of all fans, pros, and mundanes who are not also tagged person
+Log("Writing: Fans, Pros, and mundanes who are not Persons.txt")
+with open("Fans and Pros, and mundanes who are not Persons.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if ("Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Mundane" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
+            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+
+
+##################
+# Make a list of persons who don't also have a specific tag
+Log("Writing: Persons who are not Fans, Pros, or Mundanes.txt")
+with open("Persons who are not Fans, Pros, or Mundanes.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if "Person" in fancyPage.Tags and "Fan" not in fancyPage.Tags and "Pro" not in fancyPage.Tags and "Mundane" not in fancyPage.Tags:
+            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+
+
+##################
+# Make a list of all Mundanes
+Log("Writing: Mundanes.txt")
+with open("Mundanes.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if "Mundane" in fancyPage.Tags:
+            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+
 ##################
 # Compute some special statistics to display at fanac.org
 Log("Writing: Statistics.txt")
