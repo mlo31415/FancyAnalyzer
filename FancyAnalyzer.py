@@ -182,7 +182,9 @@ def IsInterestingName(p: str) -> bool:
     if " " not in p and "-" in p:   # We want to ignore names like "Bob-Tucker" in favor of "Bob Tucker"
         return False
     if " " in p:                    # If there are spaces in the name, at least one of them needs to be followed by a UC letter
-        if re.search(" ([A-Z]|de|ha|von|Č)", p) is None:  # We want to ignore "Bob tucker"
+        if re.search(" ([A-Z]|de|ha|von|Č)", p) is None:  # We want to ignore "Bob tucker", so we insist that there is a space in the name followed by
+                                                          # a capital letter, "de", "ha", "von" orČ.  I.e., there is a last name that isn't all lower case.
+                                                          # (All lower case after the 1st letter indicates its an auto-generated redirect of some sort.)
             return False
     return True
 
