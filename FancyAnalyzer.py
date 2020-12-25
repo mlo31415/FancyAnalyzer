@@ -340,9 +340,23 @@ with open("Apazines and clubzines that aren't fanzines.txt", "w+", encoding='utf
 Log("Writing: Uppercase name which aren't marked as Initialisms.txt")
 with open("Uppercase names which aren't marked as initialisms.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if fancyPage.Name == fancyPage.Name.upper() and (fancyPage.Tags is None or "Initialism" not in fancyPage.Tags):
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+        # A page might be an initialism if ALL alpha characters are upper case
+        if fancyPage.Name == fancyPage.Name.upper():
+            fpn=fancyPage.Name.upper()
+            # Bail out if it starts with 4 digits -- this is probably a year
+            if fpn[:4].isnumeric():
+                continue
+            # Bail if it begin 'nn which is also likely a year
+            if (fpn[0] == "'" and fpn[1:3].isnumeric()):
+                continue
+            # We skip certain pages because while they may look like initilaisms, they aren't or because we onl flag con series, and not the individual cons
+            if fpn[:4] == "DSC " or fpn[:8] == "CAN*CON " or fpn[:5] == "ICFA " or fpn[:5] == "NJAC " or \
+                    fpn[:6] == "OASIS " or fpn[:5] == "OVFF "  or fpn[:6] == "URCON "  or fpn[:5] == "VCON ":
+                continue
+
+            # If what's left lacks the Initialism tag, we want to list it
+            if fancyPage.Tags is None or "Initialism" not in fancyPage.Tags:
+                f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
 
 ##################
