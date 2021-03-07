@@ -353,6 +353,9 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
             if fpn[:4] == "DSC " or fpn[:8] == "CAN*CON " or fpn[:5] == "ICFA " or fpn[:5] == "NJAC " or \
                     fpn[:6] == "OASIS " or fpn[:5] == "OVFF "  or fpn[:6] == "URCON "  or fpn[:5] == "VCON ":
                 continue
+            # Bail if there are no alphabetic characters
+            if fpn.lower() == fpn.upper():
+                continue
 
             # If what's left lacks the Initialism tag, we want to list it
             if fancyPage.Tags is None or "Initialism" not in fancyPage.Tags:
@@ -402,21 +405,24 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         if not fancyPage.IsRedirectpage:
             npages+=1
-            if "Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Person" in fancyPage.Tags:
-                npeople+=1
-            if "Fan" in fancyPage.Tags:
-                nfans+=1
-            if "Fanzine" in fancyPage.Tags or "Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags or "Newszine" in fancyPage.Tags or "Fanthology" in fancyPage.Tags:
-                nfanzines+=1
-            if "APA" in fancyPage.Tags:
-                napas+=1
-            if "Club" in fancyPage.Tags:
-                nclubs+=1
-            if "Convention" in fancyPage.Tags:
-                nconinstances+=1
-    f.write("Total pages: " + str(npages) + "\n")
-    f.write("All people: " + str(npeople) + "\n")
-    f.write("Fans: " + str(nfans) + "\n")
-    f.write("APAs: " + str(napas) + "\n")
-    f.write("Clubs: " + str(nclubs) + "\n")
-    f.write("Conventions: " + str(nconinstances) + "\n")
+            if not fancyPage.IsRedirectpage:
+                if "Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Person" in fancyPage.Tags:
+                    npeople+=1
+                if "Fan" in fancyPage.Tags:
+                    nfans+=1
+                if ("Fanzine" in fancyPage.Tags or "Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags or "Newszine" in fancyPage.Tags or "Fanthology" in fancyPage.Tags):
+                    nfanzines+=1
+                if "APA" in fancyPage.Tags:
+                    napas+=1
+                if "Club" in fancyPage.Tags:
+                    nclubs+=1
+                if "Convention" in fancyPage.Tags:
+                    nconinstances+=1
+    f.write("Unique (ignoring redirects)\n")
+    f.write("  Total pages: " + str(npages) + "\n")
+    f.write("  All people: " + str(npeople) + "\n")
+    f.write("  Fans: " + str(nfans) + "\n")
+    f.write("  Fanzines: "+str(nfanzines)+"\n")
+    f.write("  APAs: " + str(napas) + "\n")
+    f.write("  Clubs: " + str(nclubs) + "\n")
+    f.write("  Conventions: " + str(nconinstances) + "\n")
