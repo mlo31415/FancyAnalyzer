@@ -49,7 +49,7 @@ Log("   path='"+fancySitePath+"'")
 allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f[-4:] == ".txt"]
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
 
-excludedPrefixes=["_admin", "Template;colon"]
+excludedPrefixes=["_admin", "Template;colon", "User;colon"]
 for prefix in excludedPrefixes:
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]     # Drop various tool, admin, etc., pages
 
