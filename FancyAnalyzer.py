@@ -90,7 +90,7 @@ for fancyPage in fancyPagesDictByWikiname.values():
     if fancyPage.Redirect is not None:
         num+=1
         #fancyPage.UltimateRedirect=GetUltimateRedirect(fancyPagesDictByWikiname, fancyPage.Redirect)
-Log("   "+str(num)+" redirects found", Print=False)
+Log("   "+str(num)+" redirects found")
 
 # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
 # Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
