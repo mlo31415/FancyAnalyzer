@@ -339,7 +339,7 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
             if fpn[:4].isnumeric():
                 continue
             # Bail if it begin 'nn which is also likely a year
-            if (fpn[0] == "'" and fpn[1:3].isnumeric()):
+            if fpn[0] == "'" and fpn[1:3].isnumeric():
                 continue
             # We skip certain pages because while they may look like initilaisms, they aren't or because we onl flag con series, and not the individual cons
             if fpn[:4] == "DSC " or fpn[:8] == "CAN*CON " or fpn[:5] == "ICFA " or fpn[:5] == "NJAC " or \
