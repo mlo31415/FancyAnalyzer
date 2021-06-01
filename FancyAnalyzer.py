@@ -103,11 +103,11 @@ for fancyPage in fancyPagesDictByWikiname.values():
         else:
             assert fancyPage.UltimateRedirect is None
         redirects[fancyPage.Name]=fancyPage.UltimateRedirect
-        if fancyPage.Redirect not in inverseRedirects.keys():
-            inverseRedirects[fancyPage.Redirect]=[]
+
+        inverseRedirects.setdefault(fancyPage.Redirect, [])
         inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
-        if fancyPage.UltimateRedirect not in inverseRedirects.keys():
-            inverseRedirects[fancyPage.UltimateRedirect]=[]
+
+        inverseRedirects.setdefault(fancyPage.UltimateRedirect, [])
         if fancyPage.UltimateRedirect != fancyPage.Redirect:
             inverseRedirects[fancyPage.UltimateRedirect].append(fancyPage.Name)
 
@@ -119,8 +119,7 @@ peopleReferences: Dict[str, List[str]]={}
 Log("***Creating dict of people references")
 for fancyPage in fancyPagesDictByWikiname.values():
     if fancyPage.IsPerson():
-        if fancyPage.Name not in peopleReferences.keys():
-            peopleReferences[fancyPage.Name]=[]
+        peopleReferences.setdefault(fancyPage.Name, [])
 
 # Now go through all outgoing references on the pages and add those which reference a person to that person's list
 for fancyPage in fancyPagesDictByWikiname.values():
@@ -237,11 +236,9 @@ for fp in fancyPagesDictByWikiname.values():
             for tag in tags:
                 if tag not in ignoredTags:
                     tagset.add(tag)
-                if tag not in tagcounts.keys():
-                    tagcounts[tag]=0
+                tagcounts.setdefault(tag, 0)
                 tagcounts[tag]+=1
-            if str(tagset) not in tagsetcounts.keys():
-                tagsetcounts[str(tagset)]=0
+            tagsetcounts.setdefault(str(tagset), 0)
             tagsetcounts[str(tagset)]+=1
         else:
             tagsetcounts["notags"]+=1
@@ -275,11 +272,9 @@ for fp in fancyPagesDictByWikiname.values():
             for tag in tags:
                 if tag not in ignoredTags:
                     tagset.add(tag)
-                if tag not in tagcounts.keys():
-                    tagcounts[tag]=0
+                tagcounts.setdefault(tag, 0)
                 tagcounts[tag]+=1
-            if str(tagset) not in tagsetcounts.keys():
-                tagsetcounts[str(tagset)]=0
+            tagsetcounts.setdefault(str(tagset), 0)
             tagsetcounts[str(tagset)]+=1
         else:
             tagsetcounts["notags"]+=1
@@ -311,8 +306,7 @@ for fp in fancyPagesDictByWikiname.values():
                     tagpowerset.add(TagSet(tag))  # Then add a TagSet consisting of just the tag, also
             # Now run through all the members of the power set, incrementing the global counts
             for ts in tagpowerset:
-                if str(ts) not in tagsetcounts.keys():
-                    tagsetcounts[str(ts)]=0
+                tagsetcounts.setdefault(str(ts), 0)
                 tagsetcounts[str(ts)]+=1
             i=0
 
