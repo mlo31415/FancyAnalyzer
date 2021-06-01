@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Dict
+from typing import Dict, List
 
 import os
 import re
@@ -58,7 +58,7 @@ allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
 
 Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
-fancyPagesDictByWikiname={}     # Key is page's canname; Val is a FancyPage class containing all the references on the page
+fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's canname; Val is a FancyPage class containing all the references on the page
 
 Log("***Scanning local copies of pages for links")
 for pageFname in allFancy3PagesFnames:
@@ -95,8 +95,8 @@ Log("   "+str(num)+" redirects found")
 # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
 # Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
 # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
-redirects={}            # Key is the name of a redirect; value is the ultimate destination
-inverseRedirects={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+redirects: Dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
+inverseRedirects: Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
 for fancyPage in fancyPagesDictByWikiname.values():
     if fancyPage.Redirect is not None:
         if fancyPage.Redirect is not None:  # A page has an UltimateRedirect iff it has a Redirect
@@ -116,7 +116,7 @@ for fancyPage in fancyPagesDictByWikiname.values():
 # The key is a page's canonical name; the value is a list of pages at which they are referenced.
 
 # First locate all the people and create empty entries for them
-peopleReferences={}
+peopleReferences: Dict[str, List[str]]={}
 Log("***Creating dict of people references")
 for fancyPage in fancyPagesDictByWikiname.values():
     if fancyPage.IsPerson():
@@ -227,9 +227,8 @@ countryTags={"US", "UK", "Australia", "Ireland", "Europe", "Asia", "Canada"}
 ignoredTags=adminTags.copy()
 ignoredTags.union({"Fancy1", "Fancy2"})
 
-tagcounts={}
-tagsetcounts={}
-tagsetcounts["notags"]=0
+tagcounts: Dict[str, int]={}
+tagsetcounts: Dict[str, int]= {"notags": 0}
 
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
@@ -266,8 +265,8 @@ with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
 ##################
 # From here on out, ignore countries
 ignoredTags=adminTags.copy().union(countryTags)
-tagcounts={}
-tagsetcounts={}
+tagcounts: Dict[str, int]={}
+tagsetcounts: Dict[str, int]={}
 tagsetcounts["notags"]=0
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
@@ -294,7 +293,7 @@ with open("Tagset counts without country.txt", "w+", encoding='utf-8') as f:
 
 ##################
 # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
-tagsetcounts={}
+tagsetcounts: Dict[str, int]={}
 for fp in fancyPagesDictByWikiname.values():
     if not fp.IsRedirectpage:
         tagpowerset=set()   # of TagSets
