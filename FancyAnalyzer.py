@@ -3,11 +3,10 @@ from typing import Dict, List
 
 import os
 import re
-from functools import reduce
 
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen
-from HelpersPackage import WindowsFilenameToWikiPagename, WikiUrlnameToWikiPagename, SearchAndReplace, WikiRedirectToPagename
+from HelpersPackage import WindowsFilenameToWikiPagename
 
 
 # We'll work entirely on the local copies of the two sites.
