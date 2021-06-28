@@ -52,7 +52,7 @@ allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "philco"]        # Just to cut down the number of pages for debugging purposes
 
-excludedPrefixes=["_admin", "Template;colon", "User;colon"]
+excludedPrefixes=["_admin", "Template;colon", "User;colon", "Log 2"]
 for prefix in excludedPrefixes:
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]     # Drop various tool, admin, etc., pages
 
@@ -65,13 +65,10 @@ fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the w
 
 Log("***Scanning local copies of pages for links")
 for pageFname in allFancy3PagesFnames:
-    if pageFname.startswith("Log 2"):     # Ignore Log 2xxx files in the site directory
-        continue
     val=DigestPage(fancySitePath, pageFname)
     if val is not None:
         fancyPagesDictByWikiname[val.Name]=val
 Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
-
 
 # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
 # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
