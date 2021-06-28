@@ -46,7 +46,11 @@ LogOpen("Log.txt", "Error.txt")
 Log("***Querying the local copy of Fancy 3 to create a list of all Fancyclopedia pages")
 Log("   path='"+fancySitePath+"'")
 allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f[-4:] == ".txt"]
+allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("index_")]     # Drop index pages
+allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
+#allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
+#allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "philco"]        # Just to cut down the number of pages for debugging purposes
 
 excludedPrefixes=["_admin", "Template;colon", "User;colon"]
 for prefix in excludedPrefixes:
@@ -57,7 +61,7 @@ allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
 
 Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
-fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's canname; Val is a FancyPage class containing all the references on the page
+fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Val is a FancyPage class containing all the references on the page
 
 Log("***Scanning local copies of pages for links")
 for pageFname in allFancy3PagesFnames:
