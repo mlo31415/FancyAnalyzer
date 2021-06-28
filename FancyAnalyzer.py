@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import os
 import re
@@ -225,23 +225,26 @@ countryTags={"US", "UK", "Australia", "Ireland", "Europe", "Asia", "Canada"}
 ignoredTags=adminTags.copy()
 ignoredTags.union({"Fancy1", "Fancy2"})
 
-tagcounts: Dict[str, int]={}
-tagsetcounts: Dict[str, int]= {"notags": 0}
+def ComputeTagCounts(pageDict: Dict[str, F3Page], ignoredTags: set) -> Tuple[Dict[str, int], Dict[str, int]]:
+    tagcounts: Dict[str, int]={}
+    tagsetcounts: Dict[str, int]={"notags": 0}
+    for fp in pageDict.values():
+        if not fp.IsRedirectpage:
+            tagset=TagSet()
+            tags=fp.Tags
+            if tags is not None:
+                for tag in tags:
+                    if tag not in ignoredTags:
+                        tagset.add(tag)
+                    tagcounts.setdefault(tag, 0)
+                    tagcounts[tag]+=1
+                tagsetcounts.setdefault(str(tagset), 0)
+                tagsetcounts[str(tagset)]+=1
+            else:
+                tagsetcounts["notags"]+=1
+    return tagcounts, tagsetcounts
 
-for fp in fancyPagesDictByWikiname.values():
-    if not fp.IsRedirectpage:
-        tagset=TagSet()
-        tags=fp.Tags
-        if tags is not None:
-            for tag in tags:
-                if tag not in ignoredTags:
-                    tagset.add(tag)
-                tagcounts.setdefault(tag, 0)
-                tagcounts[tag]+=1
-            tagsetcounts.setdefault(str(tagset), 0)
-            tagsetcounts[str(tagset)]+=1
-        else:
-            tagsetcounts["notags"]+=1
+tagcounts, tagsetcounts=ComputeTagCounts(fancyPagesDictByWikiname, ignoredTags)
 
 Log("Writing: Counts for individual tags.txt")
 with open("Tag counts.txt", "w+", encoding='utf-8') as f:
@@ -257,27 +260,10 @@ with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
     for tagset, count in tagsetcountslist:
         f.write(str(tagset)+": "+str(count)+"\n")
 
-
 ##################
-# From here on out, ignore countries
+# Now redo the counts, ignoring countries
 ignoredTags=adminTags.copy().union(countryTags)
-tagcounts: Dict[str, int]={}
-tagsetcounts: Dict[str, int]={}
-tagsetcounts["notags"]=0
-for fp in fancyPagesDictByWikiname.values():
-    if not fp.IsRedirectpage:
-        tagset=TagSet()
-        tags=fp.Tags
-        if tags is not None:
-            for tag in tags:
-                if tag not in ignoredTags:
-                    tagset.add(tag)
-                tagcounts.setdefault(tag, 0)
-                tagcounts[tag]+=1
-            tagsetcounts.setdefault(str(tagset), 0)
-            tagsetcounts[str(tagset)]+=1
-        else:
-            tagsetcounts["notags"]+=1
+tagcounts, tagsetcounts=ComputeTagCounts(fancyPagesDictByWikiname, ignoredTags)
 
 Log("Writing: Counts for tagsets without country.txt")
 with open("Tagset counts without country.txt", "w+", encoding='utf-8') as f:
