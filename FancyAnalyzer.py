@@ -70,24 +70,12 @@ Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
 
 # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
-# Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
 # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
-redirects: Dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
 inverseRedirects: Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
 for fancyPage in fancyPagesDictByWikiname.values():
-    if fancyPage.Redirect is not None:
-        if fancyPage.Redirect is not None:  # A page has an UltimateRedirect iff it has a Redirect
-            assert fancyPage.UltimateRedirect is not None
-        else:
-            assert fancyPage.UltimateRedirect is None
-        redirects[fancyPage.Name]=fancyPage.UltimateRedirect
-
+    if fancyPage.Redirect != "":
         inverseRedirects.setdefault(fancyPage.Redirect, [])
         inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
-
-        inverseRedirects.setdefault(fancyPage.UltimateRedirect, [])
-        if fancyPage.UltimateRedirect != fancyPage.Redirect:
-            inverseRedirects[fancyPage.UltimateRedirect].append(fancyPage.Name)
 
 # Create a dictionary of page references for people pages.
 # The key is a page's canonical name; the value is a list of pages at which they are referenced.
@@ -140,10 +128,10 @@ with open("Redirects.txt", "w+", encoding='utf-8') as f:
 Log("Writing: Redirects with missing target.txt")
 allFancy3Pagenames=[WindowsFilenameToWikiPagename(n) for n in allFancy3PagesFnames]
 with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
-    for key in redirects.keys():
-        dest=redirects[key]
-        if dest not in allFancy3Pagenames:
-            f.write(key+" --> "+dest+"\n")
+    for fancyPage in fancyPagesDictByWikiname.values():
+        dest=fancyPage.Redirect
+        if dest != "" and dest not in allFancy3Pagenames:
+            f.write(fancyPage.Name+" --> "+dest+"\n")
 
 
 ##################
@@ -176,7 +164,7 @@ with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
             if fancyPage.Name in inverseRedirects.keys():
                 for p in inverseRedirects[fancyPage.Name]:
                     if p in fancyPagesDictByWikiname.keys():
-                        peopleNames.append(RemoveTrailingParens(fancyPagesDictByWikiname[p].UltimateRedirect))
+                        peopleNames.append(RemoveTrailingParens(fancyPagesDictByWikiname[p].Redirect))
                         if IsInterestingName(p):
                             peopleNames.append(p)
                         else:
@@ -366,7 +354,7 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
                     npeople+=1
                 if "Fan" in fancyPage.Tags:
                     nfans+=1
-                if ("Fanzine" in fancyPage.Tags or "Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags or "Newszine" in fancyPage.Tags or "Fanthology" in fancyPage.Tags):
+                if "Fanzine" in fancyPage.Tags or "Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags or "Newszine" in fancyPage.Tags or "Fanthology" in fancyPage.Tags:
                     nfanzines+=1
                 if "APA" in fancyPage.Tags:
                     napas+=1
