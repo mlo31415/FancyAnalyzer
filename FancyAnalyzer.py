@@ -69,28 +69,6 @@ for pageFname in allFancy3PagesFnames:
 Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
 
-Log("***Computing redirect structure")
-# A FancyPage has an UltimateRedirect which can only be filled in once all the redirects are known.
-# Run through the pages and fill in UltimateRedirect.
-def GetUltimateRedirect(fancyPagesDictByWikiname: Dict[str, F3Page], redirect: str) -> str:
-    assert redirect is not None
-    if redirect not in fancyPagesDictByWikiname.keys():  # Target of redirect does not exist, so this redirect is the ultimate redirect
-        return redirect
-    if fancyPagesDictByWikiname[redirect] is None:       # Target of redirect does not exist, so this redirect is the ultimate redirect
-        return redirect
-    if fancyPagesDictByWikiname[redirect].Redirect is None: # Target is a real page, so that real page is the ultimate redirect
-        return fancyPagesDictByWikiname[redirect].Name
-
-    return GetUltimateRedirect(fancyPagesDictByWikiname, fancyPagesDictByWikiname[redirect].Redirect)
-
-# Fill in the UltimateRedirect element
-num=0
-for fancyPage in fancyPagesDictByWikiname.values():
-    if fancyPage.Redirect is not None:
-        num+=1
-        #fancyPage.UltimateRedirect=GetUltimateRedirect(fancyPagesDictByWikiname, fancyPage.Redirect)
-Log("   "+str(num)+" redirects found")
-
 # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
 # Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
 # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
