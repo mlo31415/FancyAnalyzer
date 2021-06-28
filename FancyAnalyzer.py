@@ -68,6 +68,14 @@ for pageFname in allFancy3PagesFnames:
     val=DigestPage(fancySitePath, pageFname)
     if val is not None:
         fancyPagesDictByWikiname[val.Name]=val
+    # Print a progress indicator
+    l=len(fancyPagesDictByWikiname)
+    if l%1000 == 0:
+        if l>1000:
+            Log("--", noNewLine=True)
+        if l%20000 == 0:
+            Log("")
+        Log(str(l), noNewLine=True)
 Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
 # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
