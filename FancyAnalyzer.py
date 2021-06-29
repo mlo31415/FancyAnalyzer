@@ -494,7 +494,6 @@ with open("Apazines and clubzines that aren't fanzines.txt", "w+", encoding='utf
             f.write(fancyPage.Name+"\n")
 
 
-
 ##################
 # Make a list of all all-upper-case pages which are not tagged initialism.
 Log("Writing: Uppercase name which aren't marked as Initialisms.txt")
@@ -528,7 +527,7 @@ Log("Writing: Fans, Pros, and mundanes who are not Persons.txt")
 with open("Fans and Pros, and mundanes who are not Persons.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         # Then all the redirects to one of those pages.
-        if ("Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Mundane" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
+        if (fancyPage.Tags or "Pro" in fancyPage.Tags or "Mundane" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
 
@@ -568,15 +567,15 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
             if not fancyPage.IsRedirectpage:
                 if "Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Person" in fancyPage.Tags:
                     npeople+=1
-                if "Fan" in fancyPage.Tags:
+                if fancyPage.IsFan:
                     nfans+=1
-                if "Fanzine" in fancyPage.Tags or "Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags or "Newszine" in fancyPage.Tags or "Fanthology" in fancyPage.Tags:
+                if fancyPage.IsFanzine:
                     nfanzines+=1
-                if "APA" in fancyPage.Tags:
+                if fancyPage.IsAPA:
                     napas+=1
                 if "Club" in fancyPage.Tags:
                     nclubs+=1
-                if "Convention" in fancyPage.Tags:
+                if "Convention" in fancyPage.Tags:      #TODO: Distinguish cons from con series
                     nconinstances+=1
     f.write("Unique (ignoring redirects)\n")
     f.write("  Total pages: " + str(npages) + "\n")
