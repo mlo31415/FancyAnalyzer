@@ -284,7 +284,8 @@ def ScanForLocales(s: str) -> Optional[Set[str]]:
         out.add(BaseFormOfLocaleName(localeBaseForms, lst[0]))
     return out
 
-# OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
+
+# Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
 # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
 inverseRedirects: Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
 for fancyPage in fancyPagesDictByWikiname.values():
@@ -316,7 +317,7 @@ Log("***Writing reports")
 #     <referring page>
 #     <referring page>
 #     ...
-#     **<cannonical name>
+#     **<canonical name>
 #     ...
 Log("Writing: Referring pages.txt")
 with open("Referring pages.txt", "w+", encoding='utf-8') as f:
