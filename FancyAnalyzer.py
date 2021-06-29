@@ -365,7 +365,7 @@ def IsInterestingName(p: str) -> bool:
     return True
 
 Log("Writing: Peoples rejected names.txt")
-peopleNames=[str]
+peopleNames: List[str]=[]
 # Go through the list of all the pages labelled as Person
 # Build a list of people's names
 with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
