@@ -1,12 +1,16 @@
 from __future__ import annotations
-from typing import Dict, List, Tuple, Set, Optional
+from typing import Dict, List, Tuple, Set, Optional, Union
+from dataclasses import dataclass
 
 import os
 import re
+from datetime import datetime
 
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
-from HelpersPackage import WindowsFilenameToWikiPagename, SplitOnSpan
+from HelpersPackage import WindowsFilenameToWikiPagename, SplitOnSpan, WikiExtractLink, CrosscheckListElement
+from ConInfo import ConInfo
+from FanzineIssueSpecPackage import FanzineDateRange
 
 
 # We'll work entirely on the local copies of the two sites.
@@ -285,6 +289,600 @@ def ScanForLocales(s: str) -> Optional[Set[str]]:
     return out
 
 
+Log("***Analyzing convention series tables")
+
+# Scan for a virtual flag
+# Return True/False and remaining text after V-flag is removed
+def ScanForVirtual(input: str) -> Tuple[bool, str]:
+    # First look for the alternative contained in parens *anywhere* in the text
+    pat = "\((:?virtual|online|held online|moved online|virtual convention)\)"
+    newval = re.sub(pat, "", input,
+                    flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
+    if input != newval:
+        return True, newval.strip()
+    # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
+    newval = re.sub("\s*" + pat + "\s*$", "", input, flags=re.IGNORECASE)
+    if input != newval:
+        return True, newval.strip()
+    return False, input
+
+# Scan for text bracketed by <s>...</s>
+# Return True/False and remaining text after <s> </s> is removed
+def ScanForS(input: str) -> Tuple[bool, str]:
+    m=re.match("\w*<s>(.*)</s>\w*$", input)
+    if m is None:
+        return False, input
+    return True, m.groups()[0]
+
+# Create a list of convention instances with useful information about them stored in a ConInfo structure
+conventions: List[ConInfo]=[]
+for page in fancyPagesDictByWikiname.values():
+
+    # First, see if this is a Conseries page
+    if "Conseries" in page.Tags:
+        LogSetHeader("Processing "+page.Name)
+        # We'd like to find the columns containing:
+        locColumn=None     # The convention's location
+        conColumn=None     # The convention's name
+        dateColumn=None    # The conventions dates
+        for index, table in enumerate(page.Tables):
+            numcolumns=len(table.Headers)
+
+            listLocationHeaders=["Location"]
+            locColumn=CrosscheckListElement(listLocationHeaders, table.Headers)
+            # We don't log a missing location column because that is common and not an error -- we'll try to get the location later from the con instance's page
+
+            listNameHeaders=["Convention", "Convention Name", "Name"]
+            conColumn=CrosscheckListElement(listNameHeaders, table.Headers)
+            if conColumn is None:
+                Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+
+            listDateHeaders=["Date", "Dates"]
+            dateColumn=CrosscheckListElement(listDateHeaders, table.Headers)
+            if conColumn is None:
+                Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+
+            # If we don't have a convention column and a date column we skip the whole table.
+            if conColumn is not None and dateColumn is not None:
+
+                # Walk the convention table, extracting the individual conventions
+                # (Sometimes there will be multiple table
+                if table.Rows is None:
+                    Log("***Table "+str(index+1)+" of "+str(len(page.Tables))+"has no rows", isError=True)
+                    continue
+
+                for row in table.Rows:
+                    LogSetHeader("Processing: "+page.Name+"  row: "+str(row))
+                    # Skip rows with merged columns, and rows where either the date or convention cell is empty
+                    if len(row) < numcolumns-1 or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
+                        continue
+
+                    # If the con series table has a location column, extract the location
+                    conlocation=""
+                    if locColumn is not None:
+                        if locColumn < len(row) and len(row[locColumn]) > 0:
+                            loc=WikiExtractLink(row[locColumn])
+                            conlocation=BaseFormOfLocaleName(localeBaseForms, loc)
+
+                    # Check the row for (virtual) in any form. If found, set the virtual flag and remove the text from the line
+                    virtual=False
+                    for idx, col in enumerate(row):
+                        v2, col=ScanForVirtual(col)
+                        if v2:
+                            row[idx]=col      # Update row with the virtual flag removed
+                        virtual=virtual or v2
+                    Log("Virtual="+str(virtual))
+
+                    # Decode the convention and date columns add the resulting convention(s) to the list
+                    # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:
+                    #   name1 || date1          (1 con: normal)
+                    #   <s>name1</s> || <s>date1</s>        (1: cancelled)
+                    #   <s>name1</s> || date1        (1: cancelled)
+                    #   name1 || <s>date1</s>        (1: cancelled)
+                    #   <s>name1</s> name2 || <s>date1</s> date2        (2: cancelled and then re-scheduled)
+                    #   name1 || <s>date1</s> date2             (2: cancelled and rescheduled)
+                    #   <s>name1</s> || <s>date1</s> date2            (2: cancelled and rescheduled)
+                    #   <s>name1</s> || <s>date1</s> <s>date2</s>            (2: cancelled and rescheduled and cancelled)
+                    #   <s>name1</s> name2 || <s>date1</s> date2            (2: cancelled and rescheduled under new name)
+                    #   <s>name1</s> <s>name2</s> || <s>date1</s> <s>date2</s>            (2: cancelled and rescheduled under new name and then cancelled)
+                    # and all of these cases may have the virtual flag, but it is never applied to a cancelled con unless that is the only option
+                    # Basically, the pattern is 1 || 1, 1 || 2, 2 || 1, or 2 || 2 (where # is the number of items)
+                    # 1:1 and 2:2 match are yield two cons
+                    # 1:2 yields two cons if 1 date is <s>ed
+                    # 2:1 yields two cons if 1 con is <s>ed
+                    # The strategy is to sort out each column separately and then try to merge them into conventions
+                    # Note that we are disallowing the extreme case of three cons in one row!
+
+                    # First the dates
+                    datetext = row[dateColumn]
+
+                    # For the dates column, we want to remove the virtual designation as it will just confuse later processing.
+                    # We want to handle the case where (virtual) is in parens, but also when it isn't.
+                    # We need two patterns here because Python's regex doesn't have balancing groups and we don't want to match unbalanced parens
+
+                    # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
+                    p=re.compile("\(.*\)\s?$")  # Note that this is greedy. Is that the correct things to do?
+                    datetext=re.sub("\(.*\)\s?$", "", datetext)
+                    # Convert the HTML characters some people have inserted into their ascii equivalents
+                    datetext=datetext.replace("&nbsp;", " ").replace("&#8209;", "-")
+                    # Remove leading and trailing spaces
+                    datetext=datetext.strip()
+
+                    # Now look for dates. There are many cases to consider:
+                    #1: date                    A simple date (note that there will never be two simple dates in a dates cell)
+                    #2: <s>date</s>             A canceled con's date
+                    #3: <s>date</s> date        A rescheduled con's date
+                    #4: <s>date</s> <s>date</s> A rescheduled and then cancelled con's dates
+                    #5: <s>date</s> <s>date</s> date    A twice-rescheduled con's dates
+                    #m=re.match("^(:?(<s>.+?</s>)\s*)*(.*)$", datetext)
+                    pat="<s>.+?</s>"
+                    ds=re.findall(pat, datetext)
+                    if len(ds) > 0:
+                        datetext=re.sub(pat, "", datetext).strip()
+                    if len(datetext)> 0:
+                        ds.append(datetext)
+                    if len(ds) is None:
+                        Log("Date error: "+datetext)
+                        continue
+
+                    # We have N groups up to N-1 of which might be None
+                    dates:List[FanzineDateRange]=[]
+                    for d in ds:
+                        if d is not None and len(d) > 0:
+                            c, s=ScanForS(d)
+                            dr=FanzineDateRange().Match(s)
+                            dr.Cancelled=c
+                            if dr.Duration() > 6:
+                                Log("??? convention has long duration: "+str(dr), isError=True)
+                            if not dr.IsEmpty():
+                                dates.append(dr)
+
+                    if len(dates) == 0:
+                        Log("***No dates found", isError=True)
+                    elif len(dates) == 1:
+                        Log("1 date: "+str(dates[0]))
+                    else:
+                        Log(str(len(dates))+" dates: " + str(dates[0]))
+                        for d in dates[1:]:
+                            Log("           " + str(d))
+
+
+                    # Get the corresponding convention name(s).
+                    context=row[conColumn]
+                    # Clean up the text
+                    context=context.replace("[[", "@@").replace("]]", "%%")  # The square brackets are Regex special characters. This substitution makes the patterns simpler to read
+                    # Convert the HTML characters some people have inserted into their ascii equivalents
+                    context=context.replace("&nbsp;", " ").replace("&#8209;", "-")
+                    # And get rid of hard line breaks
+                    context=context.replace("<br>", " ")
+                    # In some pages we italicize or bold the con's name, so remove spans of single quotes 2 or longer
+                    context=re.sub("[']{2,}", "", context)
+
+                    context=context.strip()
+
+                    if context.count("@@") != context.count("%%"):
+                        Log("'"+row[conColumn]+"' has unbalanced double brackets. This is unlikely to end well...", isError=True)
+
+                    # An individual name is of one of these forms:
+                        #   xxx
+                        # [[xxx]] zzz               Ignore the "zzz"
+                        # [[xxx|yyy]]               Use just xxx
+                        # [[xxx|yyy]] zzz
+                    # But! There can be more than one name on a date if a con converted from real to virtual while changing its name and keeping its dates:
+                    # E.g., <s>[[FilKONtario 30]]</s> [[FilKONtari-NO]] (trailing stuff)
+                    # Whatcon 20: This Year's Theme -- need to split on the colon
+                    # Each of the bracketed chunks can be of one of the four forms, above. (Ugh.)
+                    # But! con names can also be of the form name1 / name2 / name 3
+                    #   These are three (or two) different names for the same con.
+                    # We will assume that there is only limited mixing of these forms!
+
+                    @dataclass
+                    class ConName:
+                        #def __init__(self, Name: str="", Link: str="", Cancelled: bool=False):
+                        Name: str=""
+                        Cancelled: bool=False
+                        Link: str=""
+
+                        def __lt__(self, val: ConName) -> bool:
+                            return self.Name < val.Name
+
+                    def SplitConText(constr: str) -> Tuple[str, str]:
+                        # Now convert all link|text to separate link and text
+                        # Do this for s1 and s2
+                        m=re.match("@@(.+)\|(.+)%%$", constr)       # Split xxx|yyy into xxx and yyy
+                        if m is not None:
+                            return m.groups()[0], m.groups()[1]
+                        m = re.match("@@(.+)%%$", constr)  # Split xxx|yyy into xxx and yyy
+                        if m is not None:
+                            return "", m.groups()[0]
+                        return "", constr
+
+                    # We assume that the cancelled con names lead the uncancelled ones
+                    def NibbleCon(constr: str) -> Tuple[Optional[ConName], str]:
+                        constr=constr.strip()
+                        if len(constr) == 0:
+                            return None, constr
+
+                        # We want to take the leading con name
+                        # There can be at most one con name which isn't cancelled, and it should be at the end, so first look for a <s>...</s> bracketed con names, if any
+                        pat="^<s>(.*?)</s>"
+                        m=re.match(pat, constr)
+                        if m is not None:
+                            s=m.groups()[0]
+                            constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
+                            l, t=SplitConText(s)
+                            con=ConName(Name=t, Link=l, Cancelled=True)
+                            return con, constr
+
+                        # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
+                        pat="^(@@(:?.*?)%%)"
+                        m=re.match(pat, constr)
+                        if m is not None:
+                            s=m.groups()[0]
+                            constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
+                            l, t=SplitConText(s)
+                            con=ConName(Name=t, Link=l, Cancelled=False)
+                            return con, constr
+
+#TODO:  What's left may be a bare con name or it may be a keyword like "held online" or "virtual".  Need to check this on real data
+                        if len(constr) > 0:
+                            if constr[0] == ":":
+                                return None, ""
+                            if ":" in constr:
+                                constr=constr.split(":")[0]
+                            con=ConName(Name=constr)
+                            return con, ""
+
+                    cons: List[Union[ConName, List[ConName]]]=[]
+                    # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
+                    # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
+                    def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
+                        if matchObject.group(1) is not None and matchObject.group(2) is not None:
+                            return matchObject.group(1)+"&&&"+matchObject.group(2)
+                    context=re.sub("(<)/([A-Za-z])", replacer, context)  # Hide the '/' in things like </xxx>
+                    context=re.sub("([0-9])/([0-9])", replacer, context)    # Hide the '/' in fractions
+                    contextlist=re.split("/", context)
+                    contextlist=[x.replace("&&&", "/").strip() for x in contextlist]    # Restore the real '/'s
+                    context=context.replace("&&&", "/").strip()
+                    if len(contextlist) > 1:
+                        contextlist=[x.strip() for x in contextlist if len(x.strip()) > 0]
+                        alts: List[ConName]=[]
+                        for con in contextlist:
+                            c, _=NibbleCon(con)
+                            if c is not None:
+                                alts.append(c)
+                        alts.sort()     # Sort the list so that when this list is created from two or more different convention idnex tables, it looks the same and dups can be removed.
+                        cons.append(alts)
+                    else:
+                        # Ok, we have one or more names and they are for different cons
+                        while len(context) > 0:
+                            con, context=NibbleCon(context)
+                            if con is None:
+                                break
+                            cons.append(con)
+
+                    # Now we have cons and dates and need to create the appropriate convention entries.
+                    if len(cons) == 0 or len(dates) == 0:
+                        Log("Scan abandoned: ncons="+str(len(cons))+"  len(dates)="+str(len(dates)), isError=True)
+                        continue
+
+                    # Don't add duplicate entries
+                    def AppendCon(ci: ConInfo) -> None:
+                        hits=[x for x in conventions if ci.NameInSeriesList == x.NameInSeriesList and ci.DateRange == x.DateRange and ci.Cancelled == x.Cancelled and ci.Virtual == x.Virtual and ci.Override == x.Override]
+                        if len(hits) == 0:
+                            conventions.append(ci)
+                        else:
+                            Log("AppendCon: duplicate - "+str(ci)+"   and   "+str(hits[0]))
+                            # If there are two sources for the convention's location and one is empty, use the other.
+                            if len(hits[0].Loc) == 0:
+                                hits[0].SetLoc(ci.Loc)
+
+                    # The first case we need to look at it whether cons[0] has a type of list of ConInfo
+                    # This is one con with multiple names
+                    if type(cons[0]) is list:
+                        # By definition there is only one element. Extract it.  There may be more than one date.
+                        assert len(cons) == 1 and len(cons[0]) > 0
+                        cons=cons[0]
+                        for dt in dates:
+                            override=""
+                            cancelled=dt.Cancelled
+                            dt.Cancelled = False
+                            for co in cons:
+                                cancelled=cancelled or co.Cancelled
+                                if len(override) > 0:
+                                    override+=" / "
+                                override+="[["
+                                if len(co.Link) > 0:
+                                    override+=co.Link+"|"
+                                override+=co.Name+"]]"
+                            v = False if cancelled else virtual
+                            ci=ConInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                            ci.Override=override
+                            AppendCon(ci)
+                            Log("#append 1: "+str(ci))
+                    # OK, in all the other cases cons is a list[ConInfo]
+                    elif len(cons) == len(dates):
+                        # Add each con with the corresponding date
+                        for i in range(len(cons)):
+                            cancelled=cons[i].Cancelled or dates[i].Cancelled
+                            dates[i].Cancelled=False    # We've xferd this to ConInfo and don't still want it here because it would print twice
+                            v=False if cancelled else virtual
+                            ci=ConInfo(_Link=cons[i].Link, NameInSeriesList=cons[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                            if ci.DateRange.IsEmpty():
+                                Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
+                            Log("#append 2: "+str(ci))
+                            AppendCon(ci)
+                    elif len(cons) > 1 and len(dates) == 1:
+                        # Multiple cons all with the same dates
+                        for co in cons:
+                            cancelled=co.Cancelled or dates[0].Cancelled
+                            dates[0].Cancelled = False
+                            v=False if cancelled else virtual
+                            ci=ConInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
+                            AppendCon(ci)
+                            Log("#append 3: "+str(ci))
+                    elif len(cons) == 1 and len(dates) > 1:
+                        for dt in dates:
+                            cancelled=cons[0].Cancelled or dt.Cancelled
+                            dt.Cancelled = False
+                            v=False if cancelled else virtual
+                            ci=ConInfo(_Link=cons[0].Link, NameInSeriesList=cons[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                            AppendCon(ci)
+                            Log("#append 4: "+str(ci))
+                    else:
+                        Log("Can't happen! ncons="+str(len(cons))+"  len(dates)="+str(len(dates)), isError=True)
+
+
+# Compare two locations to see if they match
+def LocMatch(loc1: str, loc2: str) -> bool:
+    # First, remove '[[' and ']]' from both locs
+    loc1=loc1.replace("[[", "").replace("]]", "")
+    loc2=loc2.replace("[[", "").replace("]]", "")
+
+    # We want 'Glasgow, UK' to match 'Glasgow', so deal with the pattern of <City>, <Country Code> matching <City>
+    m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc1)
+    if m is not None:
+        loc1=m.groups()[0]
+    m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc2)
+    if m is not None:
+        loc2=m.groups()[0]
+
+    return loc1 == loc2
+
+# OK, all of the con series have been mined.  Now let's look through all the con instances and see if we can get more location information from them.
+# (Not all con series tables contain location information.)
+# Generate a report of cases where we have non-identical con information from both sources.
+with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
+    for page in fancyPagesDictByWikiname.values():
+        # If it's an individual convention page, we search through its text for something that looks like a placename.
+        if "Convention" in page.Tags and "Conseries" not in page.Tags:
+            m=ScanForLocales(page.Source)
+            if len(m) > 0:
+                for place in m:
+                    place=WikiExtractLink(place)
+                    # Find the convention in the conventions dictionary and add the location if appropriate.
+                    conname=page.Redirect
+                    listcons=[x for x in conventions if x.NameInSeriesList == conname]
+                    for con in listcons:
+                        if not LocMatch(place, con.Loc):
+                            if con.Loc == "":   # If there previously was no location from the con series page, substitute what we found in the con instance page
+                                con.SetLoc(place)
+                                continue
+                            f.write(conname+": Location mismatch: '"+place+"' != '"+con.Loc+"'\n")
+
+# Normalize convention locations to the standard City, ST form.
+Log("***Normalizing con locations")
+for con in conventions:
+    loc=ScanForLocales(con.Loc)
+    if len(loc) > 1:
+        Log("  In "+con.NameInSeriesList+"  found more than one location: "+str(loc))
+    if len(loc) > 0:
+        con.SetLoc=(iter(loc).__next__())    # Nasty code to get one element from the set
+
+
+# Sort the con dictionary  into date order
+Log("Writing Con DateRange oddities.txt")
+oddities=[x for x in conventions if x.DateRange.IsOdd()]
+with open("Con DateRange oddities.txt", "w+", encoding='utf-8') as f:
+    for con in oddities:
+        f.write(str(con)+"\n")
+conventions.sort(key=lambda d: d.DateRange)
+
+#TODO: Add a list of keywords to find and remove.  E.g. "Astra RR" ("Ad Astra XI")
+
+# ...
+Log("Writing Convention timeline (Fancy).txt")
+with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
+    f.write("This is a chronological list of SF conventions automatically extracted from Fancyclopedia 3\n\n")
+    f.write("If a convention is missing from the list, it may be due to it having been added only recently, (this list was generated ")
+    f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
+    f.write(" or because we do not yet have information on the convention or because the convention's listing in Fancy 3 is a bit odd ")
+    f.write("and the program which creates this list isn't parsing it.  In any case, we welcome help making it more complete!\n\n")
+    f.write("The list currently has "+str(len(conventions))+" conventions.\n")
+    currentYear=None
+    currentDateRange=None
+    # We're going to write a Fancy 3 wiki table
+    # Two columns: Daterange and convention name and location
+    # The date is not repeated when it is the same
+    # The con name and location is crossed out when it was cancelled or moved and (virtual) is added when it was virtual
+    f.write("<tab>\n")
+    for con in conventions:
+        # Look up the location for this convention
+        conloctext=con.Loc
+
+        # Format the convention name and location for tabular output
+        if len(con.Override) > 0:
+            context=con.Override
+        else:
+            context="[["+str(con.NameInSeriesList)+"]]"
+        if con.Virtual:
+            context="''"+context+" (virtual)''"
+        else:
+            if len(conloctext) > 0:
+                context+="&nbsp;&nbsp;&nbsp;<small>("+conloctext+")</small>"
+
+        # Now write the line
+        # We have two levels of date headers:  The year and each unique date within the year
+        # We do a year header for each new year, so we need to detect when the current year changes
+        if currentYear != con.DateRange._startdate.Year:
+            # When the current date range changes, we put the new date range in the 1st column of the table
+            currentYear=con.DateRange._startdate.Year
+            currentDateRange=con.DateRange
+            f.write('colspan="2"| '+"<big><big>'''"+str(currentYear)+"'''</big></big>\n")
+
+            # Write the row in two halves, first the date column and then the con column
+            f.write(str(con.DateRange)+"||")
+        else:
+            if currentDateRange != con.DateRange:
+                f.write(str(con.DateRange)+"||")
+                currentDateRange=con.DateRange
+            else:
+                f.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' ' ||")
+
+        if con.Cancelled:
+            f.write("<s>"+context+"</s>\n")
+        else:
+            f.write(context+"\n")
+
+
+    f.write("</tab>\n")
+    f.write("{{conrunning}}\n[[Category:List]]\n")
+
+# ...
+# OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
+# Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
+# Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
+Log("***Create inverse redirects tables")
+redirects: Dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
+inverseRedirects:Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+for fancyPage in fancyPagesDictByWikiname.values():
+    if fancyPage.Redirect != "":
+        redirects[fancyPage.Name]=fancyPage.Redirect
+        inverseRedirects.setdefault(fancyPage.Redirect, [])
+        inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
+        inverseRedirects.setdefault(fancyPage.Redirect, [])
+        if fancyPage.Redirect != fancyPage.Redirect:
+            inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
+
+# Analyze the Locales
+# Create a list of things that redirect to a Locale, but are not tagged as a locale.
+Log("***Look for things that redirect to a Locale, but are not tagged as a Locale")
+with open("Untagged locales.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        if "Locale" in fancyPage.Tags:                        # We only care about locales
+            if fancyPage.Redirect == "":        # We don't care about redirects
+                if fancyPage.Name in inverseRedirects.keys():
+                    for inverse in inverseRedirects[fancyPage.Name]:    # Look at everything that redirects to this
+                        if "Locale" not in fancyPagesDictByWikiname[inverse].Tags:
+                            if "-" not in inverse:                  # If there's a hyphen, it's probably a Wikidot redirect
+                                if inverse[1:] != inverse[1:].lower() and " " in inverse:   # There's a capital letter after the 1st and also a space
+                                    f.write(fancyPage.Name+" is pointed to by "+inverse+" which is not a Locale\n")
+
+# ...
+# Create a dictionary of page references for people pages.
+# The key is a page's canonical name; the value is a list of pages at which they are referenced.
+peopleReferences: Dict[str, List[str]]={}
+Log("***Creating dict of people references")
+for fancyPage in fancyPagesDictByWikiname.values():
+    if fancyPage.IsPerson and len(fancyPage.OutgoingReferences) > 0:
+        peopleReferences.setdefault(fancyPage.Name, [])
+        for outRef in fancyPage.OutgoingReferences:
+            try:
+                if fancyPagesDictByWikiname[outRef.LinkWikiName].IsPerson:
+                    peopleReferences.setdefault(outRef.LinkWikiName, [])
+                    peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
+            except KeyError:
+                Log("****KeyError on "+outRef.LinkWikiName)
+# ...
+Log("***Writing reports")
+# Write out a file containing canonical names, each with a list of pages which refer to it.
+# The format will be
+#     **<canonical name>
+#     <referring page>
+#     <referring page>
+#     ...
+#     **<canonical name>
+#     ...
+Log("Writing: Referring pages.txt")
+with open("Referring pages.txt", "w+", encoding='utf-8') as f:
+    for person, referringpagelist in peopleReferences.items():
+        f.write("**"+person+"\n")
+        for pagename in referringpagelist:
+            f.write("  "+pagename+"\n")
+
+# ...
+# Now a list of redirects.
+# We use basically the same format:
+#   **<target page>
+#   <redirect to it>
+#   <redirect to it>
+# ...
+# Now dump the inverse redirects to a file
+Log("Writing: Redirects.txt")
+with open("Redirects.txt", "w+", encoding='utf-8') as f:
+    for redirect, pages in inverseRedirects.items():
+        f.write("**"+redirect+"\n")
+        for page in pages:
+            f.write("      ⭦ "+page+"\n")
+
+# Next, a list of redirects with a missing target
+Log("Writing: Redirects with missing target.txt")
+allFancy3Pagenames=set([WindowsFilenameToWikiPagename(n) for n in allFancy3PagesFnames])
+with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
+    for key in redirects.keys():
+        dest=WikiExtractLink(redirects[key])
+        if dest not in allFancy3Pagenames:
+            f.write(key+" --> "+dest+"\n")
+
+
+# ...
+# Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
+
+# Ambiguous names will often end with something in parenthesis which need to be removed for this particular file
+def RemoveTrailingParens(s: str) -> str:
+    return re.sub("\s\(.*\)$", "", s)       # Delete any trailing ()
+
+
+# Some names are not worth adding to the list of people names.  Try to detect them.
+def IsInterestingName(p: str) -> bool:
+    if " " not in p and "-" in p:   # We want to ignore names like "Bob-Tucker" in favor of "Bob Tucker"
+        #TODO: Deal with hypenated last names
+        return False
+    if " " in p:                    # If there are spaces in the name, at least one of them needs to be followed by a UC letter or something like "deCordova"f
+        if re.search(" ([A-Z]|de|ha|von|Č)", p) is None:  # We want to ignore "Bob tucker"
+            return False
+    return True
+
+Log("Writing: Peoples rejected names.txt")
+peopleNames: Union[Set[str], List[str]]=set()
+# First make a list of all the pages labelled as "fan" or "pro"
+with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
+    for fancyPage in fancyPagesDictByWikiname.values():
+        if fancyPage.IsPerson:
+            peopleNames.add(RemoveTrailingParens(fancyPage.Name))
+            # Then all the redirects to one of those pages.
+            if fancyPage.Name in inverseRedirects.keys():
+                for p in inverseRedirects[fancyPage.Name]:
+                    if p in fancyPagesDictByWikiname.keys():
+                        peopleNames.add(RemoveTrailingParens(fancyPagesDictByWikiname[p].Redirect))
+                        if IsInterestingName(p):
+                            peopleNames.add(p)
+                        # else:
+                        #     f.write("Uninteresting: "+p+"\n")
+                    else:
+                        Log("Generating Peoples rejected names.txt: "+p+" is not in fancyPagesDictByWikiname")
+            # else:
+            #     f.write(fancyPage.Name+" Not in inverseRedirects.keys()\n")
+
+
+with open("Peoples names.txt", "w+", encoding='utf-8') as f:
+    peopleNames=list(peopleNames)   # Turn it into a list so we can sort it.
+    peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
+    for name in peopleNames:
+        f.write(name+"\n")
+
+
+###################################################
 # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
 # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
 inverseRedirects: Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
@@ -519,24 +1117,27 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
 
 
 ##################
+# Taggin Oddities
 # Make a list of all fans, pros, and mundanes who are not also tagged person
-Log("Writing: Fans, Pros, and mundanes who are not Persons.txt")
-with open("Fans and Pros, and mundanes who are not Persons.txt", "w+", encoding='utf-8') as f:
+Log("Tagging oddities.txt")
+with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
+    f.write("Fans, pros, and mundanes who are not also tagged person\n")
     for fancyPage in fancyPagesDictByWikiname.values():
         # Then all the redirects to one of those pages.
-        if (fancyPage.Tags or "Pro" in fancyPage.Tags or "Mundane" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
+        if ("Pro" in fancyPage.Tags or "Muundane" in fancyPage.Tags or "Fan" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
-
-##################
-# Make a list of persons who don't also have a specific tag
-Log("Writing: Persons who are not Fans, Pros, or Mundanes.txt")
-with open("Persons who are not Fans, Pros, or Mundanes.txt", "w+", encoding='utf-8') as f:
+    f.write("\n\nPersons who are not tagged Fan, pro, or mundane\n")
     for fancyPage in fancyPagesDictByWikiname.values():
         # Then all the redirects to one of those pages.
         if "Person" in fancyPage.Tags and "Fan" not in fancyPage.Tags and "Pro" not in fancyPage.Tags and "Mundane" not in fancyPage.Tags:
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
+    f.write("\n\nNicknames which are not persons\n")
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if "Nickname" in fancyPage.Tags and not fancyPage.IsPerson:
+            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
 ##################
 # Make a list of all Mundanes
