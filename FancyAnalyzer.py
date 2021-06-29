@@ -300,14 +300,10 @@ for fancyPage in fancyPagesDictByWikiname.values():
 peopleReferences: Dict[str, List[str]]={}
 Log("***Creating dict of people references")
 for fancyPage in fancyPagesDictByWikiname.values():
-    if fancyPage.IsPerson:
-        peopleReferences.setdefault(fancyPage.Name, [])
-
-# Now go through all outgoing references on the pages and add those which reference a person to that person's list
-for fancyPage in fancyPagesDictByWikiname.values():
     if fancyPage.OutgoingReferences is not None:
         for outRef in fancyPage.OutgoingReferences:
-            if outRef.LinkWikiName in peopleReferences.keys():    # So it's a people
+            if fancyPage.IsPerson:
+                peopleReferences.setdefault(outRef.LinkWikiName, [])
                 peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
 
 Log("***Writing reports")
