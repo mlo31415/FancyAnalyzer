@@ -390,6 +390,7 @@ with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
 # De-dupe it
 peopleNames=list(set(peopleNames))
 
+Log("Writing: Peoples names.txt")
 with open("Peoples names.txt", "w+", encoding='utf-8') as f:
     peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
     for name in peopleNames:
