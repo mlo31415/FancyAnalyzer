@@ -86,12 +86,12 @@ Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 Log("\n\n***Building a locale dictionary")
 locales: Set[str]=set()  # We use a set to eliminate duplicates and to speed checks
 for page in fancyPagesDictByWikiname.values():
-    if "Locale" in page.Tags:
+    if page.IsLocale:
         LogSetHeader("Processing Locale "+page.Name)
         locales.add(page.Name)
     else:
         if page.Redirect != "" and page.Redirect in fancyPagesDictByWikiname.keys():
-            if "Locale" in fancyPagesDictByWikiname[page.Redirect].Tags:
+            if fancyPagesDictByWikiname[page.Redirect].IsLocale:
                 LogSetHeader("Processing Locale "+page.Name)
                 locales.add(page.Name)
 
@@ -319,7 +319,7 @@ conventions: List[ConInfo]=[]
 for page in fancyPagesDictByWikiname.values():
 
     # First, see if this is a Conseries page
-    if "Conseries" in page.Tags:
+    if page.IsConSeries:
         LogSetHeader("Processing "+page.Name)
         # We'd like to find the columns containing:
         locColumn=None     # The convention's location
@@ -655,7 +655,7 @@ def LocMatch(loc1: str, loc2: str) -> bool:
 with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
     for page in fancyPagesDictByWikiname.values():
         # If it's an individual convention page, we search through its text for something that looks like a placename.
-        if "Convention" in page.Tags and "Conseries" not in page.Tags:
+        if page.IsConInstance:
             m=ScanForLocales(page.Source)
             if len(m) > 0:
                 for place in m:
@@ -769,11 +769,11 @@ for fancyPage in fancyPagesDictByWikiname.values():
 Log("***Look for things that redirect to a Locale, but are not tagged as a Locale")
 with open("Untagged locales.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
-        if "Locale" in fancyPage.Tags:                        # We only care about locales
+        if fancyPage.IsLocale:                        # We only care about locales
             if fancyPage.Redirect == "":        # We don't care about redirects
                 if fancyPage.Name in inverseRedirects.keys():
                     for inverse in inverseRedirects[fancyPage.Name]:    # Look at everything that redirects to this
-                        if "Locale" not in fancyPagesDictByWikiname[inverse].Tags:
+                        if not fancyPagesDictByWikiname[inverse].IsLocale:
                             if "-" not in inverse:                  # If there's a hyphen, it's probably a Wikidot redirect
                                 if inverse[1:] != inverse[1:].lower() and " " in inverse:   # There's a capital letter after the 1st and also a space
                                     f.write(fancyPage.Name+" is pointed to by "+inverse+" which is not a Locale\n")
@@ -1145,7 +1145,7 @@ Log("Writing: Mundanes.txt")
 with open("Mundanes.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         # Then all the redirects to one of those pages.
-        if "Mundane" in fancyPage.Tags:
+        if fancyPage.IsMundane:
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
 ##################
@@ -1163,7 +1163,7 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
         if not fancyPage.IsRedirectpage:
             npages+=1
             if not fancyPage.IsRedirectpage:
-                if "Fan" in fancyPage.Tags or "Pro" in fancyPage.Tags or "Person" in fancyPage.Tags:
+                if fancyPage.IsPerson:
                     npeople+=1
                 if fancyPage.IsFan:
                     nfans+=1
@@ -1171,9 +1171,9 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
                     nfanzines+=1
                 if fancyPage.IsAPA:
                     napas+=1
-                if "Club" in fancyPage.Tags:
+                if fancyPage.IsClub:
                     nclubs+=1
-                if "Convention" in fancyPage.Tags:      #TODO: Distinguish cons from con series
+                if fancyPage.IsConInstance:
                     nconinstances+=1
     f.write("Unique (ignoring redirects)\n")
     f.write("  Total pages: " + str(npages) + "\n")
