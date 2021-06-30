@@ -1133,10 +1133,16 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         if "Person" in fancyPage.Tags and "Fan" not in fancyPage.Tags and "Pro" not in fancyPage.Tags and "Mundane" not in fancyPage.Tags:
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
-    f.write("\n\nNicknames which are not persons\n")
+    f.write("\n\nPublishers which are tagged as persons\n")
     for fancyPage in fancyPagesDictByWikiname.values():
         # Then all the redirects to one of those pages.
-        if "Nickname" in fancyPage.Tags and not fancyPage.IsPerson:
+        if fancyPage.IsPublisher and fancyPage.IsPerson:
+            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+
+    f.write("\n\nNicknames which are not persons, fanzines or cons\n")
+    for fancyPage in fancyPagesDictByWikiname.values():
+        # Then all the redirects to one of those pages.
+        if fancyPage.IsNickname and not (fancyPage.IsPerson or fancyPage.IsFanzine or fancyPage.IsConInstance):
             f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
 ##################
