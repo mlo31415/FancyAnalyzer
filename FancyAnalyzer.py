@@ -936,7 +936,6 @@ with open("Redirects.txt", "w+", encoding='utf-8') as f:
 
 # Next, a list of redirects with a missing target
 Log("Writing: Redirects with missing target.txt")
-allFancy3Pagenames=[WindowsFilenameToWikiPagename(n) for n in allFancy3PagesFnames]
 with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         dest=fancyPage.Redirect
