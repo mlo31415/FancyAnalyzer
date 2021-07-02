@@ -698,7 +698,7 @@ with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
     f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
     f.write(" or because we do not yet have information on the convention or because the convention's listing in Fancy 3 is a bit odd ")
     f.write("and the program which creates this list isn't parsing it.  In any case, we welcome help making it more complete!\n\n")
-    f.write("The list currently has "+str(len(conventions))+" conventions.\n")
+    f.write(f"The list currently has {len(conventions)} conventions.\n")
     currentYear=None
     currentDateRange=None
     # We're going to write a Fancy 3 wiki table
@@ -731,16 +731,16 @@ with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
             f.write('colspan="2"| '+"<big><big>'''"+str(currentYear)+"'''</big></big>\n")
 
             # Write the row in two halves, first the date column and then the con column
-            f.write(str(con.DateRange)+"||")
+            f.write(f"{con.DateRange}||")
         else:
             if currentDateRange != con.DateRange:
-                f.write(str(con.DateRange)+"||")
+                f.write(f"{con.DateRange}||")
                 currentDateRange=con.DateRange
             else:
                 f.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' ' ||")
 
         if con.Cancelled:
-            f.write("<s>"+context+"</s>\n")
+            f.write(f"<s>{context}</s>\n")
         else:
             f.write(context+"\n")
 
@@ -776,7 +776,7 @@ with open("Untagged locales.txt", "w+", encoding='utf-8') as f:
                         if not fancyPagesDictByWikiname[inverse].IsLocale:
                             if "-" not in inverse:                  # If there's a hyphen, it's probably a Wikidot redirect
                                 if inverse[1:] != inverse[1:].lower() and " " in inverse:   # There's a capital letter after the 1st and also a space
-                                    f.write(fancyPage.Name+" is pointed to by "+inverse+" which is not a Locale\n")
+                                    f.write(f"{fancyPage.Name} is pointed to by {inverse} which is not a Locale\n")
 
 # ...
 # Create a dictionary of page references for people pages.
@@ -806,9 +806,9 @@ Log("***Writing reports")
 Log("Writing: Referring pages.txt")
 with open("Referring pages.txt", "w+", encoding='utf-8') as f:
     for person, referringpagelist in peopleReferences.items():
-        f.write("**"+person+"\n")
+        f.write(f"**{person}\n")
         for pagename in referringpagelist:
-            f.write("  "+pagename+"\n")
+            f.write(f"  {pagename}\n")
 
 # ...
 # Now a list of redirects.
@@ -821,9 +821,9 @@ with open("Referring pages.txt", "w+", encoding='utf-8') as f:
 Log("Writing: Redirects.txt")
 with open("Redirects.txt", "w+", encoding='utf-8') as f:
     for redirect, pages in inverseRedirects.items():
-        f.write("**"+redirect+"\n")
+        f.write(f"**{redirect}\n")
         for page in pages:
-            f.write("      ⭦ "+page+"\n")
+            f.write(f"      ⭦ {page}\n")
 
 # Next, a list of redirects with a missing target
 Log("Writing: Redirects with missing target.txt")
@@ -832,7 +832,7 @@ with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
     for key in redirects.keys():
         dest=WikiExtractLink(redirects[key])
         if dest not in allFancy3Pagenames:
-            f.write(key+" --> "+dest+"\n")
+            f.write(f"{key} --> {dest}\n")
 
 
 # ...
@@ -916,9 +916,9 @@ Log("***Writing reports")
 Log("Writing: Referring pages.txt")
 with open("Referring pages.txt", "w+", encoding='utf-8') as f:
     for person, referringpagelist in peopleReferences.items():
-        f.write("**"+person+"\n")
+        f.write(f"**{person}\n")
         for pagename in referringpagelist:
-            f.write("  "+pagename+"\n")
+            f.write(f"  {pagename}\n")
 
 # Now a list of redirects.
 # We use basically the same format:
@@ -930,9 +930,9 @@ with open("Referring pages.txt", "w+", encoding='utf-8') as f:
 Log("Writing: Redirects.txt")
 with open("Redirects.txt", "w+", encoding='utf-8') as f:
     for redirect, pages in inverseRedirects.items():
-        f.write("**"+redirect+"\n")
+        f.write(f"**{redirect}\n")
         for page in pages:
-            f.write("      ⭦ "+page+"\n")
+            f.write(f"      ⭦ {page}\n")
 
 # Next, a list of redirects with a missing target
 Log("Writing: Redirects with missing target.txt")
@@ -940,7 +940,7 @@ with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         dest=fancyPage.Redirect
         if dest != "" and dest not in allFancy3Pagenames:
-            f.write(fancyPage.Name+" --> "+dest+"\n")
+            f.write(f"{fancyPage.Name} --> {dest}\n")
 
 
 ##################
@@ -977,11 +977,11 @@ with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
                         if IsInterestingName(p):
                             peopleNames.append(p)
                         else:
-                            f.write("Uninteresting: "+p+"\n")
+                            f.write(f"Uninteresting: {p}\n")
                     else:
                         Log(p+" does not point to a person's name")
             else:
-                f.write(fancyPage.Name+": Good name -- ignored\n")
+                f.write(f"{fancyPage.Name}: Good name -- ignored\n")
 
 
 # De-dupe it
@@ -1027,14 +1027,14 @@ with open("Tag counts.txt", "w+", encoding='utf-8') as f:
     tagcountslist=[(key, val) for key, val in tagcounts.items()]
     tagcountslist.sort(key=lambda elem: elem[1], reverse=True)
     for tag, count in tagcountslist:
-        f.write(tag+": "+str(count)+"\n")
+        f.write(f"{tag}: {count}\n")
 
 Log("Writing: Counts for tagsets.txt")
 with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
     tagsetcountslist=[(key, val) for key, val in tagsetcounts.items()]
     tagsetcountslist.sort(key=lambda elem: elem[1], reverse=True)
     for tagset, count in tagsetcountslist:
-        f.write(str(tagset)+": "+str(count)+"\n")
+        f.write(f"{tagset}: {count}\n")
 
 ##################
 # Now redo the counts, ignoring countries
@@ -1044,7 +1044,7 @@ tagcounts, tagsetcounts=ComputeTagCounts(fancyPagesDictByWikiname, ignoredTags)
 Log("Writing: Counts for tagsets without country.txt")
 with open("Tagset counts without country.txt", "w+", encoding='utf-8') as f:
     for tagset, count in tagsetcounts.items():
-        f.write(str(tagset)+": "+str(count)+"\n")
+        f.write(f"{tagset}: {count}\n")
 
 
 ##################
@@ -1075,7 +1075,7 @@ for fp in fancyPagesDictByWikiname.values():
 Log("Writing: Counts for tagpowersets.txt")
 with open("Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
     for tagset, count in tagsetcounts.items():
-        f.write(str(tagset)+": "+str(count)+"\n")
+        f.write(f"{tagset}: {count}\n")
 
 ##############
 # We want apazine and clubzine to be used in addition to fanzine.  Make a list of
@@ -1216,10 +1216,10 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
             if fancyPage.IsConInstance:
                 nconinstances+=1
     f.write("Unique (ignoring redirects)\n")
-    f.write("  Total pages: " + str(npages) + "\n")
-    f.write("  All people: " + str(npeople) + "\n")
-    f.write("  Fans: " + str(nfans) + "\n")
-    f.write("  Fanzines: "+str(nfanzines)+"\n")
-    f.write("  APAs: " + str(napas) + "\n")
-    f.write("  Clubs: " + str(nclubs) + "\n")
-    f.write("  Conventions: " + str(nconinstances) + "\n")
+    f.write(f"  Total pages: {npages}\n")
+    f.write(f"  All people: {npeople}\n")
+    f.write(f"  Fans: {nfans}\n")
+    f.write(f"  Fanzines: {nfanzines}\n")
+    f.write(f"  APAs: {napas}\n")
+    f.write(f"  Club: {nclubs}\n")
+    f.write(f"  Conventions: {nconinstances}\n")
