@@ -1203,19 +1203,18 @@ with open("Statistics.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         if not fancyPage.IsRedirectpage:
             npages+=1
-            if not fancyPage.IsRedirectpage:
-                if fancyPage.IsPerson:
-                    npeople+=1
-                if fancyPage.IsFan:
-                    nfans+=1
-                if fancyPage.IsFanzine:
-                    nfanzines+=1
-                if fancyPage.IsAPA:
-                    napas+=1
-                if fancyPage.IsClub:
-                    nclubs+=1
-                if fancyPage.IsConInstance:
-                    nconinstances+=1
+            if fancyPage.IsPerson:
+                npeople+=1
+            if fancyPage.IsFan:
+                nfans+=1
+            if fancyPage.IsFanzine:
+                nfanzines+=1
+            if fancyPage.IsAPA:
+                napas+=1
+            if fancyPage.IsClub:
+                nclubs+=1
+            if fancyPage.IsConInstance:
+                nconinstances+=1
     f.write("Unique (ignoring redirects)\n")
     f.write("  Total pages: " + str(npages) + "\n")
     f.write("  All people: " + str(npeople) + "\n")
