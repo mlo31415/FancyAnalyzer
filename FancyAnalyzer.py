@@ -1119,66 +1119,43 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
 # Taggin Oddities
 # Make a list of all fans, pros, and mundanes who are not also tagged person
 Log("Tagging oddities.txt")
+
+
+def WriteSelectedTags(fancyPagesDictByWikiname: Dict[str, F3Page], select, f):
+    global found
+    found=False
+    for fancyPage in fancyPagesDictByWikiname.values():
+        if select(fancyPage):
+            found=True
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
+    if not found:
+        f.write("(none found)\n")
+
 with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
-    f.write("Fans, pros, and mundanes who are not also tagged person\n")
-    found=False
-    for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if ("Pro" in fancyPage.Tags or "Muundane" in fancyPage.Tags or "Fan" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
-            found=True
-            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
-    if not found:
-        f.write("(none found)\n")
+    f.write("-------------------------------------------------------\n")
+    f.write("Fans, Pros, and Mundanes who are not also tagged person\n")
+    WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: ("Pro" in fp.Tags or "Mundane" in fp.Tags or "Fan" in fp.Tags) and "Person" not in fp.Tags, f)
 
-    f.write("\n\nPersons who are not tagged Fan, pro, or mundane\n")
-    found=False
-    for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if "Person" in fancyPage.Tags and "Fan" not in fancyPage.Tags and "Pro" not in fancyPage.Tags and "Mundane" not in fancyPage.Tags:
-            found=True
-            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
-    if not found:
-        f.write("(none found)\n")
+    f.write("\n\n-------------------------------------------------------\n")
+    f.write("Persons who are not tagged Fan, Pro, or Mundane\n")
+    WriteSelectedTags(fancyPagesDictByWikiname, lambda fp:"Person" in fp.Tags and "Fan" not in fp.Tags and "Pro" not in fp.Tags and "Mundane" not in fp.Tags, f)
 
-    f.write("\n\nPublishers which are tagged as persons\n")
-    found=False
-    for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if fancyPage.IsPublisher and fancyPage.IsPerson:
-            found=True
-            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
-    if not found:
-        f.write("(none found)\n")
+    f.write("\n\n-------------------------------------------------------\n")
+    f.write("Publishers which are tagged as persons\n")
+    WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: fp.IsPublisher and fp.IsPerson, f)
 
-    f.write("\n\nNicknames which are not persons, fanzines or cons\n")
-    found=False
-    for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if fancyPage.IsNickname and not (fancyPage.IsPerson or fancyPage.IsFanzine or fancyPage.IsConInstance):
-            found=True
-            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
-    if not found:
-        f.write("(none found)\n")
+    f.write("\n\n-------------------------------------------------------\n")
+    f.write("Nicknames which are not persons, fanzines or cons\n")
+    WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: fp.IsNickname and not (fp.IsPerson or fp.IsFanzine or fp.IsConInstance), f)
 
-    f.write("\n\nPages with both 'Inseries' and 'Conseries'\n")
-    found=False
-    for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if "Inseries" in fancyPage.Tags and "Conseries" in fancyPage.Tags:
-            found=True
-            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
-    if not found:
-        f.write("(none found)\n")
+    f.write("\n\n-------------------------------------------------------\n")
+    f.write("Pages with both 'Inseries' and 'Conseries'\n")
+    WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: "Inseries" in fp.Tags and "Conseries" in fp.Tags, f)
 
-    f.write("\n\nPages with 'Convention' but neither 'Inseries' or 'Conseries' of 'Onetimecon'\n")
-    found=False
-    for fancyPage in fancyPagesDictByWikiname.values():
-        # Then all the redirects to one of those pages.
-        if "Convention" in fancyPage.Tags and not ("Inseries" in fancyPage.Tags or "Conseries" in fancyPage.Tags or "Onetimecon" in fancyPage.Tags):
-            found=True
-            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
-    if not found:
-        f.write("(none found)\n")
+    f.write("\n\n-------------------------------------------------------\n")
+    f.write("Pages with 'Convention' but neither 'Inseries' or 'Conseries' of 'Onetimecon'\n")
+    WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: "Convention" in fp.Tags and not ("Inseries" in fp.Tags or "Conseries" in fp.Tags or "Onetimecon" in fp.Tags), f)
+
 
 ##################
 # Make a list of all Mundanes
