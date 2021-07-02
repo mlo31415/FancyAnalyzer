@@ -1126,7 +1126,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         # Then all the redirects to one of those pages.
         if ("Pro" in fancyPage.Tags or "Muundane" in fancyPage.Tags or "Fan" in fancyPage.Tags) and "Person" not in fancyPage.Tags:
             found=True
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
     if not found:
         f.write("(none found)\n")
 
@@ -1136,7 +1136,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         # Then all the redirects to one of those pages.
         if "Person" in fancyPage.Tags and "Fan" not in fancyPage.Tags and "Pro" not in fancyPage.Tags and "Mundane" not in fancyPage.Tags:
             found=True
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
     if not found:
         f.write("(none found)\n")
 
@@ -1146,7 +1146,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         # Then all the redirects to one of those pages.
         if fancyPage.IsPublisher and fancyPage.IsPerson:
             found=True
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
     if not found:
         f.write("(none found)\n")
 
@@ -1156,7 +1156,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         # Then all the redirects to one of those pages.
         if fancyPage.IsNickname and not (fancyPage.IsPerson or fancyPage.IsFanzine or fancyPage.IsConInstance):
             found=True
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
     if not found:
         f.write("(none found)\n")
 
@@ -1166,7 +1166,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         # Then all the redirects to one of those pages.
         if "Inseries" in fancyPage.Tags and "Conseries" in fancyPage.Tags:
             found=True
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
     if not found:
         f.write("(none found)\n")
 
@@ -1176,7 +1176,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
         # Then all the redirects to one of those pages.
         if "Convention" in fancyPage.Tags and not ("Inseries" in fancyPage.Tags or "Conseries" in fancyPage.Tags or "Onetimecon" in fancyPage.Tags):
             found=True
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
     if not found:
         f.write("(none found)\n")
 
@@ -1187,7 +1187,7 @@ with open("Mundanes.txt", "w+", encoding='utf-8') as f:
     for fancyPage in fancyPagesDictByWikiname.values():
         # Then all the redirects to one of those pages.
         if fancyPage.IsMundane:
-            f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
+            f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
 
 ##################
 # Compute some special statistics to display at fanac.org
