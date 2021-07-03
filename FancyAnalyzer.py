@@ -1116,12 +1116,11 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
 
 ##################
 # Taggin Oddities
-# Make a list of all fans, pros, and mundanes who are not also tagged person
+# Make lists of odd tag combinations which may indicate something wrong
 Log("Tagging oddities.txt")
 
-
 def WriteSelectedTags(fancyPagesDictByWikiname: Dict[str, F3Page], select, f):
-    global found
+    f.write("-------------------------------------------------------\n")
     found=False
     for fancyPage in fancyPagesDictByWikiname.values():
         if select(fancyPage):
@@ -1152,7 +1151,7 @@ with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
     WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: "Inseries" in fp.Tags and "Conseries" in fp.Tags, f)
 
     f.write("\n\n-------------------------------------------------------\n")
-    f.write("Pages with 'Convention' but neither 'Inseries' or 'Conseries' of 'Onetimecon'\n")
+    f.write("Pages with 'Convention' but neither 'Inseries' or 'Conseries' or 'Onetimecon'\n")
     WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: "Convention" in fp.Tags and not ("Inseries" in fp.Tags or "Conseries" in fp.Tags or "Onetimecon" in fp.Tags), f)
 
 
