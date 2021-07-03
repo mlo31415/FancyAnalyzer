@@ -787,12 +787,11 @@ for fancyPage in fancyPagesDictByWikiname.values():
     if fancyPage.IsPerson and len(fancyPage.OutgoingReferences) > 0:
         peopleReferences.setdefault(fancyPage.Name, [])
         for outRef in fancyPage.OutgoingReferences:
-            try:
+            if outRef.LinkWikiName in fancyPagesDictByWikiname:
                 if fancyPagesDictByWikiname[outRef.LinkWikiName].IsPerson:
                     peopleReferences.setdefault(outRef.LinkWikiName, [])
                     peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
-            except KeyError:
-                Log("****KeyError on "+outRef.LinkWikiName)
+
 # ...
 Log("***Writing reports")
 # Write out a file containing canonical names, each with a list of pages which refer to it.
