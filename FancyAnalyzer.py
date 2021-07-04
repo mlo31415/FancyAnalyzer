@@ -8,7 +8,7 @@ from datetime import datetime
 
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
-from HelpersPackage import WindowsFilenameToWikiPagename, SplitOnSpan, WikiExtractLink, CrosscheckListElement
+from HelpersPackage import WindowsFilenameToWikiPagename, SplitOnSpan, WikiExtractLink, CrosscheckListElement, WikiLinkSplit
 from ConInfo import ConInfo
 from FanzineIssueSpecPackage import FanzineDateRange
 
