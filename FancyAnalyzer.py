@@ -346,7 +346,7 @@ for page in fancyPagesDictByWikiname.values():
             if conColumn is not None and dateColumn is not None:
 
                 # Walk the convention table, extracting the individual conventions
-                # (Sometimes there will be multiple table
+                # (Sometimes there will be multiple tables)
                 if table.Rows is None:
                     Log("***Table "+str(index+1)+" of "+str(len(page.Tables))+"has no rows", isError=True)
                     continue
