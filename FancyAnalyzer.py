@@ -654,16 +654,25 @@ def LocMatch(loc1: str, loc2: str) -> bool:
 # Generate a report of cases where we have non-identical con information from both sources.
 with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
     for page in fancyPagesDictByWikiname.values():
-        # If it's an individual convention page, we search through its text for something that looks like a placename.
-        if page.IsConInstance:
-            m=ScanForLocales(page.Source)
-            if len(m) > 0:
-                for place in m:
-                    place=WikiExtractLink(place)
-                    # Find the convention in the conventions dictionary and add the location if appropriate.
-                    conname=page.Redirect
-                    listcons=[x for x in conventions if x.NameInSeriesList == conname]
-                    for con in listcons:
+        if not page.IsConInstance:
+            continue
+
+        if page.Locale != "":    # If the con has Locale set, it overrides
+            for con in conventions:
+                if con.NameInSeriesList == conname:
+                    con.SetLoc(page.Locale)
+            continue
+
+        # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
+        #TODO: Shouldn't we move this upwards and store the derived location in otherwise-empty page.Locales?
+        m=ScanForLocales(page.Source)
+        if len(m) > 0:
+            for place in m:
+                place=WikiExtractLink(place)
+                # Find the convention in the conventions dictionary and add the location if appropriate.
+                conname=page.Redirect
+                for con in conventions:
+                    if con.NameInSeriesList == conname:
                         if not LocMatch(place, con.Loc):
                             if con.Loc == "":   # If there previously was no location from the con series page, substitute what we found in the con instance page
                                 con.SetLoc(place)
