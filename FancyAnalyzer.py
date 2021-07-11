@@ -572,9 +572,11 @@ for page in fancyPagesDictByWikiname.values():
                     def AppendCon(coninstlist: List[ConInstanceInfo], ci: ConInstanceInfo) -> None:
                         hits=[x for x in coninstlist if ci.NameInSeriesList == x.NameInSeriesList and ci.DateRange == x.DateRange and ci.Cancelled == x.Cancelled and ci.Virtual == x.Virtual and ci.Override == x.Override]
                         if len(hits) == 0:
+                            # This is a new name: Just append it
                             coninstlist.append(ci)
                         else:
                             Log("AppendCon: duplicate - "+str(ci)+"   and   "+str(hits[0]))
+                            # Name exists.  But maybe we have some new information on it?
                             # If there are two sources for the convention's location and one is empty, use the other.
                             if len(hits[0].Loc) == 0:
                                 hits[0].SetLoc(ci.Loc)
@@ -598,8 +600,8 @@ for page in fancyPagesDictByWikiname.values():
                                     override+=co.Link+"|"
                                 override+=co.Name+"]]"
                             v = False if cancelled else virtual
-                            ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
-                            ci.Override=override
+                            #TODO: This will cause a name of "dummy" to potentially appear in many cases.  Is this a problem?
+                            ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
                             AppendCon(conventions, ci)
                             Log("#append 1: "+str(ci))
                     # OK, in all the other cases cons is a list[ConInstanceInfo]
