@@ -9,7 +9,7 @@ from datetime import datetime
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, SplitOnSpan, WikiExtractLink, CrosscheckListElement, WikiLinkSplit
-from ConInfo import ConInfo
+from ConInstanceInfo import ConInstanceInfo
 from FanzineIssueSpecPackage import FanzineDateRange
 
 
@@ -314,8 +314,8 @@ def ScanForS(input: str) -> Tuple[bool, str]:
         return False, input
     return True, m.groups()[0]
 
-# Create a list of convention instances with useful information about them stored in a ConInfo structure
-conventions: List[ConInfo]=[]
+# Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
+conventions: List[ConInstanceInfo]=[]
 for page in fancyPagesDictByWikiname.values():
 
     # First, see if this is a Conseries page
@@ -567,7 +567,7 @@ for page in fancyPagesDictByWikiname.values():
                         continue
 
                     # Don't add duplicate entries
-                    def AppendCon(ci: ConInfo) -> None:
+                    def AppendCon(ci: ConInstanceInfo) -> None:
                         hits=[x for x in conventions if ci.NameInSeriesList == x.NameInSeriesList and ci.DateRange == x.DateRange and ci.Cancelled == x.Cancelled and ci.Virtual == x.Virtual and ci.Override == x.Override]
                         if len(hits) == 0:
                             conventions.append(ci)
@@ -577,7 +577,7 @@ for page in fancyPagesDictByWikiname.values():
                             if len(hits[0].Loc) == 0:
                                 hits[0].SetLoc(ci.Loc)
 
-                    # The first case we need to look at it whether cons[0] has a type of list of ConInfo
+                    # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
                     # This is one con with multiple names
                     if type(cons[0]) is list:
                         # By definition there is only one element. Extract it.  There may be more than one date.
@@ -596,18 +596,18 @@ for page in fancyPagesDictByWikiname.values():
                                     override+=co.Link+"|"
                                 override+=co.Name+"]]"
                             v = False if cancelled else virtual
-                            ci=ConInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                            ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                             ci.Override=override
                             AppendCon(ci)
                             Log("#append 1: "+str(ci))
-                    # OK, in all the other cases cons is a list[ConInfo]
+                    # OK, in all the other cases cons is a list[ConInstanceInfo]
                     elif len(cons) == len(dates):
                         # Add each con with the corresponding date
                         for i in range(len(cons)):
                             cancelled=cons[i].Cancelled or dates[i].Cancelled
-                            dates[i].Cancelled=False    # We've xferd this to ConInfo and don't still want it here because it would print twice
+                            dates[i].Cancelled=False    # We've xferd this to ConInstanceInfo and don't still want it here because it would print twice
                             v=False if cancelled else virtual
-                            ci=ConInfo(_Link=cons[i].Link, NameInSeriesList=cons[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                            ci=ConInstanceInfo(_Link=cons[i].Link, NameInSeriesList=cons[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
                             if ci.DateRange.IsEmpty():
                                 Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
                             Log("#append 2: "+str(ci))
@@ -618,7 +618,7 @@ for page in fancyPagesDictByWikiname.values():
                             cancelled=co.Cancelled or dates[0].Cancelled
                             dates[0].Cancelled = False
                             v=False if cancelled else virtual
-                            ci=ConInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
+                            ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
                             AppendCon(ci)
                             Log("#append 3: "+str(ci))
                     elif len(cons) == 1 and len(dates) > 1:
@@ -626,7 +626,7 @@ for page in fancyPagesDictByWikiname.values():
                             cancelled=cons[0].Cancelled or dt.Cancelled
                             dt.Cancelled = False
                             v=False if cancelled else virtual
-                            ci=ConInfo(_Link=cons[0].Link, NameInSeriesList=cons[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                            ci=ConInstanceInfo(_Link=cons[0].Link, NameInSeriesList=cons[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                             AppendCon(ci)
                             Log("#append 4: "+str(ci))
                     else:
@@ -689,7 +689,7 @@ for con in conventions:
         con.SetLoc=(iter(loc).__next__())    # Nasty code to get one element from the set
 
 
-# Sort the con dictionary  into date order
+# Sort the con dictionary into date order
 Log("Writing Con DateRange oddities.txt")
 oddities=[x for x in conventions if x.DateRange.IsOdd()]
 with open("Con DateRange oddities.txt", "w+", encoding='utf-8') as f:

@@ -7,11 +7,12 @@ from HelpersPackage import WikiExtractLink
 #------------------------------------
 # Just a simple class to conveniently wrap a bunch of data
 @dataclass
-class ConInfo:
+class ConInstanceInfo:
     #def __init__(self, Link: str="", Text: str="", Loc: str="", DateRange: FanzineDateRange=FanzineDateRange(), Virtual: bool=False, Cancelled: bool=False):
-    # The link is the name of the page referred to
-    # NameInSeriesList is the name displayed in the table   E.g., [[Link|NameInSeriesList]]
+    # NameInSeriesList is the name *displayed* in the table's link
     # If the link is simple, e.g. [[simple link]], then that value should go in NameInSeriesList
+    # If the link is complex E.g., [[Link|NameInSeriesList]], the name displayed goes in NameInSeriesList and the page referred to goes in _Link
+    # The property Link will always return the actual page referred to
     _Link: str=""
     NameInSeriesList: str=""
     Loc: str=""
