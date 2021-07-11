@@ -14,12 +14,13 @@ class ConInstanceInfo:
     # If the link is complex E.g., [[Link|NameInSeriesList]], the name displayed goes in NameInSeriesList and the page referred to goes in _Link
     # The property Link will always return the actual page referred to
     _Link: str=""
+    #TODO: How do we deal with cons with more than one name?
     NameInSeriesList: str=""
     Loc: str=""
     DateRange: FanzineDateRange=field(default=FanzineDateRange())
     Virtual: bool=False
     Cancelled: bool=False
-    Override: str=""
+    Override: str=""    # In certain complex cases (a convention with multiple names each of which are linked) we need to override normal name/link handling.
 
     def __str__(self) -> str:
         s="Link="+self.Link+"  Name="+self.NameInSeriesList+"  Date="+str(self.DateRange)+"  Location="+self.Loc
