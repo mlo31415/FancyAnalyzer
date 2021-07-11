@@ -569,10 +569,10 @@ for page in fancyPagesDictByWikiname.values():
                         continue
 
                     # Don't add duplicate entries
-                    def AppendCon(ci: ConInstanceInfo) -> None:
-                        hits=[x for x in conventions if ci.NameInSeriesList == x.NameInSeriesList and ci.DateRange == x.DateRange and ci.Cancelled == x.Cancelled and ci.Virtual == x.Virtual and ci.Override == x.Override]
+                    def AppendCon(coninstlist: List[ConInstanceInfo], ci: ConInstanceInfo) -> None:
+                        hits=[x for x in coninstlist if ci.NameInSeriesList == x.NameInSeriesList and ci.DateRange == x.DateRange and ci.Cancelled == x.Cancelled and ci.Virtual == x.Virtual and ci.Override == x.Override]
                         if len(hits) == 0:
-                            conventions.append(ci)
+                            coninstlist.append(ci)
                         else:
                             Log("AppendCon: duplicate - "+str(ci)+"   and   "+str(hits[0]))
                             # If there are two sources for the convention's location and one is empty, use the other.
@@ -600,7 +600,7 @@ for page in fancyPagesDictByWikiname.values():
                             v = False if cancelled else virtual
                             ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                             ci.Override=override
-                            AppendCon(ci)
+                            AppendCon(conventions, ci)
                             Log("#append 1: "+str(ci))
                     # OK, in all the other cases cons is a list[ConInstanceInfo]
                     elif len(seriesTableConEntries) == len(dates):
@@ -613,7 +613,7 @@ for page in fancyPagesDictByWikiname.values():
                             if ci.DateRange.IsEmpty():
                                 Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
                             Log("#append 2: "+str(ci))
-                            AppendCon(ci)
+                            AppendCon(conventions, ci)
                     elif len(seriesTableConEntries) > 1 and len(dates) == 1:
                         # Multiple cons all with the same dates
                         for co in seriesTableConEntries:
@@ -621,7 +621,7 @@ for page in fancyPagesDictByWikiname.values():
                             dates[0].Cancelled = False
                             v=False if cancelled else virtual
                             ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
-                            AppendCon(ci)
+                            AppendCon(conventions, ci)
                             Log("#append 3: "+str(ci))
                     elif len(seriesTableConEntries) == 1 and len(dates) > 1:
                         for dt in dates:
@@ -629,7 +629,7 @@ for page in fancyPagesDictByWikiname.values():
                             dt.Cancelled = False
                             v=False if cancelled else virtual
                             ci=ConInstanceInfo(_Link=seriesTableConEntries[0].Link, NameInSeriesList=seriesTableConEntries[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
-                            AppendCon(ci)
+                            AppendCon(conventions, ci)
                             Log("#append 4: "+str(ci))
                     else:
                         Log("Can't happen! ncons="+str(len(seriesTableConEntries))+"  len(dates)="+str(len(dates)), isError=True)
