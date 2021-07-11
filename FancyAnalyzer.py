@@ -477,6 +477,7 @@ for page in fancyPagesDictByWikiname.values():
                     # We will assume that there is only limited mixing of these forms!
 
                     @dataclass
+                    # A simple class for holding an individual convention name from a convention series table, including its link and whether it is <s>cancelled</s> or not
                     class ConName:
                         #def __init__(self, Name: str="", Link: str="", Cancelled: bool=False):
                         Name: str=""
@@ -497,7 +498,7 @@ for page in fancyPagesDictByWikiname.values():
                             return "", m.groups()[0]
                         return "", constr
 
-                    # We assume that the cancelled con names lead the uncancelled ones
+                    # We assume that the cancelled con names precede the uncancelled ones
                     def NibbleCon(constr: str) -> Tuple[Optional[ConName], str]:
                         constr=constr.strip()
                         if len(constr) == 0:
@@ -533,7 +534,8 @@ for page in fancyPagesDictByWikiname.values():
                             con=ConName(Name=constr)
                             return con, ""
 
-                    cons: List[Union[ConName, List[ConName]]]=[]
+                    # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
+                    seriesTableConEntries: List[Union[ConName, List[ConName]]]=[]
                     # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
                     # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
                     def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
@@ -552,18 +554,18 @@ for page in fancyPagesDictByWikiname.values():
                             if c is not None:
                                 alts.append(c)
                         alts.sort()     # Sort the list so that when this list is created from two or more different convention idnex tables, it looks the same and dups can be removed.
-                        cons.append(alts)
+                        seriesTableConEntries.append(alts)
                     else:
                         # Ok, we have one or more names and they are for different cons
                         while len(context) > 0:
                             con, context=NibbleCon(context)
                             if con is None:
                                 break
-                            cons.append(con)
+                            seriesTableConEntries.append(con)
 
                     # Now we have cons and dates and need to create the appropriate convention entries.
-                    if len(cons) == 0 or len(dates) == 0:
-                        Log("Scan abandoned: ncons="+str(len(cons))+"  len(dates)="+str(len(dates)), isError=True)
+                    if len(seriesTableConEntries) == 0 or len(dates) == 0:
+                        Log("Scan abandoned: ncons="+str(len(seriesTableConEntries))+"  len(dates)="+str(len(dates)), isError=True)
                         continue
 
                     # Don't add duplicate entries
@@ -579,15 +581,15 @@ for page in fancyPagesDictByWikiname.values():
 
                     # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
                     # This is one con with multiple names
-                    if type(cons[0]) is list:
+                    if type(seriesTableConEntries[0]) is list:
                         # By definition there is only one element. Extract it.  There may be more than one date.
-                        assert len(cons) == 1 and len(cons[0]) > 0
-                        cons=cons[0]
+                        assert len(seriesTableConEntries) == 1 and len(seriesTableConEntries[0])>0
+                        seriesTableConEntries=seriesTableConEntries[0]
                         for dt in dates:
                             override=""
                             cancelled=dt.Cancelled
                             dt.Cancelled = False
-                            for co in cons:
+                            for co in seriesTableConEntries:
                                 cancelled=cancelled or co.Cancelled
                                 if len(override) > 0:
                                     override+=" / "
@@ -601,36 +603,36 @@ for page in fancyPagesDictByWikiname.values():
                             AppendCon(ci)
                             Log("#append 1: "+str(ci))
                     # OK, in all the other cases cons is a list[ConInstanceInfo]
-                    elif len(cons) == len(dates):
+                    elif len(seriesTableConEntries) == len(dates):
                         # Add each con with the corresponding date
-                        for i in range(len(cons)):
-                            cancelled=cons[i].Cancelled or dates[i].Cancelled
+                        for i in range(len(seriesTableConEntries)):
+                            cancelled=seriesTableConEntries[i].Cancelled or dates[i].Cancelled
                             dates[i].Cancelled=False    # We've xferd this to ConInstanceInfo and don't still want it here because it would print twice
                             v=False if cancelled else virtual
-                            ci=ConInstanceInfo(_Link=cons[i].Link, NameInSeriesList=cons[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                            ci=ConInstanceInfo(_Link=seriesTableConEntries[i].Link, NameInSeriesList=seriesTableConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
                             if ci.DateRange.IsEmpty():
                                 Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
                             Log("#append 2: "+str(ci))
                             AppendCon(ci)
-                    elif len(cons) > 1 and len(dates) == 1:
+                    elif len(seriesTableConEntries) > 1 and len(dates) == 1:
                         # Multiple cons all with the same dates
-                        for co in cons:
+                        for co in seriesTableConEntries:
                             cancelled=co.Cancelled or dates[0].Cancelled
                             dates[0].Cancelled = False
                             v=False if cancelled else virtual
                             ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
                             AppendCon(ci)
                             Log("#append 3: "+str(ci))
-                    elif len(cons) == 1 and len(dates) > 1:
+                    elif len(seriesTableConEntries) == 1 and len(dates) > 1:
                         for dt in dates:
-                            cancelled=cons[0].Cancelled or dt.Cancelled
+                            cancelled=seriesTableConEntries[0].Cancelled or dt.Cancelled
                             dt.Cancelled = False
                             v=False if cancelled else virtual
-                            ci=ConInstanceInfo(_Link=cons[0].Link, NameInSeriesList=cons[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                            ci=ConInstanceInfo(_Link=seriesTableConEntries[0].Link, NameInSeriesList=seriesTableConEntries[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                             AppendCon(ci)
                             Log("#append 4: "+str(ci))
                     else:
-                        Log("Can't happen! ncons="+str(len(cons))+"  len(dates)="+str(len(dates)), isError=True)
+                        Log("Can't happen! ncons="+str(len(seriesTableConEntries))+"  len(dates)="+str(len(dates)), isError=True)
 
 
 # Compare two locations to see if they match
