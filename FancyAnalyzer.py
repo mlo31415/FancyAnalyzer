@@ -79,9 +79,7 @@ for pageFname in allFancy3PagesFnames:
     # This is a very slow process, so print progress info on the console
     if l%1000 == 0:     # Print only when divisible by 1000
         if l>1000:
-            Log("--", noNewLine=True)
-        if l%20000 == 0:
-            Log("")
+            Log("--", noNewLine=l%20000 != 0)  # Add a newline only when divisible by 20,000
         Log(str(l), noNewLine=True)
 Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
