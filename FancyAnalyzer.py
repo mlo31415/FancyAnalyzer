@@ -85,8 +85,7 @@ Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
 # Build a locale database
 Log("\n\n***Building a locale dictionary")
-for page in fancyPagesDictByWikiname.values():
-    Locale().AddF3Page(page, fancyPagesDictByWikiname)
+Locale().Create(fancyPagesDictByWikiname)
 
 Log("***Analyzing convention series tables")
 

@@ -11,18 +11,19 @@ class Locale:
     locales: Set[str]=set()  # We use a set to eliminate duplicates and to speed checks
     localeBaseForms: Dict[str, str]={}  # It's defined as a dictionary with the value being the base form of the key
 
-    def AddF3Page(self, page: F3Page, fancyPagesDictByWikiname: Dict[str, F3Page]) -> None:
-        # Add locale pages to the set
-        if page.IsLocale:
-            LogSetHeader("Found Locale page "+page.Name)
-            self.locales.add(page.Name)
-        else:
-            # If this page is a redirect to a locale page, add this page to the locale set
-            # TODO: Do we want all redirects to locale pages or just those tagged as a locale?
-            if page.Redirect != "" and page.Redirect in fancyPagesDictByWikiname.keys():
-                if fancyPagesDictByWikiname[page.Redirect].IsLocale:
-                    LogSetHeader("Processing Locale redirect "+page.Name)
-                    self.locales.add(page.Name)
+    def Create(self, fancyPagesDictByWikiname: Dict[str, F3Page]) -> None:
+        for page in fancyPagesDictByWikiname.values():
+            # Add locale pages to the set
+            if page.IsLocale:
+                LogSetHeader("Found Locale page "+page.Name)
+                self.locales.add(page.Name)
+            else:
+                # If this page is a redirect to a locale page, add this page to the locale set
+                # TODO: Do we want all redirects to locale pages or just those tagged as a locale?
+                if page.Redirect != "" and page.Redirect in fancyPagesDictByWikiname.keys():
+                    if fancyPagesDictByWikiname[page.Redirect].IsLocale:
+                        LogSetHeader("Processing Locale redirect "+page.Name)
+                        self.locales.add(page.Name)
 
 
     # Convert names like "Chicago" to "Chicago, IL"
