@@ -9,7 +9,7 @@ from datetime import datetime
 from Locale import Locale
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
-from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement
+from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText
 from ConInstanceInfo import ConInstanceInfo
 from FanzineIssueSpecPackage import FanzineDateRange
 
@@ -94,8 +94,7 @@ Log("***Analyzing convention series tables")
 def ScanForVirtual(s: str) -> Tuple[bool, str]:
     # First look for the alternative contained in parens *anywhere* in the text
     pattern = "\((:?virtual|online|held online|moved online|virtual convention)\)"
-    newval = re.sub(pattern, "", s,
-                    flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
+    newval = re.sub(pattern, "", s, flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
     if s != newval:
         return True, newval.strip()
     # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
@@ -103,14 +102,6 @@ def ScanForVirtual(s: str) -> Tuple[bool, str]:
     if s != newval:
         return True, newval.strip()
     return False, s
-
-# Scan for text bracketed by <s>...</s>
-# Return True/False and remaining text after <s> </s> is removed
-def ScanForS(s: str) -> Tuple[bool, str]:
-    m=re.match("\w*<s>(.*)</s>\w*$", s)
-    if m is None:
-        return False, s
-    return True, m.groups()[0]
 
 # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
 conventions: List[ConInstanceInfo]=[]
@@ -227,7 +218,7 @@ for page in fancyPagesDictByWikiname.values():
                     dates:List[FanzineDateRange]=[]
                     for d in ds:
                         if d is not None and len(d) > 0:
-                            c, s=ScanForS(d)
+                            c, s=ScanForBracketedText(d, "s")
                             dr=FanzineDateRange().Match(s)
                             dr.Cancelled=c
                             if dr.Duration() > 6:
