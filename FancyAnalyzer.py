@@ -56,10 +56,12 @@ allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "philco"]        # Just to cut down the number of pages for debugging purposes
 
+# We ignore pages with certain prefixes
 excludedPrefixes=["_admin", "Template;colon", "User;colon", "Log 2"]
 for prefix in excludedPrefixes:
-    allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]     # Drop various tool, admin, etc., pages
+    allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]
 
+# And we exclude certain pages
 excludedPages=["Admin", "Standards", "Test Templates"]
 allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
 
@@ -67,14 +69,15 @@ Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
 fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Val is a FancyPage class containing all the references on the page
 
-Log("***Scanning local copies of pages for links")
+Log("***Scanning local copies of pages for links and other info")
 for pageFname in allFancy3PagesFnames:
     val=DigestPage(fancySitePath, pageFname)
     if val is not None:
         fancyPagesDictByWikiname[val.Name]=val
     # Print a progress indicator
     l=len(fancyPagesDictByWikiname)
-    if l%1000 == 0:
+    # This is a very slow process, so print progress info on the console
+    if l%1000 == 0:     # Print only when divisible by 1000
         if l>1000:
             Log("--", noNewLine=True)
         if l%20000 == 0:
