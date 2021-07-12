@@ -108,322 +108,326 @@ conventions: List[ConInstanceInfo]=[]
 for page in fancyPagesDictByWikiname.values():
 
     # First, see if this is a Conseries page
-    if page.IsConSeries:
-        LogSetHeader("Processing "+page.Name)
-        # We'd like to find the columns containing:
-        locColumn=None     # The convention's location
-        conColumn=None     # The convention's name
-        dateColumn=None    # The conventions dates
-        for index, table in enumerate(page.Tables):
-            numcolumns=len(table.Headers)
+    if not page.IsConSeries:
+        continue
 
-            listLocationHeaders=["Location"]
-            locColumn=CrosscheckListElement(listLocationHeaders, table.Headers)
-            # We don't log a missing location column because that is common and not an error -- we'll try to get the location later from the con instance's page
+    LogSetHeader("Processing "+page.Name)
+    # We'd like to find these columns.  The first two are required.
+    conColumn=None  # The convention's name
+    dateColumn=None  # The conventions dates
+    locColumn=None     # The convention's location
 
-            listNameHeaders=["Convention", "Convention Name", "Name"]
-            conColumn=CrosscheckListElement(listNameHeaders, table.Headers)
-            if conColumn is None:
-                Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+    # Sometimes there will be multiple tables, so we check each of them
+    for index, table in enumerate(page.Tables):
+        numcolumns=len(table.Headers)
 
-            listDateHeaders=["Date", "Dates"]
-            dateColumn=CrosscheckListElement(listDateHeaders, table.Headers)
-            if conColumn is None:
-                Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+        listLocationHeaders=["Location"]
+        locColumn=CrosscheckListElement(listLocationHeaders, table.Headers)
+        # We don't log a missing location column because that is common and not an error -- we'll try to get the location later from the con instance's page
 
-            # If we don't have a convention column and a date column we skip the whole table.
-            if conColumn is not None and dateColumn is not None:
+        listNameHeaders=["Convention", "Convention Name", "Name"]
+        conColumn=CrosscheckListElement(listNameHeaders, table.Headers)
+        if conColumn is None:
+            Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
 
-                # Walk the convention table, extracting the individual conventions
-                # (Sometimes there will be multiple tables)
-                if table.Rows is None:
-                    Log("***Table "+str(index+1)+" of "+str(len(page.Tables))+"has no rows", isError=True)
-                    continue
+        listDateHeaders=["Date", "Dates"]
+        dateColumn=CrosscheckListElement(listDateHeaders, table.Headers)
+        if conColumn is None:
+            Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
 
-                for row in table.Rows:
-                    LogSetHeader("Processing: "+page.Name+"  row: "+str(row))
-                    # Skip rows with merged columns, and rows where either the date or convention cell is empty
-                    if len(row) < numcolumns-1 or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
-                        continue
+        # If we don't have a convention column and a date column we skip the whole table.
+        if conColumn is None or dateColumn is None:
+            # Skip quietly
+            continue
+        if table.Rows is None:
+            Log(f"***Table {index+1} of {len(page.Tables)} looks like a convention table, but has no rows", isError=True)
+            continue
 
-                    # If the con series table has a location column, extract the location
-                    conlocation=""
-                    if locColumn is not None:
-                        if locColumn < len(row) and len(row[locColumn]) > 0:
-                            loc=WikiExtractLink(row[locColumn])
-                            conlocation=Locale().BaseFormOfLocaleName(loc)
+        # We have a convention table.  Walk it, extracting the individual conventions
+        for row in table.Rows:
+            LogSetHeader("Processing: "+page.Name+"  row: "+str(row))
+            # Skip rows with merged columns, and also rows where either the date or convention cell is empty
+            if len(row) < numcolumns-1 or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
+                continue
 
-                    # Check the row for (virtual) in any form. If found, set the virtual flag and remove the text from the line
-                    virtual=False
-                    for idx, col in enumerate(row):
-                        v2, col=ScanForVirtual(col)
-                        if v2:
-                            row[idx]=col      # Update row with the virtual flag removed
-                        virtual=virtual or v2
-                    Log("Virtual="+str(virtual))
+            # If the con series table has a location column, extract the location
+            conlocation=""
+            if locColumn is not None:
+                if locColumn < len(row) and len(row[locColumn]) > 0:
+                    loc=WikiExtractLink(row[locColumn])
+                    conlocation=Locale().BaseFormOfLocaleName(loc)
 
-                    # Decode the convention and date columns add the resulting convention(s) to the list
-                    # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:
-                    #   name1 || date1          (1 con: normal)
-                    #   <s>name1</s> || <s>date1</s>        (1: cancelled)
-                    #   <s>name1</s> || date1        (1: cancelled)
-                    #   name1 || <s>date1</s>        (1: cancelled)
-                    #   <s>name1</s> name2 || <s>date1</s> date2        (2: cancelled and then re-scheduled)
-                    #   name1 || <s>date1</s> date2             (2: cancelled and rescheduled)
-                    #   <s>name1</s> || <s>date1</s> date2            (2: cancelled and rescheduled)
-                    #   <s>name1</s> || <s>date1</s> <s>date2</s>            (2: cancelled and rescheduled and cancelled)
-                    #   <s>name1</s> name2 || <s>date1</s> date2            (2: cancelled and rescheduled under new name)
-                    #   <s>name1</s> <s>name2</s> || <s>date1</s> <s>date2</s>            (2: cancelled and rescheduled under new name and then cancelled)
-                    # and all of these cases may have the virtual flag, but it is never applied to a cancelled con unless that is the only option
-                    # Basically, the pattern is 1 || 1, 1 || 2, 2 || 1, or 2 || 2 (where # is the number of items)
-                    # 1:1 and 2:2 match are yield two cons
-                    # 1:2 yields two cons if 1 date is <s>ed
-                    # 2:1 yields two cons if 1 con is <s>ed
-                    # The strategy is to sort out each column separately and then try to merge them into conventions
-                    # Note that we are disallowing the extreme case of three cons in one row!
+            # Check the row for (virtual) in any form. If found, set the virtual flag and remove the text from the line
+            virtual=False
+            for idx, col in enumerate(row):
+                v2, col=ScanForVirtual(col)
+                if v2:
+                    row[idx]=col      # Update row with the virtual flag removed
+                virtual=virtual or v2
+            Log("Virtual="+str(virtual))
 
-                    # First the dates
-                    datetext = row[dateColumn]
+            # Decode the convention and date columns add the resulting convention(s) to the list
+            # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:
+            #   name1 || date1          (1 con: normal)
+            #   <s>name1</s> || <s>date1</s>        (1: cancelled)
+            #   <s>name1</s> || date1        (1: cancelled)
+            #   name1 || <s>date1</s>        (1: cancelled)
+            #   <s>name1</s> name2 || <s>date1</s> date2        (2: cancelled and then re-scheduled)
+            #   name1 || <s>date1</s> date2             (2: cancelled and rescheduled)
+            #   <s>name1</s> || <s>date1</s> date2            (2: cancelled and rescheduled)
+            #   <s>name1</s> || <s>date1</s> <s>date2</s>            (2: cancelled and rescheduled and cancelled)
+            #   <s>name1</s> name2 || <s>date1</s> date2            (2: cancelled and rescheduled under new name)
+            #   <s>name1</s> <s>name2</s> || <s>date1</s> <s>date2</s>            (2: cancelled and rescheduled under new name and then cancelled)
+            # and all of these cases may have the virtual flag, but it is never applied to a cancelled con unless that is the only option
+            # Basically, the pattern is 1 || 1, 1 || 2, 2 || 1, or 2 || 2 (where # is the number of items)
+            # 1:1 and 2:2 match are yield two cons
+            # 1:2 yields two cons if 1 date is <s>ed
+            # 2:1 yields two cons if 1 con is <s>ed
+            # The strategy is to sort out each column separately and then try to merge them into conventions
+            # Note that we are disallowing the extreme case of three cons in one row!
 
-                    # For the dates column, we want to remove the virtual designation as it will just confuse later processing.
-                    # We want to handle the case where (virtual) is in parens, but also when it isn't.
-                    # We need two patterns here because Python's regex doesn't have balancing groups and we don't want to match unbalanced parens
+            # First the dates
+            datetext = row[dateColumn]
 
-                    # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
-                    p=re.compile("\(.*\)\s?$")  # Note that this is greedy. Is that the correct things to do?
-                    datetext=re.sub("\(.*\)\s?$", "", datetext)
-                    # Convert the HTML characters some people have inserted into their ascii equivalents
-                    datetext=datetext.replace("&nbsp;", " ").replace("&#8209;", "-")
-                    # Remove leading and trailing spaces
-                    datetext=datetext.strip()
+            # For the dates column, we want to remove the virtual designation as it will just confuse later processing.
+            # We want to handle the case where (virtual) is in parens, but also when it isn't.
+            # We need two patterns here because Python's regex doesn't have balancing groups and we don't want to match unbalanced parens
 
-                    # Now look for dates. There are many cases to consider:
-                    #1: date                    A simple date (note that there will never be two simple dates in a dates cell)
-                    #2: <s>date</s>             A canceled con's date
-                    #3: <s>date</s> date        A rescheduled con's date
-                    #4: <s>date</s> <s>date</s> A rescheduled and then cancelled con's dates
-                    #5: <s>date</s> <s>date</s> date    A twice-rescheduled con's dates
-                    #m=re.match("^(:?(<s>.+?</s>)\s*)*(.*)$", datetext)
-                    pat="<s>.+?</s>"
-                    ds=re.findall(pat, datetext)
-                    if len(ds) > 0:
-                        datetext=re.sub(pat, "", datetext).strip()
-                    if len(datetext)> 0:
-                        ds.append(datetext)
-                    if len(ds) is None:
-                        Log("Date error: "+datetext)
-                        continue
+            # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
+            p=re.compile("\(.*\)\s?$")  # Note that this is greedy. Is that the correct things to do?
+            datetext=re.sub("\(.*\)\s?$", "", datetext)
+            # Convert the HTML characters some people have inserted into their ascii equivalents
+            datetext=datetext.replace("&nbsp;", " ").replace("&#8209;", "-")
+            # Remove leading and trailing spaces
+            datetext=datetext.strip()
 
-                    # We have N groups up to N-1 of which might be None
-                    dates:List[FanzineDateRange]=[]
-                    for d in ds:
-                        if d is not None and len(d) > 0:
-                            c, s=ScanForBracketedText(d, "s")
-                            dr=FanzineDateRange().Match(s)
-                            dr.Cancelled=c
-                            if dr.Duration() > 7:
-                                Log("??? convention has long duration: "+str(dr), isError=True)
-                            if not dr.IsEmpty():
-                                dates.append(dr)
+            # Now look for dates. There are many cases to consider:
+            #1: date                    A simple date (note that there will never be two simple dates in a dates cell)
+            #2: <s>date</s>             A canceled con's date
+            #3: <s>date</s> date        A rescheduled con's date
+            #4: <s>date</s> <s>date</s> A rescheduled and then cancelled con's dates
+            #5: <s>date</s> <s>date</s> date    A twice-rescheduled con's dates
+            #m=re.match("^(:?(<s>.+?</s>)\s*)*(.*)$", datetext)
+            pat="<s>.+?</s>"
+            ds=re.findall(pat, datetext)
+            if len(ds) > 0:
+                datetext=re.sub(pat, "", datetext).strip()
+            if len(datetext)> 0:
+                ds.append(datetext)
+            if len(ds) is None:
+                Log("Date error: "+datetext)
+                continue
 
-                    if len(dates) == 0:
-                        Log("***No dates found", isError=True)
-                    elif len(dates) == 1:
-                        Log("1 date: "+str(dates[0]))
-                    else:
-                        Log(str(len(dates))+" dates: " + str(dates[0]))
-                        for d in dates[1:]:
-                            Log("           " + str(d))
+            # We have N groups up to N-1 of which might be None
+            dates:List[FanzineDateRange]=[]
+            for d in ds:
+                if d is not None and len(d) > 0:
+                    c, s=ScanForBracketedText(d, "s")
+                    dr=FanzineDateRange().Match(s)
+                    dr.Cancelled=c
+                    if dr.Duration() > 7:
+                        Log("??? convention has long duration: "+str(dr), isError=True)
+                    if not dr.IsEmpty():
+                        dates.append(dr)
+
+            if len(dates) == 0:
+                Log("***No dates found", isError=True)
+            elif len(dates) == 1:
+                Log("1 date: "+str(dates[0]))
+            else:
+                Log(str(len(dates))+" dates: " + str(dates[0]))
+                for d in dates[1:]:
+                    Log("           " + str(d))
 
 
-                    # Get the corresponding convention name(s).
-                    context=row[conColumn]
-                    # Clean up the text
-                    context=context.replace("[[", "@@")  # The square brackets are Regex special characters. This substitution makes the patterns simpler to read
-                    # Convert the HTML characters some people have inserted into their ascii equivalents
-                    context=context.replace("&nbsp;", " ").replace("&#8209;", "-")
-                    # And get rid of hard line breaks
-                    context=context.replace("<br>", " ")
-                    # In some pages we italicize or bold the con's name, so remove spans of single quotes 2 or longer
-                    context=re.sub("[']{2,}", "", context)
+            # Get the corresponding convention name(s).
+            context=row[conColumn]
+            # Clean up the text
+            context=context.replace("[[", "@@")  # The square brackets are Regex special characters. This substitution makes the patterns simpler to read
+            # Convert the HTML characters some people have inserted into their ascii equivalents
+            context=context.replace("&nbsp;", " ").replace("&#8209;", "-")
+            # And get rid of hard line breaks
+            context=context.replace("<br>", " ")
+            # In some pages we italicize or bold the con's name, so remove spans of single quotes 2 or longer
+            context=re.sub("[']{2,}", "", context)
 
-                    context=context.strip()
+            context=context.strip()
 
-                    if context.count("@@") != context.count("]]"):
-                        Log("'"+row[conColumn]+"' has unbalanced double brackets. This is unlikely to end well...", isError=True)
+            if context.count("@@") != context.count("]]"):
+                Log("'"+row[conColumn]+"' has unbalanced double brackets. This is unlikely to end well...", isError=True)
 
-                    # An individual name is of one of these forms:
-                        #   xxx
-                        # [[xxx]] zzz               Ignore the "zzz"
-                        # [[xxx|yyy]]               Use just xxx
-                        # [[xxx|yyy]] zzz
-                    # But! There can be more than one name on a date if a con converted from real to virtual while changing its name and keeping its dates:
-                    # E.g., <s>[[FilKONtario 30]]</s> [[FilKONtari-NO]] (trailing stuff)
-                    # Whatcon 20: This Year's Theme -- need to split on the colon
-                    # Each of the bracketed chunks can be of one of the four forms, above. (Ugh.)
-                    # But! con names can also be of the form name1 / name2 / name 3
-                    #   These are three (or two) different names for the same con.
-                    # We will assume that there is only limited mixing of these forms!
+            # An individual name is of one of these forms:
+                #   xxx
+                # [[xxx]] zzz               Ignore the "zzz"
+                # [[xxx|yyy]]               Use just xxx
+                # [[xxx|yyy]] zzz
+            # But! There can be more than one name on a date if a con converted from real to virtual while changing its name and keeping its dates:
+            # E.g., <s>[[FilKONtario 30]]</s> [[FilKONtari-NO]] (trailing stuff)
+            # Whatcon 20: This Year's Theme -- need to split on the colon
+            # Each of the bracketed chunks can be of one of the four forms, above. (Ugh.)
+            # But! con names can also be of the form name1 / name2 / name 3
+            #   These are three (or two) different names for the same con.
+            # We will assume that there is only limited mixing of these forms!
 
-                    @dataclass
-                    # A simple class for holding an individual convention name from a convention series table, including its link and whether it is <s>cancelled</s> or not
-                    class ConName:
-                        #def __init__(self, Name: str="", Link: str="", Cancelled: bool=False):
-                        Name: str=""
-                        Cancelled: bool=False
-                        Link: str=""
+            @dataclass
+            # A simple class for holding an individual convention name from a convention series table, including its link and whether it is <s>cancelled</s> or not
+            class ConName:
+                #def __init__(self, Name: str="", Link: str="", Cancelled: bool=False):
+                Name: str=""
+                Cancelled: bool=False
+                Link: str=""
 
-                        def __lt__(self, val: ConName) -> bool:
-                            return self.Name < val.Name
+                def __lt__(self, val: ConName) -> bool:
+                    return self.Name < val.Name
 
-                    def SplitConText(constr: str) -> Tuple[str, str]:
-                        # Now convert all link|text to separate link and text
-                        # Do this for s1 and s2
-                        m=re.match("@@(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
-                        if m is not None:
-                            return m.groups()[0], m.groups()[1]
-                        m = re.match("@@(.+)]]$", constr)  # Split xxx|yyy into xxx and yyy
-                        if m is not None:
-                            return "", m.groups()[0]
-                        return "", constr
+            def SplitConText(constr: str) -> Tuple[str, str]:
+                # Now convert all link|text to separate link and text
+                # Do this for s1 and s2
+                m=re.match("@@(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
+                if m is not None:
+                    return m.groups()[0], m.groups()[1]
+                m = re.match("@@(.+)]]$", constr)  # Split xxx|yyy into xxx and yyy
+                if m is not None:
+                    return "", m.groups()[0]
+                return "", constr
 
-                    # We assume that the cancelled con names precede the uncancelled ones
-                    def NibbleCon(constr: str) -> Tuple[Optional[ConName], str]:
-                        constr=constr.strip()
-                        if len(constr) == 0:
-                            return None, constr
+            # We assume that the cancelled con names precede the uncancelled ones
+            def NibbleCon(constr: str) -> Tuple[Optional[ConName], str]:
+                constr=constr.strip()
+                if len(constr) == 0:
+                    return None, constr
 
-                        # We want to take the leading con name
-                        # There can be at most one con name which isn't cancelled, and it should be at the end, so first look for a <s>...</s> bracketed con names, if any
-                        pat="^<s>(.*?)</s>"
-                        m=re.match(pat, constr)
-                        if m is not None:
-                            s=m.groups()[0]
-                            constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
-                            l, t=SplitConText(s)
-                            con=ConName(Name=t, Link=l, Cancelled=True)
-                            return con, constr
+                # We want to take the leading con name
+                # There can be at most one con name which isn't cancelled, and it should be at the end, so first look for a <s>...</s> bracketed con names, if any
+                pat="^<s>(.*?)</s>"
+                m=re.match(pat, constr)
+                if m is not None:
+                    s=m.groups()[0]
+                    constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
+                    l, t=SplitConText(s)
+                    con=ConName(Name=t, Link=l, Cancelled=True)
+                    return con, constr
 
-                        # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
-                        pat="^(@@(:?.*?)]])"
-                        m=re.match(pat, constr)
-                        if m is not None:
-                            s=m.groups()[0]
-                            constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
-                            l, t=SplitConText(s)
-                            con=ConName(Name=t, Link=l, Cancelled=False)
-                            return con, constr
+                # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
+                pat="^(@@(:?.*?)]])"
+                m=re.match(pat, constr)
+                if m is not None:
+                    s=m.groups()[0]
+                    constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
+                    l, t=SplitConText(s)
+                    con=ConName(Name=t, Link=l, Cancelled=False)
+                    return con, constr
 
 #TODO:  What's left may be a bare con name or it may be a keyword like "held online" or "virtual".  Need to check this on real data
-                        if len(constr) > 0:
-                            if constr[0] == ":":
-                                return None, ""
-                            if ":" in constr:
-                                constr=constr.split(":")[0]
-                            con=ConName(Name=constr)
-                            return con, ""
+                if len(constr) > 0:
+                    if constr[0] == ":":
+                        return None, ""
+                    if ":" in constr:
+                        constr=constr.split(":")[0]
+                    con=ConName(Name=constr)
+                    return con, ""
 
-                    # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
-                    seriesTableRowConEntries: List[Union[ConName, List[ConName]]]=[]
-                    # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
-                    # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
-                    def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
-                        if matchObject.group(1) is not None and matchObject.group(2) is not None:
-                            return matchObject.group(1)+"&&&"+matchObject.group(2)
-                    contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, context)  # Hide the '/' in html items like </xxx>
-                    contextforsplitting=re.sub("([0-9])/([0-9])", replacer, contextforsplitting)    # Hide the '/' in fractions such as 1/2
-                    # Split on any remaining '/'s
-                    contextlist=contextforsplitting.split("/")
-                    # Restore the '/'s that had been hidden as &&& (and strip, just to be safe)
-                    contextlist=[x.replace("&&&", "/").strip() for x in contextlist]
-                    contextlist=[x for x in contextlist if len(x) > 0]  # Squeeze out any empty splits
-                    if len(contextlist) > 1:
-                        alts: List[ConName]=[]
-                        for con in contextlist:
-                            c, _=NibbleCon(con)
-                            if c is not None:
-                                alts.append(c)
-                        alts.sort()     # Sort the list so that when this list is created from two or more different convention index tables, it looks the same and dups can be removed.
-                        seriesTableRowConEntries.append(alts)
-                    else:
-                        # Ok, we have one or more names and they are for different cons
-                        while len(context) > 0:
-                            con, context=NibbleCon(context)
-                            if con is None:
-                                break
-                            seriesTableRowConEntries.append(con)
+            # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
+            seriesTableRowConEntries: List[Union[ConName, List[ConName]]]=[]
+            # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
+            # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
+            def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
+                if matchObject.group(1) is not None and matchObject.group(2) is not None:
+                    return matchObject.group(1)+"&&&"+matchObject.group(2)
+            contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, context)  # Hide the '/' in html items like </xxx>
+            contextforsplitting=re.sub("([0-9])/([0-9])", replacer, contextforsplitting)    # Hide the '/' in fractions such as 1/2
+            # Split on any remaining '/'s
+            contextlist=contextforsplitting.split("/")
+            # Restore the '/'s that had been hidden as &&& (and strip, just to be safe)
+            contextlist=[x.replace("&&&", "/").strip() for x in contextlist]
+            contextlist=[x for x in contextlist if len(x) > 0]  # Squeeze out any empty splits
+            if len(contextlist) > 1:
+                alts: List[ConName]=[]
+                for con in contextlist:
+                    c, _=NibbleCon(con)
+                    if c is not None:
+                        alts.append(c)
+                alts.sort()     # Sort the list so that when this list is created from two or more different convention index tables, it looks the same and dups can be removed.
+                seriesTableRowConEntries.append(alts)
+            else:
+                # Ok, we have one or more names and they are for different cons
+                while len(context) > 0:
+                    con, context=NibbleCon(context)
+                    if con is None:
+                        break
+                    seriesTableRowConEntries.append(con)
 
-                    # Now we have cons and dates and need to create the appropriate convention entries.
-                    if len(seriesTableRowConEntries) == 0 or len(dates) == 0:
-                        Log("Scan abandoned: ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
-                        continue
+            # Now we have cons and dates and need to create the appropriate convention entries.
+            if len(seriesTableRowConEntries) == 0 or len(dates) == 0:
+                Log("Scan abandoned: ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
+                continue
 
-                    # Don't add duplicate entries
-                    def AppendCon(coninstlist: List[ConInstanceInfo], cii: ConInstanceInfo) -> None:
-                        hits=[x for x in coninstlist if cii.NameInSeriesList == x.NameInSeriesList and cii.DateRange == x.DateRange and cii.Cancelled == x.Cancelled and cii.Virtual == x.Virtual and cii.Override == x.Override]
-                        if len(hits) == 0:
-                            # This is a new name: Just append it
-                            coninstlist.append(cii)
-                        else:
-                            Log("AppendCon: duplicate - "+str(cii)+"   and   "+str(hits[0]))
-                            # Name exists.  But maybe we have some new information on it?
-                            # If there are two sources for the convention's location and one is empty, use the other.
-                            if len(hits[0].Loc) == 0:
-                                hits[0].SetLoc(cii.Loc)
+            # Don't add duplicate entries
+            def AppendCon(coninstlist: List[ConInstanceInfo], cii: ConInstanceInfo) -> None:
+                hits=[x for x in coninstlist if cii.NameInSeriesList == x.NameInSeriesList and cii.DateRange == x.DateRange and cii.Cancelled == x.Cancelled and cii.Virtual == x.Virtual and cii.Override == x.Override]
+                if len(hits) == 0:
+                    # This is a new name: Just append it
+                    coninstlist.append(cii)
+                else:
+                    Log("AppendCon: duplicate - "+str(cii)+"   and   "+str(hits[0]))
+                    # Name exists.  But maybe we have some new information on it?
+                    # If there are two sources for the convention's location and one is empty, use the other.
+                    if len(hits[0].Loc) == 0:
+                        hits[0].SetLoc(cii.Loc)
 
-                    # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
-                    # This is one con with multiple names
-                    if type(seriesTableRowConEntries[0]) is list:
-                        # By definition there is only one element. Extract it.  There may be more than one date.
-                        assert len(seriesTableRowConEntries) == 1 and len(seriesTableRowConEntries[0])>0
-                        for dt in dates:
-                            override=""
-                            cancelled=dt.Cancelled
-                            dt.Cancelled = False
-                            for co in seriesTableRowConEntries[0]:
-                                cancelled=cancelled or co.Cancelled
-                                if len(override) > 0:
-                                    override+=" / "
-                                override+="[["
-                                if len(co.Link) > 0:
-                                    override+=co.Link+"|"
-                                override+=co.Name+"]]"
-                            v = False if cancelled else virtual
-                            #TODO: This will cause a name of "dummy" to potentially appear in many cases.  Is this a problem?
-                            ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
-                            AppendCon(conventions, ci)
-                            Log("#append 1: "+str(ci))
-                    # OK, in all the other cases cons is a list[ConInstanceInfo]
-                    elif len(seriesTableRowConEntries) == len(dates):
-                        # Add each con with the corresponding date
-                        for i in range(len(seriesTableRowConEntries)):
-                            cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
-                            dates[i].Cancelled=False    # We've xferd this to ConInstanceInfo and don't still want it here because it would print twice
-                            v=False if cancelled else virtual
-                            ci=ConInstanceInfo(_Link=seriesTableRowConEntries[i].Link, NameInSeriesList=seriesTableRowConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
-                            if ci.DateRange.IsEmpty():
-                                Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
-                            Log("#append 2: "+str(ci))
-                            AppendCon(conventions, ci)
-                    elif len(seriesTableRowConEntries) > 1 and len(dates) == 1:
-                        # Multiple cons all with the same dates
-                        for co in seriesTableRowConEntries:
-                            cancelled=co.Cancelled or dates[0].Cancelled
-                            dates[0].Cancelled = False
-                            v=False if cancelled else virtual
-                            ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
-                            AppendCon(conventions, ci)
-                            Log("#append 3: "+str(ci))
-                    elif len(seriesTableRowConEntries) == 1 and len(dates) > 1:
-                        for dt in dates:
-                            cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
-                            dt.Cancelled = False
-                            v=False if cancelled else virtual
-                            ci=ConInstanceInfo(_Link=seriesTableRowConEntries[0].Link, NameInSeriesList=seriesTableRowConEntries[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
-                            AppendCon(conventions, ci)
-                            Log("#append 4: "+str(ci))
-                    else:
-                        Log("Can't happen! ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
+            # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
+            # This is one con with multiple names
+            if type(seriesTableRowConEntries[0]) is list:
+                # By definition there is only one element. Extract it.  There may be more than one date.
+                assert len(seriesTableRowConEntries) == 1 and len(seriesTableRowConEntries[0])>0
+                for dt in dates:
+                    override=""
+                    cancelled=dt.Cancelled
+                    dt.Cancelled = False
+                    for co in seriesTableRowConEntries[0]:
+                        cancelled=cancelled or co.Cancelled
+                        if len(override) > 0:
+                            override+=" / "
+                        override+="[["
+                        if len(co.Link) > 0:
+                            override+=co.Link+"|"
+                        override+=co.Name+"]]"
+                    v = False if cancelled else virtual
+                    #TODO: This will cause a name of "dummy" to potentially appear in many cases.  Is this a problem?
+                    ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
+                    AppendCon(conventions, ci)
+                    Log("#append 1: "+str(ci))
+            # OK, in all the other cases cons is a list[ConInstanceInfo]
+            elif len(seriesTableRowConEntries) == len(dates):
+                # Add each con with the corresponding date
+                for i in range(len(seriesTableRowConEntries)):
+                    cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
+                    dates[i].Cancelled=False    # We've xferd this to ConInstanceInfo and don't still want it here because it would print twice
+                    v=False if cancelled else virtual
+                    ci=ConInstanceInfo(_Link=seriesTableRowConEntries[i].Link, NameInSeriesList=seriesTableRowConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                    if ci.DateRange.IsEmpty():
+                        Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
+                    Log("#append 2: "+str(ci))
+                    AppendCon(conventions, ci)
+            elif len(seriesTableRowConEntries) > 1 and len(dates) == 1:
+                # Multiple cons all with the same dates
+                for co in seriesTableRowConEntries:
+                    cancelled=co.Cancelled or dates[0].Cancelled
+                    dates[0].Cancelled = False
+                    v=False if cancelled else virtual
+                    ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
+                    AppendCon(conventions, ci)
+                    Log("#append 3: "+str(ci))
+            elif len(seriesTableRowConEntries) == 1 and len(dates) > 1:
+                for dt in dates:
+                    cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
+                    dt.Cancelled = False
+                    v=False if cancelled else virtual
+                    ci=ConInstanceInfo(_Link=seriesTableRowConEntries[0].Link, NameInSeriesList=seriesTableRowConEntries[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                    AppendCon(conventions, ci)
+                    Log("#append 4: "+str(ci))
+            else:
+                Log("Can't happen! ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
 
 
 # Compare two locations to see if they match
