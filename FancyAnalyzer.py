@@ -74,9 +74,8 @@ for pageFname in allFancy3PagesFnames:
     val=DigestPage(fancySitePath, pageFname)
     if val is not None:
         fancyPagesDictByWikiname[val.Name]=val
-    # Print a progress indicator
+    # This is a very slow process, so print progress indication on the console
     l=len(fancyPagesDictByWikiname)
-    # This is a very slow process, so print progress info on the console
     if l%1000 == 0:     # Print only when divisible by 1000
         if l>1000:
             Log("--", noNewLine=l%20000 != 0)  # Add a newline only when divisible by 20,000
