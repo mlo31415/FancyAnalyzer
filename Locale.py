@@ -4,7 +4,7 @@ from typing import Dict, Set, Optional
 import re
 
 from F3Page import F3Page
-from Log import Log, LogSetHeader
+from Log import LogSetHeader
 from HelpersPackage import SplitOnSpan
 
 class Locale:
@@ -203,7 +203,7 @@ class Locale:
                         if splt[loc-i-1] == "in":
                             return {locale}
                         sep=" "
-            except ValueError as e:
+            except ValueError:
                 continue
 
         # Look for the pattern "in [[City Name]]"
@@ -218,3 +218,20 @@ class Locale:
         if len(lst)>0:
             out.add(Locale().BaseFormOfLocaleName(lst[0]))
         return out
+
+
+    # Compare two locations to see if they match
+    def LocMatch(self, loc1: str, loc2: str) -> bool:
+        # First, remove '[[' and ']]' from both locs
+        loc1=loc1.replace("[[", "").replace("]]", "")
+        loc2=loc2.replace("[[", "").replace("]]", "")
+
+        # We want 'Glasgow, UK' to match 'Glasgow', so deal with the pattern of <City>, <Country Code> matching <City>
+        m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc1)
+        if m is not None:
+            loc1=m.groups()[0]
+        m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc2)
+        if m is not None:
+            loc2=m.groups()[0]
+
+        return loc1 == loc2

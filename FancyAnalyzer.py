@@ -150,7 +150,7 @@ for page in fancyPagesDictByWikiname.values():
             if len(row) < numcolumns-1 or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
                 continue
 
-            # If the con series table has a location column, extract the location
+            # If the con series table has a location column, extract the text from that cell
             conlocation=""
             if locColumn is not None:
                 if locColumn < len(row) and len(row[locColumn]) > 0:
@@ -430,22 +430,6 @@ for page in fancyPagesDictByWikiname.values():
                 Log("Can't happen! ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
 
 
-# Compare two locations to see if they match
-def LocMatch(loc1: str, loc2: str) -> bool:
-    # First, remove '[[' and ']]' from both locs
-    loc1=loc1.replace("[[", "").replace("]]", "")
-    loc2=loc2.replace("[[", "").replace("]]", "")
-
-    # We want 'Glasgow, UK' to match 'Glasgow', so deal with the pattern of <City>, <Country Code> matching <City>
-    m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc1)
-    if m is not None:
-        loc1=m.groups()[0]
-    m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc2)
-    if m is not None:
-        loc2=m.groups()[0]
-
-    return loc1 == loc2
-
 # OK, all of the con series have been mined.  Now let's look through all the con instances and see if we can get more location information from them.
 # (Not all con series tables contain location information.)
 # Generate a report of cases where we have non-identical con information from both sources.
@@ -470,7 +454,7 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
                 conname=page.Redirect
                 for con in conventions:
                     if con.NameInSeriesList == conname:
-                        if not LocMatch(place, con.Loc):
+                        if not Locale().LocMatch(place, con.Loc):
                             if con.Loc == "":   # If there previously was no location from the con series page, substitute what we found in the con instance page
                                 con.SetLoc(place)
                                 continue
