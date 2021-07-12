@@ -221,7 +221,7 @@ for page in fancyPagesDictByWikiname.values():
                             c, s=ScanForBracketedText(d, "s")
                             dr=FanzineDateRange().Match(s)
                             dr.Cancelled=c
-                            if dr.Duration() > 6:
+                            if dr.Duration() > 7:
                                 Log("??? convention has long duration: "+str(dr), isError=True)
                             if not dr.IsEmpty():
                                 dates.append(dr)
