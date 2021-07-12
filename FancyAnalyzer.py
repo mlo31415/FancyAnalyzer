@@ -9,7 +9,7 @@ from datetime import datetime
 from Locale import Locale
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
-from HelpersPackage import WindowsFilenameToWikiPagename, SplitOnSpan, WikiExtractLink, CrosscheckListElement
+from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement
 from ConInstanceInfo import ConInstanceInfo
 from FanzineIssueSpecPackage import FanzineDateRange
 
