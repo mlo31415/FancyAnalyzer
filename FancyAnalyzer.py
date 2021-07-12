@@ -541,19 +541,20 @@ for page in fancyPagesDictByWikiname.values():
                     def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
                         if matchObject.group(1) is not None and matchObject.group(2) is not None:
                             return matchObject.group(1)+"&&&"+matchObject.group(2)
-                    context=re.sub("(<)/([A-Za-z])", replacer, context)  # Hide the '/' in things like </xxx>
-                    context=re.sub("([0-9])/([0-9])", replacer, context)    # Hide the '/' in fractions
-                    contextlist=re.split("/", context)
-                    contextlist=[x.replace("&&&", "/").strip() for x in contextlist]    # Restore the real '/'s
-                    context=context.replace("&&&", "/").strip()
+                    contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, context)  # Hide the '/' in html items like </xxx>
+                    contextforsplitting=re.sub("([0-9])/([0-9])", replacer, contextforsplitting)    # Hide the '/' in fractions such as 1/2
+                    # Split on any remaining '/'s
+                    contextlist=contextforsplitting.split("/")
+                    # Restore the '/'s that had been hidden as &&& (and strip, just to be safe)
+                    contextlist=[x.replace("&&&", "/").strip() for x in contextlist]
+                    contextlist=[x for x in contextlist if len(x) > 0]  # Squeeze out any empty splits
                     if len(contextlist) > 1:
-                        contextlist=[x.strip() for x in contextlist if len(x.strip()) > 0]
                         alts: List[ConName]=[]
                         for con in contextlist:
                             c, _=NibbleCon(con)
                             if c is not None:
                                 alts.append(c)
-                        alts.sort()     # Sort the list so that when this list is created from two or more different convention idnex tables, it looks the same and dups can be removed.
+                        alts.sort()     # Sort the list so that when this list is created from two or more different convention index tables, it looks the same and dups can be removed.
                         seriesTableRowConEntries.append(alts)
                     else:
                         # Ok, we have one or more names and they are for different cons
