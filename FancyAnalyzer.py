@@ -107,10 +107,10 @@ def ScanForVirtual(s: str) -> Tuple[bool, str]:
 
 # Scan for text bracketed by <s>...</s>
 # Return True/False and remaining text after <s> </s> is removed
-def ScanForS(input: str) -> Tuple[bool, str]:
-    m=re.match("\w*<s>(.*)</s>\w*$", input)
+def ScanForS(s: str) -> Tuple[bool, str]:
+    m=re.match("\w*<s>(.*)</s>\w*$", s)
     if m is None:
-        return False, input
+        return False, s
     return True, m.groups()[0]
 
 # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
