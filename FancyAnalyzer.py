@@ -638,7 +638,6 @@ for fancyPage in fancyPagesDictByWikiname.values():
                 peopleReferences.setdefault(outRef.LinkWikiName, [])
                 peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
 
-Log("***Writing reports")
 # Write out a file containing canonical names, each with a list of pages which refer to it.
 # The format will be
 #     **<canonical name>
