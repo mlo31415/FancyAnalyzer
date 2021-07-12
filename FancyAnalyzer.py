@@ -536,9 +536,9 @@ with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
         # Now write the line
         # We have two levels of date headers:  The year and each unique date within the year
         # We do a year header for each new year, so we need to detect when the current year changes
-        if currentYear != con.DateRange._startdate.Year:
+        if currentYear != con.DateRange.StartDate.Year:
             # When the current date range changes, we put the new date range in the 1st column of the table
-            currentYear=con.DateRange._startdate.Year
+            currentYear=con.DateRange.StartDate.Year
             currentDateRange=con.DateRange
             f.write('colspan="2"| '+"<big><big>'''"+str(currentYear)+"'''</big></big>\n")
 
