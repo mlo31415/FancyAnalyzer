@@ -129,11 +129,13 @@ for page in fancyPagesDictByWikiname.values():
         conColumn=CrosscheckListElement(listNameHeaders, table.Headers)
         if conColumn is None:
             Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+            continue
 
         listDateHeaders=["Date", "Dates"]
         dateColumn=CrosscheckListElement(listDateHeaders, table.Headers)
         if conColumn is None:
             Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+            continue
 
         # If we don't have a convention column and a date column we skip the whole table.
         if conColumn is None or dateColumn is None:
