@@ -92,18 +92,18 @@ Log("***Analyzing convention series tables")
 
 # Scan for a virtual flag
 # Return True/False and remaining text after V-flag is removed
-def ScanForVirtual(input: str) -> Tuple[bool, str]:
+def ScanForVirtual(s: str) -> Tuple[bool, str]:
     # First look for the alternative contained in parens *anywhere* in the text
     pat = "\((:?virtual|online|held online|moved online|virtual convention)\)"
-    newval = re.sub(pat, "", input,
+    newval = re.sub(pat, "", s,
                     flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
-    if input != newval:
+    if s != newval:
         return True, newval.strip()
     # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
-    newval = re.sub("\s*" + pat + "\s*$", "", input, flags=re.IGNORECASE)
-    if input != newval:
+    newval = re.sub("\s*" + pat + "\s*$", "", s, flags=re.IGNORECASE)
+    if s != newval:
         return True, newval.strip()
-    return False, input
+    return False, s
 
 # Scan for text bracketed by <s>...</s>
 # Return True/False and remaining text after <s> </s> is removed
