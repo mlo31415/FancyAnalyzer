@@ -369,17 +369,17 @@ for page in fancyPagesDictByWikiname.values():
                         continue
 
                     # Don't add duplicate entries
-                    def AppendCon(coninstlist: List[ConInstanceInfo], ci: ConInstanceInfo) -> None:
-                        hits=[x for x in coninstlist if ci.NameInSeriesList == x.NameInSeriesList and ci.DateRange == x.DateRange and ci.Cancelled == x.Cancelled and ci.Virtual == x.Virtual and ci.Override == x.Override]
+                    def AppendCon(coninstlist: List[ConInstanceInfo], cii: ConInstanceInfo) -> None:
+                        hits=[x for x in coninstlist if cii.NameInSeriesList == x.NameInSeriesList and cii.DateRange == x.DateRange and cii.Cancelled == x.Cancelled and cii.Virtual == x.Virtual and cii.Override == x.Override]
                         if len(hits) == 0:
                             # This is a new name: Just append it
-                            coninstlist.append(ci)
+                            coninstlist.append(cii)
                         else:
-                            Log("AppendCon: duplicate - "+str(ci)+"   and   "+str(hits[0]))
+                            Log("AppendCon: duplicate - "+str(cii)+"   and   "+str(hits[0]))
                             # Name exists.  But maybe we have some new information on it?
                             # If there are two sources for the convention's location and one is empty, use the other.
                             if len(hits[0].Loc) == 0:
-                                hits[0].SetLoc(ci.Loc)
+                                hits[0].SetLoc(cii.Loc)
 
                     # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
                     # This is one con with multiple names
