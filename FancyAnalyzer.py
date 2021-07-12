@@ -828,18 +828,18 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
     for fancyPage in fancyPagesDictByWikiname.values():
         # A page might be an initialism if ALL alpha characters are upper case
         if fancyPage.Name == fancyPage.Name.upper():
-            fpn=fancyPage.Name.upper()
+            fpn=fancyPage.Name
             # Bail out if it starts with 4 digits -- this is probably a year
             if fpn[:4].isnumeric():
                 continue
-            # Bail if it begin 'nn which is also likely a year
+            # Also bail if it begin 'nn which is also likely a year (e.g., '73)
             if fpn[0] == "'" and fpn[1:3].isnumeric():
                 continue
-            # We skip certain pages because while they may look like initilaisms, they aren't or because we onl flag con series, and not the individual cons
-            if fpn[:4] == "DSC " or fpn[:8] == "CAN*CON " or fpn[:5] == "ICFA " or fpn[:5] == "NJAC " or \
-                    fpn[:6] == "OASIS " or fpn[:5] == "OVFF "  or fpn[:6] == "URCON "  or fpn[:5] == "VCON ":
+            # We skip certain pages because while they may look like initilaisms, they aren't or because we only flag con series, and not the individual cons
+            ignorelist: List[str]=["DSC", "CAN*CON", "ICFA", "NJAC", "OASIS", "OVFF", "URCON", "VCON"]
+            if any([fpn.startswith(x+" ") for x in ignorelist]):
                 continue
-            # Bail if there are no alphabetic characters
+            # Bail if there are no alphabetic characters at all
             if fpn.lower() == fpn.upper():
                 continue
 
@@ -849,7 +849,7 @@ with open("Uppercase names which aren't marked as initialisms.txt", "w+", encodi
 
 
 ##################
-# Taggin Oddities
+# Tagging Oddities
 # Make lists of odd tag combinations which may indicate something wrong
 Log("Tagging oddities.txt")
 
