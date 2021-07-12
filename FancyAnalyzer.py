@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, List, Tuple, Set, Optional, Union
+from typing import Dict, List, Tuple, Optional, Union
 from dataclasses import dataclass
 
 import os
@@ -606,35 +606,6 @@ for fancyPage in fancyPagesDictByWikiname.values():
 
 # ...
 Log("***Writing reports")
-# Write out a file containing canonical names, each with a list of pages which refer to it.
-# The format will be
-#     **<canonical name>
-#     <referring page>
-#     <referring page>
-#     ...
-#     **<canonical name>
-#     ...
-Log("Writing: Referring pages.txt")
-with open("Referring pages.txt", "w+", encoding='utf-8') as f:
-    for person, referringpagelist in peopleReferences.items():
-        f.write(f"**{person}\n")
-        for pagename in referringpagelist:
-            f.write(f"  {pagename}\n")
-
-# ...
-# Now a list of redirects.
-# We use basically the same format:
-#   **<target page>
-#   <redirect to it>
-#   <redirect to it>
-# ...
-# Now dump the inverse redirects to a file
-Log("Writing: Redirects.txt")
-with open("Redirects.txt", "w+", encoding='utf-8') as f:
-    for redirect, pages in inverseRedirects.items():
-        f.write(f"**{redirect}\n")
-        for page in pages:
-            f.write(f"      ⭦ {page}\n")
 
 # Next, a list of redirects with a missing target
 Log("Writing: Redirects with missing target.txt")
@@ -644,54 +615,6 @@ with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
         dest=WikiExtractLink(redirects[key])
         if dest not in allFancy3Pagenames:
             f.write(f"{key} --> {dest}\n")
-
-
-# ...
-# Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
-
-# Ambiguous names will often end with something in parenthesis which need to be removed for this particular file
-def RemoveTrailingParens(s: str) -> str:
-    return re.sub("\s\(.*\)$", "", s)       # Delete any trailing ()
-
-
-# Some names are not worth adding to the list of people names.  Try to detect them.
-def IsInterestingName(p: str) -> bool:
-    if " " not in p and "-" in p:   # We want to ignore names like "Bob-Tucker" in favor of "Bob Tucker"
-        #TODO: Deal with hypenated last names
-        return False
-    if " " in p:                    # If there are spaces in the name, at least one of them needs to be followed by a UC letter or something like "deCordova"f
-        if re.search(" ([A-Z]|de|ha|von|Č)", p) is None:  # We want to ignore "Bob tucker"
-            return False
-    return True
-
-Log("Writing: Peoples rejected names.txt")
-peopleNames: Union[Set[str], List[str]]=set()
-# First make a list of all the pages labelled as "fan" or "pro"
-with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
-    for fancyPage in fancyPagesDictByWikiname.values():
-        if fancyPage.IsPerson:
-            peopleNames.add(RemoveTrailingParens(fancyPage.Name))
-            # Then all the redirects to one of those pages.
-            if fancyPage.Name in inverseRedirects.keys():
-                for p in inverseRedirects[fancyPage.Name]:
-                    if p in fancyPagesDictByWikiname.keys():
-                        peopleNames.add(RemoveTrailingParens(fancyPagesDictByWikiname[p].Redirect))
-                        if IsInterestingName(p):
-                            peopleNames.add(p)
-                        # else:
-                        #     f.write("Uninteresting: "+p+"\n")
-                    else:
-                        Log("Generating Peoples rejected names.txt: "+p+" is not in fancyPagesDictByWikiname")
-            # else:
-            #     f.write(fancyPage.Name+" Not in inverseRedirects.keys()\n")
-
-
-with open("Peoples names.txt", "w+", encoding='utf-8') as f:
-    peopleNames=list(peopleNames)   # Turn it into a list so we can sort it.
-    peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
-    for name in peopleNames:
-        f.write(name+"\n")
-
 
 ###################################################
 # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
@@ -798,12 +721,12 @@ with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
 # De-dupe it
 peopleNames=list(set(peopleNames))
 
+# Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
 Log("Writing: Peoples names.txt")
 with open("Peoples names.txt", "w+", encoding='utf-8') as f:
     peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
     for name in peopleNames:
         f.write(name+"\n")
-
 
 # Create some reports on tags/Categories
 adminTags={"Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries", "Noend", "Nowebsite", "Hasfiles", "Haslink", "Haswebsite", "Fixme", "Details", "Redirect", "Wikidot", "Multiple",
