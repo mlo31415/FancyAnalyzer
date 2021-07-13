@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Dict, Set, Optional
+from dataclasses import dataclass
 
 import re
 
@@ -7,7 +8,8 @@ from F3Page import F3Page
 from Log import LogSetHeader
 from HelpersPackage import SplitOnSpan
 
-class Locale:
+
+class LocaleHandling:
     # A set of the names of all Locale pages
     # We use a set to eliminate duplicates and to speed checks
     locales: Set[str]=set()
@@ -220,7 +222,7 @@ class Locale:
         # ending with "]]"
         lst=re.findall("in \[\[((?:[A-Z][A-Za-z]+[.,]?\s*)+)]]", s)
         if len(lst)>0:
-            out.add(Locale().BaseFormOfLocaleName(lst[0]))
+            out.add(LocaleHandling().BaseFormOfLocaleName(lst[0]))
         return out
 
 

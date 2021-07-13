@@ -6,7 +6,7 @@ import os
 import re
 from datetime import datetime
 
-from Locale import Locale
+from Locale import LocaleHandling
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText
@@ -85,7 +85,7 @@ Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
 # Build a locale database
 Log("\n\n***Building a locale dictionary")
-Locale().Create(fancyPagesDictByWikiname)
+LocaleHandling().Create(fancyPagesDictByWikiname)
 
 Log("***Analyzing convention series tables")
 
@@ -157,7 +157,7 @@ for page in fancyPagesDictByWikiname.values():
             if locColumn is not None:
                 if locColumn < len(row) and len(row[locColumn]) > 0:
                     loc=WikiExtractLink(row[locColumn])
-                    conlocation=Locale().BaseFormOfLocaleName(loc)
+                    conlocation=LocaleHandling().BaseFormOfLocaleName(loc)
 
             # Check the row for (virtual) in any form. If found, set the virtual flag and remove the text from the line
             virtual=False
@@ -448,7 +448,7 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
 
         # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
         #TODO: Shouldn't we move this upwards and store the derived location in otherwise-empty page.Locales?
-        m=Locale().ScanForLocales(page.Source)
+        m=LocaleHandling().ScanForLocales(page.Source)
         if len(m) > 0:
             for place in m:
                 place=WikiExtractLink(place)
@@ -456,7 +456,7 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
                 conname=page.Redirect
                 for con in conventions:
                     if con.NameInSeriesList == conname:
-                        if not Locale().LocMatch(place, con.Loc):
+                        if not LocaleHandling().LocMatch(place, con.Loc):
                             if con.Loc == "":   # If there previously was no location from the con series page, substitute what we found in the con instance page
                                 con.SetLoc(place)
                                 continue
@@ -465,7 +465,7 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
 # Normalize convention locations to the standard City, ST form.
 Log("***Normalizing con locations")
 for con in conventions:
-    loc=Locale().ScanForLocales(con.Loc)
+    loc=LocaleHandling().ScanForLocales(con.Loc)
     if len(loc) > 1:
         Log("  In "+con.NameInSeriesList+"  found more than one location: "+str(loc))
     if len(loc) > 0:
