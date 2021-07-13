@@ -30,17 +30,16 @@ class Locale:
                         LogSetHeader("Processing Locale redirect "+page.Name)
                         self.locales.add(page.Name)
 
-
     # Convert names like "Chicago" to "Chicago, IL"
     # We look through the locales database for names that are proper extensions of the input name
     # First create the dictionary we'll need
-    def AddBaseForm(self, locale: str) -> None:
+    for locale in locales:
         # Look for names of the form Name,ST
         m=re.match("^([A-Za-z .]*),\s([A-Z]{2})$", locale)
         if m is not None:
             city=m.groups()[0]
             state=m.groups()[1]
-            self.localeBaseForms.setdefault(city, city+", "+state)
+            localeBaseForms.setdefault(city, city+", "+state)
 
     # Find the base form of a locale.  E.g., the base form of "Cambridge, MA" is "Boston, MA".
     def BaseFormOfLocaleName(self, name: str) -> str:
