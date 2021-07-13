@@ -204,7 +204,7 @@ class LocaleHandling:
                     for i in range(1, 6):  # City can be up to five tokens
                         if loc-i<0:
                             break
-                        if re.match("^[A-Z]{1}[a-z]+$", splt[loc-i]):  # Look for Xxxxx
+                        if re.match("^[A-Z][a-z]+$", splt[loc-i]):  # Look for Xxxxx
                             locale=splt[loc-i]+sep+locale
                         if splt[loc-i-1] == "in":
                             return {locale}
