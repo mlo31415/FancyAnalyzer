@@ -8,9 +8,14 @@ from Log import LogSetHeader
 from HelpersPackage import SplitOnSpan
 
 class Locale:
-    locales: Set[str]=set()  # We use a set to eliminate duplicates and to speed checks
-    localeBaseForms: Dict[str, str]={}  # It's defined as a dictionary with the value being the base form of the key
+    # A set of the names of all Locale pages
+    # We use a set to eliminate duplicates and to speed checks
+    locales: Set[str]=set()
+    # All locales have a base form (often themselves).
+    # Rhis is a dictionary with the value being the base form of the key: both key and value are page names
+    localeBaseForms: Dict[str, str]={}
 
+    # Go through the entire set of pages looking for locales and harvest the information
     def Create(self, fancyPagesDictByWikiname: Dict[str, F3Page]) -> None:
         for page in fancyPagesDictByWikiname.values():
             # Add locale pages to the set
