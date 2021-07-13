@@ -124,7 +124,7 @@ class LocaleHandling:
         "Point, NC": "High",
         "Rock, AR": ["Little", "North Little"],
         "Rosa, CA": "Santa",
-        "Sacromento, CA": "West",
+        "Sacramento, CA": "West",
         "Sheen, UK": "East",
         "Spring, MD": "Silver",
         "Springs, CO": "Colorado",
