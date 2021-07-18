@@ -159,7 +159,7 @@ for page in fancyPagesDictByWikiname.values():
         # We have a convention table.  Walk it, extracting the individual conventions
         for row in table.Rows:
             LogSetHeader("Processing: "+page.Name+"  row: "+str(row))
-            # Skip rows with merged columns, and also rows where either the date or convention cell is empty
+            # Skip rows with merged columns, and also rows where either the date cell or the convention name cell is empty
             if len(row) < numcolumns or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
                 continue
 
