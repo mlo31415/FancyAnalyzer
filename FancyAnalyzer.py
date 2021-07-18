@@ -65,7 +65,6 @@ for prefix in excludedPrefixes:
 # And we exclude certain pages
 excludedPages=["Admin", "Standards", "Test Templates"]
 allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
-
 Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
 fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Val is a FancyPage class containing all the references on the page
@@ -92,16 +91,20 @@ Log("***Analyzing convention series tables")
 # Scan for a virtual flag
 # Return True/False and remaining text after V-flag is removed
 def ScanForVirtual(s: str) -> Tuple[bool, str]:
-    # First look for the alternative contained in parens *anywhere* in the text
     pattern = "\((:?virtual|online|held online|moved online|virtual convention)\)"
+
+    # First look for the alternative contained in parens *anywhere* in the text
     newval = re.sub(pattern, "", s, flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
     if s != newval:
         return True, newval.strip()
+
     # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
     newval = re.sub("\s*" + pattern + "\s*$", "", s, flags=re.IGNORECASE)
     if s != newval:
         return True, newval.strip()
+
     return False, s
+
 
 # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
 conventions: List[ConInstanceInfo]=[]
@@ -448,24 +451,29 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
 
         # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
         #TODO: Shouldn't we move this upwards and store the derived location in otherwise-empty page.Locales?
-        m=LocaleHandling().ScanForLocales(page.Source)
-        if len(m) > 0:
-            for place in m:
-                place=WikiExtractLink(place)
+        m=LocaleHandling().ScanForLocales(page.Source, page.Name)
+        if m is not None and len(m) > 0:
+            for locale in m:
                 # Find the convention in the conventions dictionary and add the location if appropriate.
                 conname=page.Redirect
                 for con in conventions:
                     if con.NameInSeriesList == conname:
-                        if not LocaleHandling().LocMatch(place, con.Loc):
+                        if not locale.LocMatch(con.Loc):
                             if con.Loc == "":   # If there previously was no location from the con series page, substitute what we found in the con instance page
-                                con.SetLoc(place)
+                                con.SetLoc(locale.PageName)
                                 continue
-                            f.write(conname+": Location mismatch: '"+place+"' != '"+con.Loc+"'\n")
+                            f.write(f"{conname}: Location mismatch: '{locale.PageName}' != '{con.Loc}'\n")
+
+
+Log("Writing: Locale failures.txt")
+with open("Locale failures.txt", "w+", encoding='utf-8') as f:
+    for key, val in LocaleHandling().probableLocales.items():
+        f.write(str(key)+"\n")
 
 # Normalize convention locations to the standard City, ST form.
 Log("***Normalizing con locations")
 for con in conventions:
-    loc=LocaleHandling().ScanForLocales(con.Loc)
+    loc=LocaleHandling().ScanForLocales(con.Loc, con.NameInSeriesList)
     if len(loc) > 1:
         Log("  In "+con.NameInSeriesList+"  found more than one location: "+str(loc))
     if len(loc) > 0:
