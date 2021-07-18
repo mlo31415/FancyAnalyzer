@@ -160,7 +160,7 @@ for page in fancyPagesDictByWikiname.values():
         for row in table.Rows:
             LogSetHeader("Processing: "+page.Name+"  row: "+str(row))
             # Skip rows with merged columns, and also rows where either the date or convention cell is empty
-            if len(row) < numcolumns-1 or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
+            if len(row) < numcolumns or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
                 continue
 
             # If the con series table has a location column, extract the text from that cell
