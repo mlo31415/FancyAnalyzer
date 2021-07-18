@@ -147,7 +147,7 @@ for page in fancyPagesDictByWikiname.values():
 
         listConDateHeaders=["Date", "Dates"]
         dateColumn=CrosscheckListElement(listConDateHeaders, table.Headers)
-        if conColumn is None:
+        if dateColumn is None:
             Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
             continue
 
