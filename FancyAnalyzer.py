@@ -83,6 +83,16 @@ for pageFname in allFancy3PagesFnames:
         Log(str(l), noNewLine=True)
 Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
 
+
+Log("Writing: Redirects to Wikidot pages.txt")
+with open("Redirects to Wikidot pages.txt", "w+", encoding='utf-8') as f:
+    for key, val in fancyPagesDictByWikiname.items():
+        for link in val.OutgoingReferences:
+            if link.LinkWikiName in fancyPagesDictByWikiname.keys():
+                if fancyPagesDictByWikiname[link.LinkWikiName].IsWikidotRedirect:
+                    print(f"Page '{key} has a pointer to Wikidot redirect page'{link.LinkWikiName}'", file=f)
+
+
 # Build a locale database
 Log("\n\n***Building a locale dictionary")
 LocaleHandling().Create(fancyPagesDictByWikiname)
