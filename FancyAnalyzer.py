@@ -135,18 +135,18 @@ for page in fancyPagesDictByWikiname.values():
     for index, table in enumerate(page.Tables):
         numcolumns=len(table.Headers)
 
-        listLocationHeaders=["Location"]
-        locColumn=CrosscheckListElement(listLocationHeaders, table.Headers)
+        listConLocationHeaders=["Location"]
+        locColumn=CrosscheckListElement(listConLocationHeaders, table.Headers)
         # We don't log a missing location column because that is common and not an error -- we'll try to get the location later from the con instance's page
 
-        listNameHeaders=["Convention", "Convention Name", "Name"]
-        conColumn=CrosscheckListElement(listNameHeaders, table.Headers)
+        listConNameHeaders=["Convention", "Convention Name", "Name"]
+        conColumn=CrosscheckListElement(listConNameHeaders, table.Headers)
         if conColumn is None:
             Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
             continue
 
-        listDateHeaders=["Date", "Dates"]
-        dateColumn=CrosscheckListElement(listDateHeaders, table.Headers)
+        listConDateHeaders=["Date", "Dates"]
+        dateColumn=CrosscheckListElement(listConDateHeaders, table.Headers)
         if conColumn is None:
             Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
             continue
