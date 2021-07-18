@@ -67,6 +67,7 @@ excludedPages=["Admin", "Standards", "Test Templates"]
 allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
 Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
+# Build the master dictionary of all Fancy 3 pages.
 fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Val is a FancyPage class containing all the references on the page
 
 Log("***Scanning local copies of pages for links and other info")
@@ -480,18 +481,18 @@ for con in conventions:
         con.SetLoc=(iter(loc).__next__())    # Nasty code to get one element from the set
 
 
-# Sort the con dictionary into date order
-Log("Writing Con DateRange oddities.txt")
+Log("Writing: Con DateRange oddities.txt")
 oddities=[x for x in conventions if x.DateRange.IsOdd()]
 with open("Con DateRange oddities.txt", "w+", encoding='utf-8') as f:
     for con in oddities:
         f.write(str(con)+"\n")
+# Sort the con dictionary into date order
 conventions.sort(key=lambda d: d.DateRange)
 
 #TODO: Add a list of keywords to find and remove.  E.g. "Astra RR" ("Ad Astra XI")
 
 # ...
-Log("Writing Convention timeline (Fancy).txt")
+Log("Writing: Convention timeline (Fancy).txt")
 with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
     f.write("This is a chronological list of SF conventions automatically extracted from Fancyclopedia 3\n\n")
     f.write("If a convention is missing from the list, it may be due to it having been added only recently, (this list was generated ")
