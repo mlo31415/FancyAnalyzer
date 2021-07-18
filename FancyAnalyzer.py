@@ -151,10 +151,7 @@ for page in fancyPagesDictByWikiname.values():
             Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
             continue
 
-        # If we don't have a convention column and a date column we skip the whole table.
-        if conColumn is None or dateColumn is None:
-            # Skip quietly
-            continue
+        # Make sure the table has rows
         if table.Rows is None:
             Log(f"***Table {index+1} of {len(page.Tables)} looks like a convention table, but has no rows", isError=True)
             continue
