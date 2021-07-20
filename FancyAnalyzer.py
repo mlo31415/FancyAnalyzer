@@ -167,7 +167,7 @@ for page in fancyPagesDictByWikiname.values():
             conlocation=""
             if locColumn is not None:
                 if locColumn < len(row) and len(row[locColumn]) > 0:
-                    loc=WikiExtractLink(row[locColumn])
+                    loc=WikiExtractLink(row[locColumn])     # If there is linked text, get it; otherwise use everything
                     conlocation=LocaleHandling().BaseFormOfLocaleName(loc)
 
             # Check the row for (virtual) in any form. If found, set the virtual flag and remove the text from the line
