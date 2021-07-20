@@ -8,7 +8,9 @@ from F3Page import F3Page
 from Log import LogSetHeader, Log
 from HelpersPackage import SplitOnSpan, WikidotCononicizeName
 
-# This class encapsulates our knowledge of Locales
+
+############################################################################################
+# This class encapsulates our knowledge of Locale pages
 # There are four kinds of pages which generate a Locale:
 #   A base Locale: typically a metropolitan name in standard form, e.g., Boston, MA).  It is tagged as a Locale and is not a redirect
 #   A shortname: Some cities, e.g., Boston, London, New York, are usually referred to without state/country.
@@ -17,8 +19,8 @@ from HelpersPackage import SplitOnSpan, WikidotCononicizeName
 @dataclass
 class Locale:
     PageName: str=""        # The Fancy 3 page name.
-    DisplayName: str=""     # If there's a MediaWiki Displayname override, put it here
-    Redirect: str=""        # If this is a redirect page, the target
+    DisplayName: str=""     # If there's a MediaWiki Displayname override, put it here. Otherwise empty string
+    Redirect: str=""        # If this is a redirect page, the page name of the target. Otherwise empty string
     IsTaggedLocale: bool=False    # Is this page tagged "Locale"?
     Basename: str=""        # If PageName is "Boston" this would be "Boston, MA"; otherwise empty
 
@@ -30,6 +32,10 @@ class Locale:
     @property
     def IsLocale(self) -> bool:
         return self.IsTaggedLocale
+
+    @property
+    def IsRedirect(self) -> bool:
+        return len(self.Redirect) > 0
 
     @property
     # Is this nothing but a pointer for the Wikidot canonical name of the page?
@@ -56,6 +62,8 @@ class Locale:
 
         assert False
 
+
+    #-------------------------------------------------------------
     # Compare two locations to see if they match
     def LocMatch(self, loc2: str) -> bool:
         # First, remove '[[' and ']]' from both locs
@@ -73,6 +81,7 @@ class Locale:
         return loc1 == loc2
 
 
+############################################################################################
 class LocaleDict:
     def __init__(self):
         self.d: Dict[str, Locale]={}
@@ -96,6 +105,7 @@ class LocaleDict:
         return self.d.keys()
 
 
+############################################################################################
 class LocaleHandling:
     # A set of the names of all Locale pages
     # We use a set to eliminate duplicates and to speed checks
@@ -119,10 +129,9 @@ class LocaleHandling:
             else:
                 # If this page is a redirect to a locale page, add this page to the locale set
                 # TODO: Do we want all redirects to locale pages or just those tagged as a locale?
-                if page.Redirect != "" and page.Redirect in fancyPagesDictByWikiname.keys():
-                    if fancyPagesDictByWikiname[page.Redirect].IsLocale:
-                        LogSetHeader("Processing Locale redirect "+page.Name)
-                        self.locales[page.Name]=Locale(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
+                if page.IsRedirectpage and page.Redirect in fancyPagesDictByWikiname.keys() and fancyPagesDictByWikiname[page.Redirect].IsLocale:
+                    LogSetHeader("Processing Locale redirect "+page.Name)
+                    self.locales[page.Name]=Locale(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
 
         # Convert names like "Chicago" to "Chicago, IL"
         # We look through the locales database for names that are proper extensions of the input name
@@ -151,7 +160,8 @@ class LocaleHandling:
             return self.localeBaseForms[name]
         return name
 
-    # The current algorithm messes up multi-word city names and only catches the last word.
+
+    # Looking for <in City, ST> messes up multi-word city names and only catches the last word.
     # Correct the ones we know of to the full name.
     multiWordCities={
         "Angeles, CA": "Los",
@@ -256,8 +266,10 @@ class LocaleHandling:
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
         m=re.search("in ([A-Z][a-z.]+\s+)?([A-Z][a-z.]+\s+)?([A-Z][a-z]+,?\s+)([A-Z]{2})[^a-zA-Z]",
                     " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
+        # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m is not None and len(m.groups()) > 1:
             groups=[x for x in m.groups() if x is not None]
+
             city=" ".join(groups[0:-1]) # It's assumed to be possible-multi-word-city state-country, where state-country is a single token
             city=city.replace(",", " ")  # Get rid of any commas after city
             city=re.sub("\s+", " ", city).strip()  # Multiple spaces go to single space and trim the result
@@ -360,7 +372,7 @@ class LocaleHandling:
         # Fortunately, this will nearly always happen *after* the first sentence which contains the actual locale, and we ignore second and later hits
         # Pattern:
         # Capture "in" followed by "[[" followed by a group
-        # The group is a possibly repeated non-capturing group
+        # The group is a possibly-repeated non-capturing group
         #       which is a UC letter followed by one or more letters followed by an optional period or comma followed by zero or more spaces
         # ending with "]]"
         lst=re.findall("in \[\[((?:[A-Z][A-Za-z]+[.,]?\s*)+)]]", s)
