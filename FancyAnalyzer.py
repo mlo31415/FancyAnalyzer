@@ -118,6 +118,7 @@ def ScanForVirtual(s: str) -> Tuple[bool, str]:
 
 
 # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
+# We do this be reading all the convention series pages' convention tables
 conventions: List[ConInstanceInfo]=[]
 for page in fancyPagesDictByWikiname.values():
 
@@ -331,7 +332,6 @@ for page in fancyPagesDictByWikiname.values():
                     con=ConName(Name=t, Link=l, Cancelled=False)
                     return con, constr
 
-#TODO:  What's left may be a bare con name or it may be a keyword like "held online" or "virtual".  Need to check this on real data
                 if len(constr) > 0:
                     if constr[0] == ":":
                         return None, ""
