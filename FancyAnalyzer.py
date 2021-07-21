@@ -55,7 +55,7 @@ allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("ind
 allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
 #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
-#allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "philco"]        # Just to cut down the number of pages for debugging purposes
+#allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:7].lower() == "boskone"]        # Just to cut down the number of pages for debugging purposes
 
 # We ignore pages with certain prefixes
 excludedPrefixes=["_admin", "Template;colon", "User;colon", "Log 2"]
@@ -451,19 +451,20 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
         if not page.IsConInstance:
             continue
 
+        # The page is a convention page
         if page.Locale != "":    # If the con has Locale set, it overrides
             for con in conventions:
-                if con.NameInSeriesList == conname:
+                if con.NameInSeriesList == page.Name:
                     con.SetLoc(page.Locale)
             continue
 
         # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
         #TODO: Shouldn't we move this upwards and store the derived location in otherwise-empty page.Locales?
-        m=LocaleHandling().ScanForLocales(page.Source, page.Name)
+        m=LocaleHandling().ScanConPageforLocale(page.Source, page.Name)
         if m is not None and len(m) > 0:
             for locale in m:
                 # Find the convention in the conventions dictionary and add the location if appropriate.
-                conname=page.Redirect
+                conname=page.Name
                 for con in conventions:
                     if con.NameInSeriesList == conname:
                         if not locale.LocMatch(con.Loc):
@@ -473,15 +474,15 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
                             f.write(f"{conname}: Location mismatch: '{locale.PageName}' != '{con.Loc}'\n")
 
 
-Log("Writing: Locale failures.txt")
-with open("Locale failures.txt", "w+", encoding='utf-8') as f:
+Log("Writing: Places that are not tagged as Locales.txt")
+with open("Places that are not tagged as Locales.txt", "w+", encoding='utf-8') as f:
     for key, val in LocaleHandling().probableLocales.items():
         f.write(str(key)+"\n")
 
 # Normalize convention locations to the standard City, ST form.
 Log("***Normalizing con locations")
 for con in conventions:
-    loc=LocaleHandling().ScanForLocales(con.Loc, con.NameInSeriesList)
+    loc=LocaleHandling().ScanConPageforLocale(con.Loc, con.NameInSeriesList)
     if len(loc) > 1:
         Log("  In "+con.NameInSeriesList+"  found more than one location: "+str(loc))
     if len(loc) > 0:
