@@ -108,10 +108,6 @@ class LocaleHandling:
     # We use a set to eliminate duplicates and to speed checks
     locales: LocaleDict=LocaleDict()
 
-    # All locales have a base form (often themselves).
-    # This is a dictionary with the value being the base form of the key: both key and value are page names
-#   localeBaseForms: Dict[str, str]={}
-
     # We also identify some things as probable locales which are not tagged directly or indirectly as locales
     # Maintain a dict of lists of pages that contain them
     probableLocales: Dict[str, List[str]]={}
