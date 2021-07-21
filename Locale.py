@@ -115,7 +115,7 @@ class LocaleHandling:
     # This will be a pointer to fancyPagesDictByWikiname
     allPages: Dict[str, F3Page]={}
 
-    # Go through the entire set of pages looking for locales and harvest the information
+    # Go through the entire set of pages looking for locales and harvest the information to create the list of all locales
     def Create(self, fancyPagesDictByWikiname: Dict[str, F3Page]) -> None:
         LocaleHandling.allPages=fancyPagesDictByWikiname
         for page in LocaleHandling.allPages.values():
