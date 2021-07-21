@@ -471,7 +471,7 @@ with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
                             if con.Loc == "":   # If there previously was no location from the con series page, substitute what we found in the con instance page
                                 con.SetLoc(locale.PageName)
                                 continue
-                            f.write(f"{conname}: Location mismatch: '{locale.PageName}' != '{con.Loc}'\n")
+                            f.write(f"{conname}: Location mismatch: '{locale.PreferredName}' != '{con.Loc}'\n")
 
 
 Log("Writing: Places that are not tagged as Locales.txt")
@@ -679,6 +679,7 @@ with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
 # Ambiguous names will often end with something in parenthesis which need to be removed for this particular file
 def RemoveTrailingParens(s: str) -> str:
     return re.sub("\s\(.*\)$", "", s)       # Delete any trailing ()
+
 
 # Some names are not worth adding to the list of people names.  Try to detect them.
 def IsInterestingName(p: str) -> bool:

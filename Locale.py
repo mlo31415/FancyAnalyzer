@@ -66,16 +66,14 @@ class Locale:
     # Compare two locations to see if they match
     def LocMatch(self, loc2: str) -> bool:
         # First, remove '[[' and ']]' from both locs
-        loc1=self.PageName.replace("[[", "").replace("]]", "")
+        loc1=self.PreferredName
         loc2=loc2.replace("[[", "").replace("]]", "")
 
-        # We want 'Glasgow, UK' to match 'Glasgow', so deal with the pattern of <City>, <Country Code> matching <City>
-        m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc1)
-        if m is not None:
-            loc1=m.groups()[0]
-        m=re.match("^/s*(.*), [A-Z]{2}\s*$", loc2)
-        if m is not None:
-            loc2=m.groups()[0]
+        # Some names are special (e.g., Boston), wso we compare them in their reduced forms.
+        if loc1 in LocaleHandling.specialNames.keys():
+            loc1=LocaleHandling.specialNames[loc1]
+        if loc2 in LocaleHandling.specialNames.keys():
+            loc2=LocaleHandling.specialNames[loc2]
 
         return loc1 == loc2
 
