@@ -527,17 +527,6 @@ class LocaleHandling:
         return []
 
 
-    #-------------------------------------------------------------------
-    # Take a string which is of the general form "stuff, stuff...stuff Locale" and extract the Locale
-    # E.g., a convention location "Sheraton Boston, Boston, MA"
-    # The key thing is that the locale *ends* the string
-    def TruncateLocale(self, s: str) -> Locale:
-        tokens=s.split(" .,")
-        # Start with the last token and look for the longest trailing set of tokens that is recognizable as a locale. Don't look at more than four in any event.
-        for i in range(len(tokens)-5, len(tokens)-1):
-            s=" ".join(tokens[-i:])
-
-
     #-------------------------------------------------------
     def LocaleFromName(self, pagename: str) -> Locale:
         if pagename not in LocaleHandling.locales.keys():
