@@ -204,8 +204,7 @@ def main():
                 # We need two patterns here because Python's regex doesn't have balancing groups and we don't want to match unbalanced parens
 
                 # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
-                p=re.compile("\(.*\)\s?$")  # Note that this is greedy. Is that the correct things to do?
-                datetext=re.sub("\(.*\)\s?$", "", datetext)
+                datetext=re.sub("\(.*\)\s?$", "", datetext)   # Note that this is greedy. Is that the correct things to do?
                 # Convert the HTML characters some people have inserted into their ascii equivalents
                 datetext=datetext.replace("&nbsp;", " ").replace("&#8209;", "-")
                 # Remove leading and trailing spaces
