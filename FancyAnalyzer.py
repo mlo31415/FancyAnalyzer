@@ -418,7 +418,7 @@ def main():
                     # Add each con with the corresponding date
                     for i in range(len(seriesTableRowConEntries)):
                         cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
-                        dates[i].Cancelled=False    # We've xferd this to ConInstanceInfo and don't still want it here because it would print twice
+                        dates[i].Cancelled=False    # We've xfered this to ConInstanceInfo and don't still want it here because it would print twice
                         v=False if cancelled else virtual
                         conlocation.test=1
                         ci=ConInstanceInfo(_Link=seriesTableRowConEntries[i].Link, NameInSeriesList=seriesTableRowConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
