@@ -71,7 +71,7 @@ class Locale:
         return self.Redirect and not self.IsTaggedLocale and self.PageName == WikidotCononicizeName(self.PageName) and "_" in self.PageName
 
     @property
-    # Is this a Wikipage?
+    # Is this a page in the Fancy wiki?
     def IsPage(self) -> bool:
         return len(self.PageName) > 0
 
