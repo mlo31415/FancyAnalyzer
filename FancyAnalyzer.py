@@ -162,7 +162,7 @@ def main():
 
             # We have a convention table.  Walk it, extracting the individual conventions
             for row in table.Rows:
-                LogSetHeader("Processing: "+page.Name+"  row: "+str(row))
+                LogSetHeader(f"Processing: {page.Name}  row: {row}")
                 # Skip rows with merged columns, and also rows where either the date cell or the convention name cell is empty
                 if len(row) < numcolumns or len(row[conColumn]) == 0  or len(row[dateColumn]) == 0:
                     continue
@@ -241,11 +241,11 @@ def main():
                             dates.append(dr)
 
                 if len(dates) == 0:
-                    Log("***No dates found", isError=True)
+                    Log(f"***No dates found - {page.Name}  row: {row}", isError=True)
                 elif len(dates) == 1:
-                    Log(f"1 date: {dates[0]}", Print=False)
+                    Log(f"{page.Name}  row: {row}: 1 date: {dates[0]}", Print=False)
                 else:
-                    Log(f"{len(dates)} dates: {dates[0]}")
+                    Log(f"{page.Name}  row: {row}: {len(dates)} dates: {dates[0]}", Print=False)
                     for d in dates[1:]:
                         Log(f"           {d}", Print=False)
 
