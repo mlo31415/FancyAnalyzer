@@ -130,10 +130,6 @@ def main():
             continue
 
         LogSetHeader("Processing "+page.Name)
-        # We'd like to find these columns.  The first two are required.
-        conColumn=None  # The convention's name
-        dateColumn=None  # The convention's dates
-        locColumn=None     # The convention's location
 
         # Sometimes there will be multiple tables, so we check each of them
         for index, table in enumerate(page.Tables):
