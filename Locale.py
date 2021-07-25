@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Set, List
+from typing import Dict, List
 from dataclasses import dataclass
 
 import re
@@ -16,17 +16,45 @@ from HelpersPackage import SplitOnSpan, WikidotCononicizeName
 #   A shortname: Some cities, e.g., Boston, London, New York, are usually referred to without state/country.
 #   A non-base Locale: typically a location in a metro area, e.g., Cambridge, MA. It is tagged as a Locale, but redirects to a base Locale
 #   A synonym: typically a variant spelling or Wikidot form of a base (or non-base) Locale, e.g., Cambridge_ma. It is a redirect to a Locale, but not tagged as one
+# In addition, a local can be created for a non-page.  In this case only member NonPageName is set
 @dataclass
 class Locale:
     PageName: str=""        # The Fancy 3 page name.
     DisplayName: str=""     # If there's a MediaWiki Displayname override, put it here. Otherwise empty string
     Redirect: str=""        # If this is a redirect page, the page name of the target. Otherwise empty string
     IsTaggedLocale: bool=False    # Is this page tagged "Locale"?
+    NonPageName: str=""     # If this is a locale created with no associated page
+
+    def __eq__(self, val: Locale) -> bool:
+        return self.PageName == val. PageName and \
+            self.DisplayName == val. DisplayName and \
+            self.Redirect == val. Redirect and \
+            self.IsTaggedLocale == val.IsTaggedLocale and \
+            self.NonPageName == val. NonPageName
+
+
 
     @property
-    # The name of the locale for the world to see.
-    def Name(self) -> str:
-        return self.PageName
+    # Provides a formatted link to this Locale (or just the name if there is no associated page)
+    def Link(self) -> str:
+        if self.IsEmpty:
+            return ""
+        # If this is a non-page Locale, just return the undecorated locale name
+        if len(self.NonPageName) > 0:
+            return self.NonPageName
+        # If this is tagged as a Locale and is a real page, we return a simple link to that page.
+        # This will work for a regular page, a regular page with a displaytitle or a redirect
+        if self.IsTaggedLocale:
+            return "[["+self.PageName+"]]"
+        # Otherwise, it must be a page which links to a Locale page, so we return a simple link to the page
+        if self.IsRedirect:
+            return "[["+self.PageName+"]]"
+        # Oops
+        return f"Locale.Link({self}) failure"
+
+    @property
+    def IsEmpty(self) -> bool:
+        return len(self.PageName) == 0 and len(self.Redirect) == 0 and len(self.NonPageName) == 0
 
     @property
     def IsLocale(self) -> bool:
@@ -38,28 +66,44 @@ class Locale:
 
     @property
     # Is this nothing but a pointer for the Wikidot canonical name of the page?
-    def IsWikidot(self) -> bool:
-        return self.Redirect and not self.IsTaggedLocale and self.PageName == WikidotCononicizeName(self.PageName)
+    # Note that we can't detect a Wikidot redirect that is only a single lower case word
+    def IsWikidotRedirect(self) -> bool:
+        return self.Redirect and not self.IsTaggedLocale and self.PageName == WikidotCononicizeName(self.PageName) and "_" in self.PageName
+
+    @property
+    # Is this a Wikipage?
+    def IsPage(self) -> bool:
+        return len(self.PageName) > 0
 
     @property
     def PreferredName(self) -> str:
-        # If this is itself tagged as a Locale we return the page name even if it is a redirect
+        # If this is itself tagged as a Locale we return the page name even if it is also a redirect
         # E.g., we return "Cambridge, MA" because it is tagged Locale even though it points to "Boston, MA"
         if self.IsTaggedLocale:
             if len(self.DisplayName) > 0:
                 return self.DisplayName
             return self.PageName
 
-        # It's a Locale, but not tagged as one.  Unless it's a error, it's a redirect from a Wikidot canonical name
-        if not self.IsWikidot:
-            Log(f"@@@Locale page {self.PageName} is not tagged as Locale, but is not in Wikidot format")
+        # If all of the real page names are empty, we just return the NonPageName -- either it's real and we need to return it or it is also empty which is still correct
+        if self.DisplayName == "" and self.PageName == "" and self.Redirect == "":
+            return self.NonPageName
+
+        # At this point we know it's a real page and not itself a locale.
+        # If it's a Wikidot redirect, we always return the redirect
+        if self.IsWikidotRedirect:  # Note that this test is not perfect, since it can't look at the page's contents.
+            return self.Redirect
+
+        # Locale or not, if it's a redirect, follow the redirect!
+        if self.Redirect:
+            return self.Redirect    #TODO: should go to redirect's Locale to see if it has some other preferred name?
+
+        # Looks like an error
+        Log(f"@@@Locale page '{self.PageName}' is not tagged as Locale, but is not in Wikidot format either", Print=False, isError=True)
+        if self.PageName != "":
             return self.PageName
 
-        # OK, it is not tagged as a Locale and is in Wikidot format.  If it's a redirect, follow the redirect!
-        if len(self.Redirect) > 0:
-            return self.Redirect    #TODO: should go to redirect's Locale to see if it has some other preferred name
+        return ""
 
-        assert False
 
 
     #-------------------------------------------------------------
@@ -130,7 +174,6 @@ class LocaleHandling:
                     LogSetHeader("Processing Locale redirect "+page.Name)
                     self.locales[page.Name]=Locale(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
 
-
     # key is full name, value is preferred name
     # Generally these will only be major (in both the fannish and mundane sense) cities.
     specialNames: Dict[str, str]={
@@ -159,7 +202,7 @@ class LocaleHandling:
         locale=self.locales[name]
         if not locale.IsLocale and locale.IsRedirect:
             locale=self.locales[locale.Redirect]
-        name=locale.Name
+        name=locale.PreferredName
 
         if name in self.specialNames.keys():
             return self.specialNames[name]
@@ -267,6 +310,7 @@ class LocaleHandling:
                     page=LocaleHandling.allPages[rslt]
                     out.append(Locale(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle))
                 else:
+                    out.append(Locale(NonPageName=rslt))
                     self.probableLocales.setdefault(rslt, [])
                     self.probableLocales[rslt].append(pagename)
         return out
@@ -318,6 +362,48 @@ class LocaleHandling:
 
         return out
 
+    # We have text which is supposedly a locale: Try to interpret it
+    def ScanForLocale(self, s: str, pagename: str) -> List[Locale]:
+
+        # Find the first locale
+        # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
+        # ([A-Z][a-z]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
+        # \[*  and  \]*             Lets us ignore spans of [[brackets]]
+        # The "[^a-zA-Z]"           Prohibits another letter immediately following the putative 2-UC state
+        out: List[Locale]=[]
+        found=False
+        s1=s.replace("[", "").replace("]", "")  # Remove brackets
+        m1=re.search("[A-Z][a-z.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
+        # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
+        if m1 is not None:
+            rslts=self.ScanForCityST(s1, pagename)
+            if len(rslts) > 0:
+                found=True
+                out.extend(self.AppendLocale(rslts, pagename))
+
+        if not found:
+            m2=re.search("\[\[[A-Z][a-z.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
+            # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
+            if m2 is not None:
+                rslts=self.ScanForCityCountry(s)
+                if len(rslts) > 0:
+                    found=True
+                    out.extend(self.AppendLocale(rslts, pagename))
+
+        if not found and m1 is not None:
+            # Now scan for a stand-alone City name
+            rslts=self.ScanForCity(s1)
+            if len(rslts) > 0:
+                found=True
+                out.extend(self.AppendLocale(rslts, pagename))
+
+        if not found and m2 is not None:
+            rslts=self.ScanForCity(s)
+            if len(rslts) > 0:
+                out.extend(self.AppendLocale(rslts, pagename))
+
+        return out
+
 
     def ScanForCityST(self, s: str, pagename: str) -> List[str]:
 
@@ -327,8 +413,7 @@ class LocaleHandling:
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
         # The "[^a-zA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m=re.search("([A-Z][a-z.]+\s+)?([A-Z][a-z.]+\s+)?([A-Z][a-z]+,?\s+)([A-Z]{2})[^a-zA-Z]",
-                    " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
+        m=re.search("([A-Z][a-z.]+\s+)?([A-Z][a-z.]+\s+)?([A-Z][a-z]+,?\s+)([A-Z]{2})[^a-zA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m is not None and len(m.groups()) > 1:
             groups=[x for x in m.groups() if x is not None]
@@ -340,8 +425,7 @@ class LocaleHandling:
 
             state=groups[-1].strip()
 
-            impossiblestates={"SF", "MC", "PR", "II", "IV", "VI", "IX", "XI", "XX", "VL", "XL", "LV",
-                              "LX"}  # PR: Progress Report; others Roman numerals; "LI" is reluctantly allowed because of Long Island (maybe a mistake?)
+            impossiblestates={"SF", "MC", "PR", "II", "IV", "VI", "IX", "XI", "XX", "VL", "XL", "LV", "LX"}  # PR: Progress Report; others Roman numerals; "LI" is reluctantly allowed because of Long Island (maybe a mistake?)
             if state not in impossiblestates:
                 # City should consist of a list of one or more capitalized tokens.
                 if len(city) > 0:
@@ -351,10 +435,10 @@ class LocaleHandling:
                         # If not -- if we have *exactly* "in Xxxx[,] XX" -- then we have a local (as best we can tell).  Return it.
                         loc=city[-1]+", "+state
                         if len(city) == 1:
-                            if loc in self.locales.keys():
-                                return [loc]
-                            self.probableLocales.setdefault(loc, [])
-                            self.probableLocales[loc].append(pagename)
+                            if loc not in self.locales.keys():
+                                self.probableLocales.setdefault(loc, [])
+                                self.probableLocales[loc].append(pagename)
+                            return [loc]
 
                         # Apparently we have more than one leading word.  Check the last word+state against the multiWordCities dictionary.
                         # If the multi-word city is found, we're good.
@@ -364,19 +448,19 @@ class LocaleHandling:
                             if type(tokens) == str:
                                 if tokens == " ".join(city[:-1]):
                                     name=tokens+" "+loc
-                                    if name in self.locales.keys():
-                                        return [name]
-                                    self.probableLocales.setdefault(name, [])
-                                    self.probableLocales[name].append(pagename)
+                                    if name not in self.locales.keys():
+                                        self.probableLocales.setdefault(name, [])
+                                        self.probableLocales[name].append(pagename)
+                                    return [name]
                             else:
                                 # It's a list of strings
                                 for token in tokens:
                                     if token == " ".join(city[:-1]):
                                         name=token+" "+loc
-                                        if name in self.locales.keys():
-                                            return [name]
-                                        self.probableLocales.setdefault(name, [])
-                                        self.probableLocales[name].append(pagename)
+                                        if name not in self.locales.keys():
+                                            self.probableLocales.setdefault(name, [])
+                                            self.probableLocales[name].append(pagename)
+                                        return [name]
         return []
 
 
@@ -453,3 +537,9 @@ class LocaleHandling:
         for i in range(len(tokens)-5, len(tokens)-1):
             s=" ".join(tokens[-i:])
 
+
+    #-------------------------------------------------------
+    def LocaleFromName(self, pagename: str) -> Locale:
+        if pagename not in LocaleHandling.locales.keys():
+            return Locale()
+        return LocaleHandling.locales[pagename]
