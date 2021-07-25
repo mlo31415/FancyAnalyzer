@@ -452,31 +452,21 @@ def main():
     # (Not all con series tables contain location information.)
     # Generate a report of cases where we have non-identical con information from both sources.
     with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
-        ii=1
         for page in fancyPagesDictByWikiname.values():
-            ii=2
             if not page.IsConInstance:
-                ii=3
                 #Log(f"{page=}")
-                ii=4
                 continue
 
             # The page is a convention page
-            ii=5
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
             if not loc.IsEmpty:    # If the page has a Locale set, it overrides
-                ii=6
                 if page.Name in conventions.keys():
-                    ii=7
                     conventions[page.Name].Locale=loc
-                    ii=8
                 continue
-            ii=9
 
             # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
             #TODO: Shouldn't we move this upwards and store the derived location in otherwise-empty page.Locales?
             m=LocaleHandling().ScanConPageforLocale(page.Source, page.Name)
-            ii=10
             if m is not None and len(m) > 0:
                 for locale in m:
                     # Find the convention in the conventions dictionary and add the location if appropriate.
