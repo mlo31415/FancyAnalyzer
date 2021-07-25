@@ -681,8 +681,8 @@ def main():
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
 
     # Ambiguous names will often end with something in parenthesis which need to be removed for this particular file
-    def RemoveTrailingParens(s: str) -> str:
-        return re.sub("\s\(.*\)$", "", s)       # Delete any trailing ()
+    def RemoveTrailingParens(ss: str) -> str:
+        return re.sub("\s\(.*\)$", "", ss)       # Delete any trailing ()
 
 
     # Some names are not worth adding to the list of people names.  Try to detect them.
