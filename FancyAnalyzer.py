@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from typing import Dict, List, Tuple, Optional, Union
 from dataclasses import dataclass
 
@@ -807,7 +806,6 @@ def main():
                 for ts in tagpowerset:
                     tagsetcounts.setdefault(str(ts), 0)
                     tagsetcounts[str(ts)]+=1
-                i=0
 
     Log(f"{datetime.now():%H:%M:%S}: Writing: Counts for tagpowersets.txt")
     with open("Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
