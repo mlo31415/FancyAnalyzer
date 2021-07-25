@@ -109,16 +109,34 @@ class Locale:
     #-------------------------------------------------------------
     # Compare two locations to see if they match
     def LocMatch(self, loc2: str) -> bool:
+
         # First, remove '[[' and ']]' from both locs
         loc1=self.PreferredName
         loc2=loc2.replace("[[", "").replace("]]", "")
+
+        if loc1 == loc2:
+            return True
+
+        # If one is empty and the other not, it'a a non-match
+        if loc1 == "" or loc2 == "":
+            return False
+
+        # if self redirects to loc 2 it's a match
+        if self.Redirect != "" and self.Redirect == loc2:
+            return True
+
+        # If loc 2 redirects to self, it's a match,a lso.  (A bit more work to determine.)
+        if loc2 not in LocaleHandling.locales.keys():
+            return False
+        locale2=LocaleHandling.locales[loc2]
+        if locale2.Redirect != "" and locale2.Redirect == self.PageName:
+            return True
 
         # Some names are special (e.g., Boston), wso we compare them in their reduced forms.
         if loc1 in LocaleHandling.specialNames.keys():
             loc1=LocaleHandling.specialNames[loc1]
         if loc2 in LocaleHandling.specialNames.keys():
             loc2=LocaleHandling.specialNames[loc2]
-
         return loc1 == loc2
 
 
