@@ -218,14 +218,14 @@ def main():
                     datetext=re.sub(pat, "", datetext).strip()
                 if len(datetext)> 0:
                     ds.append(datetext)
-                if len(ds) is None:
+                if len(ds) == 0:
                     Log("Date error: "+datetext)
                     continue
 
                 # We have N groups up to N-1 of which might be None
                 dates:List[FanzineDateRange]=[]
                 for d in ds:
-                    if d is not None and len(d) > 0:
+                    if len(d) > 0:
                         c, s=ScanForBracketedText(d, "s")
                         dr=FanzineDateRange().Match(s)
                         dr.Cancelled=c
@@ -845,7 +845,7 @@ def main():
                     continue
 
                 # If what's left lacks the Initialism tag, we want to list it
-                if fancyPage.Tags is None or "Initialism" not in fancyPage.Tags:
+                if "Initialism" not in fancyPage.Tags:
                     f.write(fancyPage.Name+": "+str(fancyPage.Tags)+"\n")
 
 
