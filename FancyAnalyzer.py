@@ -420,7 +420,6 @@ def main():
                         cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
                         dates[i].Cancelled=False    # We've xfered this to ConInstanceInfo and don't still want it here because it would print twice
                         v=False if cancelled else virtual
-                        conlocation.test=1
                         ci=ConInstanceInfo(_Link=seriesTableRowConEntries[i].Link, NameInSeriesList=seriesTableRowConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
                         if ci.DateRange.IsEmpty():
                             Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
