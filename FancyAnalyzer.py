@@ -631,11 +631,10 @@ def main():
     peopleReferences: Dict[str, List[str]]={}
     Log("***Creating dict of people references")
     for fancyPage in fancyPagesDictByWikiname.values():
-        if fancyPage.OutgoingReferences is not None:
-            for outRef in fancyPage.OutgoingReferences:
-                if fancyPage.IsPerson:
-                    peopleReferences.setdefault(outRef.LinkWikiName, [])
-                    peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
+        for outRef in fancyPage.OutgoingReferences:
+            if fancyPage.IsPerson:
+                peopleReferences.setdefault(outRef.LinkWikiName, [])
+                peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
 
     # Write out a file containing canonical names, each with a list of pages which refer to it.
     # The format will be
@@ -743,7 +742,7 @@ def main():
             if not fp.IsRedirectpage:
                 tagset=TagSet()
                 tags=fp.Tags
-                if tags is not None:
+                if len(tags) > 0:
                     for tag in tags:
                         if tag not in ignoredTags:
                             tagset.add(tag)
@@ -789,22 +788,21 @@ def main():
         if not fp.IsRedirectpage:
             tagpowerset=set()   # of TagSets
             tags=fp.Tags
-            if tags is not None:
-                # The power set is a set of all the subsets.
-                # For each tag, we double the power set by adding a copy of itself with that tag added to each of the previous sets
-                for tag in tags:
-                    if tag not in ignoredTags:
-                        if len(tagpowerset) > 0:
-                            # Duplicate and extend any existing TagSets
-                            temptagpowerset=tagpowerset.copy()
-                            for st in temptagpowerset:
-                                st.add(tag)
-                            tagpowerset=tagpowerset.union(temptagpowerset)
-                        tagpowerset.add(TagSet(tag))  # Then add a TagSet consisting of just the tag, also
-                # Now run through all the members of the power set, incrementing the global counts
-                for ts in tagpowerset:
-                    tagsetcounts.setdefault(str(ts), 0)
-                    tagsetcounts[str(ts)]+=1
+            # The power set is a set of all the subsets.
+            # For each tag, we double the power set by adding a copy of itself with that tag added to each of the previous sets
+            for tag in tags:
+                if tag not in ignoredTags:
+                    if len(tagpowerset) > 0:
+                        # Duplicate and extend any existing TagSets
+                        temptagpowerset=tagpowerset.copy()
+                        for st in temptagpowerset:
+                            st.add(tag)
+                        tagpowerset=tagpowerset.union(temptagpowerset)
+                    tagpowerset.add(TagSet(tag))  # Then add a TagSet consisting of just the tag, also
+            # Now run through all the members of the power set, incrementing the global counts
+            for ts in tagpowerset:
+                tagsetcounts.setdefault(str(ts), 0)
+                tagsetcounts[str(ts)]+=1
 
     Log(f"{datetime.now():%H:%M:%S}: Writing: Counts for tagpowersets.txt")
     with open("Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
@@ -818,7 +816,7 @@ def main():
     with open("Apazines and clubzines that aren't fanzines.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             # Then all the redirects to one of those pages.
-            if fancyPage.Tags is not None and ("Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags) and "Fanzine" not in fancyPage.Tags:
+            if ("Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags) and "Fanzine" not in fancyPage.Tags:
                 f.write(fancyPage.Name+"\n")
 
 
