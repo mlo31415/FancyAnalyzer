@@ -83,7 +83,7 @@ def main():
             if l>1000:
                 Log("--", noNewLine=l%20000 != 0)  # Add a newline only when divisible by 20,000
             Log(str(l), noNewLine=True)
-    Log("   "+str(len(fancyPagesDictByWikiname))+" semi-unique links found")
+    Log(f"   {len(fancyPagesDictByWikiname)} semi-unique links found")
 
 
     Log(f"{datetime.now():%H:%M:%S}: Writing: Redirects to Wikidot pages.txt")
