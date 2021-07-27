@@ -247,7 +247,6 @@ def main():
                 # Get the corresponding convention name(s).
                 context=row[conColumn]
                 # Clean up the text
-                context=context.replace("[[", "@@")  # The square brackets are Regex special characters. This substitution makes the patterns simpler to read
                 # Convert the HTML characters some people have inserted into their ascii equivalents
                 context=context.replace("&nbsp;", " ").replace("&#8209;", "-")
                 # And get rid of hard line breaks
@@ -257,7 +256,7 @@ def main():
 
                 context=context.strip()
 
-                if context.count("@@") != context.count("]]"):
+                if context.count("[[") != context.count("]]"):
                     Log("'"+row[conColumn]+"' has unbalanced double brackets. This is unlikely to end well...", isError=True)
 
                 # An individual name is of one of these forms:
@@ -287,10 +286,10 @@ def main():
                 def SplitConText(constr: str) -> Tuple[str, str]:
                     # Now convert all link|text to separate link and text
                     # Do this for s1 and s2
-                    m=re.match("@@(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
+                    m=re.match("\[\[(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
                     if m is not None:
                         return m.groups()[0], m.groups()[1]
-                    m = re.match("@@(.+)]]$", constr)  # Split xxx|yyy into xxx and yyy
+                    m = re.match("\[\[(.+)]]$", constr)  # Split xxx|yyy into xxx and yyy
                     if m is not None:
                         return "", m.groups()[0]
                     return "", constr
@@ -315,7 +314,7 @@ def main():
                         return con, constr
 
                     # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
-                    pat="^(@@.*?]])"    # Anchored; '[['; non-greedy string of characters; ']]'
+                    pat="^(\[\[.*?]])"    # Anchored; '[['; non-greedy string of characters; ']]'
                     m=re.match(pat, constr)
                     if m is not None:
                         s=m.groups()[0]     # Get the patched part
