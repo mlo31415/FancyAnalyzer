@@ -289,7 +289,7 @@ def main():
                     m=re.match("\[\[(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
                     if m is not None:
                         return m.groups()[0], m.groups()[1]
-                    m = re.match("\[\[(.+)]]$", constr)  # Split xxx|yyy into xxx and yyy
+                    m = re.match("\[\[(.+)]]$", constr)  # Look for a simple [[text]] page reference
                     if m is not None:
                         return "", m.groups()[0]
                     return "", constr
