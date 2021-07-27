@@ -315,7 +315,7 @@ def main():
                         return con, constr
 
                     # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
-                    pat="^(@@(:?.*?)]])"
+                    pat="^(@@.*?]])"    # Anchored; '[['; non-greedy string of characters; ']]'
                     m=re.match(pat, constr)
                     if m is not None:
                         s=m.groups()[0]     # Get the patched part
