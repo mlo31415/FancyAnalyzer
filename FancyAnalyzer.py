@@ -295,7 +295,9 @@ def main():
                         return "", m.groups()[0]
                     return "", constr
 
+                #----------------------------------------------------------
                 # We assume that the cancelled con names precede the uncancelled ones
+                # On each call, we find the first con name and return it (as a ConName) and the remaining text as a tuple
                 def NibbleCon(constr: str) -> Tuple[Optional[ConName], str]:
                     constr=constr.strip()
                     if len(constr) == 0:
@@ -316,15 +318,18 @@ def main():
                     pat="^(@@(:?.*?)]])"
                     m=re.match(pat, constr)
                     if m is not None:
-                        s=m.groups()[0]
-                        constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
-                        l, t=SplitConText(s)
+                        s=m.groups()[0]     # Get the patched part
+                        constr=re.sub(pat, "", constr).strip()  # And remove it fromt he string and trim whitespace
+                        l, t=SplitConText(s)           # If text contains a "|" split it on the "|"
                         con=ConName(Name=t, Link=l, Cancelled=False)
                         return con, constr
 
+                    # So far we've found nothing
                     if len(constr) > 0:
+                        # If the remaining stuff starts with a colon, return a null result
                         if constr[0] == ":":
                             return None, ""
+                        # If it there's a colon later on, the stuff before the colon is a con name.  (Why?)
                         if ":" in constr:
                             constr=constr.split(":")[0]
                         con=ConName(Name=constr)
@@ -395,7 +400,7 @@ def main():
                 # This is one con with multiple names
                 if type(seriesTableRowConEntries[0]) is list:
                     # By definition there is only one element. Extract it.  There may be more than one date.
-                    assert len(seriesTableRowConEntries) == 1 and len(seriesTableRowConEntries[0])>0
+                    assert len(seriesTableRowConEntries) == 1 and len(seriesTableRowConEntries[0]) > 0
                     for dt in dates:
                         override=""
                         cancelled=dt.Cancelled
@@ -413,6 +418,7 @@ def main():
                         ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
                         AppendCon(conventions, ci)
                         Log("#append 1: "+str(ci), Print=False)
+
                 # OK, in all the other cases cons is a list[ConInstanceInfo]
                 elif len(seriesTableRowConEntries) == len(dates):
                     # Add each con with the corresponding date
