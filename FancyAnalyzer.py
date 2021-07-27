@@ -283,6 +283,7 @@ def main():
                     def __lt__(self, val: ConName) -> bool:
                         return self.Name < val.Name
 
+                # Take a Wikidot page reference and extract its text and link (if different)
                 def SplitConText(constr: str) -> Tuple[str, str]:
                     # Now convert all link|text to separate link and text
                     # Do this for s1 and s2
