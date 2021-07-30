@@ -28,26 +28,12 @@ def main():
     #
     #       The URLname and WindowsFilename can be derived from the WikiPagename, but not necessarily vice-versa
 
-    #TODO: Revise this
-
-
-    # There will be a dictionary, nameVariants, indexed by every form of every name. The value will be the canonical form of the name.
-    # There will be a second dictionary, people, indexed by the canonical name and containing an unordered list of F3Reference structures
-    # A F3Reference will contain:
-    #       The canonical name
-    #       The as-used name
-    #       An importance code (initially 1, 2 or 3 with 3 being least important)
-    #       If a reference to Fancy, the name of the page (else None)
-    #       If a reference to fanac.org, the URL of the relevant page (else None)
-    #       If a redirect, the redirect name
-
-    fancySitePath=r"C:\Users\mlo\Documents\usr\Fancyclopedia\Python\site"   # A local copy of the site maintained by FancyDownloader
-    LogOpen("Log.txt", "Error Log.txt")
-
     # The local version of the site is a pair (sometimes also a folder) of files with the Wikidot name of the page.
     # <name>.txt is the text of the current version of the page
     # <name>.xml is xml containing meta date. The metadata we need is the tags
     # If there are attachments, they're in a folder named <name>. We don't need to look at that in this program
+    fancySitePath=r"C:\Users\mlo\Documents\usr\Fancyclopedia\Python\site"   # Location of a local copy of the site maintained by FancyDownloader
+    LogOpen("Log.txt", "Error Log.txt")
 
     # Create a list of the pages on the site by looking for .txt files and dropping the extension
     Log("***Querying the local copy of Fancy 3 to create a list of all Fancyclopedia pages")
@@ -55,6 +41,7 @@ def main():
     allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f[-4:] == ".txt"]
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("index_")]     # Drop index pages
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
+    # The following lines are for debugging and are used to select a subset of the pages for greater speed
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:7].lower() == "boskone"]        # Just to cut down the number of pages for debugging purposes
@@ -64,13 +51,13 @@ def main():
     for prefix in excludedPrefixes:
         allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]
 
-    # And we exclude certain pages
+    # And we exclude certain specific pages
     excludedPages=["Admin", "Standards", "Test Templates"]
     allFancy3PagesFnames=[f for f in allFancy3PagesFnames if f not in excludedPages]
     Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
-    # Build the master dictionary of all Fancy 3 pages.
-    fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Val is a FancyPage class containing all the references on the page
+    # The master dictionary of all Fancy 3 pages.
+    fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Value is a F3Page class containing all the references, tags, etc. on the page
 
     Log("***Scanning local copies of pages for links and other info")
     for pageFname in allFancy3PagesFnames:
