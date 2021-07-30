@@ -207,6 +207,7 @@ class LocaleHandling:
         "Los Angeles, CA": "Los Angeles",
         "Melbourne, Australia": "Melbourne",
         "New York, NY": "New York",
+        "New York City": "New York",
         "Philadelphia, PA": "Philadelphia",
         "San Francisco, CA": "San Francisco",
         "Sydney, Australia": "Sydney"
