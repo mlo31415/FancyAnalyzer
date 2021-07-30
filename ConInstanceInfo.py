@@ -37,10 +37,7 @@ class ConInstanceInfo:
     def __post_init__(self):
         if type(self.Loc) is str:
             self._loc=LocaleHandling().LocaleFromName(self.Loc)  #()
-    # temp: InitVar[str]
-    # a: int = field(init=False)
-    # def __post_init__(self, temp):
-    #     self.a = int(temp)
+
 
     @property
     def Locale(self) -> Locale:
