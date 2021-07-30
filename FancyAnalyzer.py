@@ -78,7 +78,7 @@ def main():
         for key, val in fancyPagesDictByWikiname.items():
             for link in val.OutgoingReferences:
                 if link.LinkWikiName in fancyPagesDictByWikiname.keys():
-                    if fancyPagesDictByWikiname[link.LinkWikiName].IsWikidotRedirect:
+                    if fancyPagesDictByWikiname[link.LinkWikiName].IsWikidotRedirectPage:
                         print(f"Page '{key} has a pointer to Wikidot redirect page'{link.LinkWikiName}'", file=f)
 
 
