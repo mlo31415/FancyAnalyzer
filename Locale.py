@@ -68,7 +68,10 @@ class Locale:
     # Is this nothing but a pointer for the Wikidot canonical name of the page?
     # Note that we can't detect a Wikidot redirect that is only a single lower case word
     def IsWikidotRedirect(self) -> bool:
-        return self.Redirect and not self.IsTaggedLocale and self.PageName == WikidotCononicizeName(self.PageName) and "_" in self.PageName
+        if not self.Redirect:
+            return False
+        #TODO Is there some way we can check on presence of Wikidot tag?
+        return  not self.IsTaggedLocale and self.PageName == WikidotCononicizeName(self.PageName) and "_" in self.PageName
 
     @property
     # Is this a page in the Fancy wiki?
