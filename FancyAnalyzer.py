@@ -667,6 +667,21 @@ def main():
                 f.write(f"{fancyPage.Name} --> {dest}\n")
 
 
+    # List pages which are not referred to anywhere and which are not Wikidot redirects
+    Log(f"{datetime.now():%H:%M:%S}: Writing: Pages never referred to.txt")
+    with open("Pages never referred to.txt", "w+", encoding='utf-8') as f:
+        alloutgoingrefs=set([x.LinkWikiName for y in fancyPagesDictByWikiname.values() for x in y.OutgoingReferences])
+        alloutgoingrefsF3name=[]
+        for x in alloutgoingrefs:
+            if x in fancyPagesDictByWikiname.keys():
+                alloutgoingrefsF3name.append(x)
+        for fancyPage in fancyPagesDictByWikiname.values():
+            if fancyPage.IsWikidotRedirectPage:
+                continue        # We don't care about these!
+            if fancyPage.Name not in alloutgoingrefsF3name:
+                f.write(f"{fancyPage.Name}\n")  # We're not OK
+
+
     ##################
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
 
