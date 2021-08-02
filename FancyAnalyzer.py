@@ -597,16 +597,7 @@ def main():
                         peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
 
     # ...
-    Log("***Writing reports")
 
-    # Next, a list of redirects with a missing target
-    Log(f"{datetime.now():%H:%M:%S}: Writing: Redirects with missing target.txt")
-    allFancy3Pagenames=set([WindowsFilenameToWikiPagename(n) for n in allFancy3PagesFnames])
-    with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
-        for key in redirects.keys():
-            dest=WikiExtractLink(redirects[key])
-            if dest not in allFancy3Pagenames:
-                f.write(f"{key} --> {dest}\n")
 
     ###################################################
     # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
@@ -629,6 +620,7 @@ def main():
                 peopleReferences.setdefault(outRef.LinkWikiName, [])
                 peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
 
+    Log("***Writing reports")
     # Write out a file containing canonical names, each with a list of pages which refer to it.
     # The format will be
     #     **<canonical name>
@@ -660,7 +652,8 @@ def main():
 
     # Next, a list of redirects with a missing target
     Log(f"{datetime.now():%H:%M:%S}: Writing: Redirects with missing target.txt")
-    with open("Redirects with missing target.txt", "w+", encoding='utf-8') as f:
+    allFancy3Pagenames=set([WindowsFilenameToWikiPagename(n) for n in allFancy3PagesFnames])
+    with open("Redirects with missing target 2.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             dest=fancyPage.Redirect
             if dest != "" and dest not in allFancy3Pagenames:
