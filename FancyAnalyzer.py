@@ -582,22 +582,6 @@ def main():
                                     if inverse[1:] != inverse[1:].lower() and " " in inverse:   # There's a capital letter after the 1st and also a space
                                         f.write(f"{fancyPage.Name} is pointed to by {inverse} which is not a Locale\n")
 
-    # ...
-    # Create a dictionary of page references for people pages.
-    # The key is a page's canonical name; the value is a list of pages at which they are referenced.
-    peopleReferences: Dict[str, List[str]]={}
-    Log("***Creating dict of people references")
-    for fancyPage in fancyPagesDictByWikiname.values():
-        if fancyPage.IsPerson and len(fancyPage.OutgoingReferences) > 0:
-            peopleReferences.setdefault(fancyPage.Name, [])
-            for outRef in fancyPage.OutgoingReferences:
-                if outRef.LinkWikiName in fancyPagesDictByWikiname:
-                    if fancyPagesDictByWikiname[outRef.LinkWikiName].IsPerson:
-                        peopleReferences.setdefault(outRef.LinkWikiName, [])
-                        peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
-
-    # ...
-
 
     ###################################################
     # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
@@ -610,14 +594,14 @@ def main():
 
     # Create a dictionary of page references for people pages.
     # The key is a page's canonical name; the value is a list of pages at which they are referenced.
-
-    # Go through all outgoing references on the pages and add those which reference a person to that person's list
     peopleReferences: Dict[str, List[str]]={}
     Log("***Creating dict of people references")
     for fancyPage in fancyPagesDictByWikiname.values():
+        if fancyPage.IsPerson:
+            peopleReferences[fancyPage.Name]=[]
+    for fancyPage in fancyPagesDictByWikiname.values():
         for outRef in fancyPage.OutgoingReferences:
-            if fancyPage.IsPerson:
-                peopleReferences.setdefault(outRef.LinkWikiName, [])
+            if outRef.LinkWikiName in peopleReferences.keys():
                 peopleReferences[outRef.LinkWikiName].append(fancyPage.Name)
 
     Log("***Writing reports")
@@ -629,8 +613,8 @@ def main():
     #     ...
     #     **<canonical name>
     #     ...
-    Log(f"{datetime.now():%H:%M:%S}: Writing: Referring pages.txt")
-    with open("Referring pages.txt", "w+", encoding='utf-8') as f:
+    Log(f"{datetime.now():%H:%M:%S}: Writing: Referring pages for People.txt")
+    with open("Referring pages for People.txt", "w+", encoding='utf-8') as f:
         for person, referringpagelist in peopleReferences.items():
             f.write(f"**{person}\n")
             for pagename in referringpagelist:
