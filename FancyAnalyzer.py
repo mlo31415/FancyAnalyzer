@@ -10,7 +10,7 @@ from datetime import datetime
 from Locale import LocaleHandling, Locale
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
-from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText
+from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText,WikidotCanonicizeName
 from ConInstanceInfo import ConInstanceInfo
 from FanzineIssueSpecPackage import FanzineDateRange
 
@@ -668,6 +668,21 @@ def main():
 
 
     # List pages which are not referred to anywhere and which are not Wikidot redirects
+    Log(f"{datetime.now():%H:%M:%S}: Writing: Wikidot redirects with no Mediawiki equivalent.txt")
+    with open("Wikidot redirects with no Mediawiki equivalent.txt", "w+", encoding='utf-8') as f:
+        setOfWikidotPages=set(x.Name for x in fancyPagesDictByWikiname.values() if x.IsWikidotRedirectPage)
+        for page in fancyPagesDictByWikiname.values():
+            if not page.IsWikidotRedirectPage:
+                wikiname=WikidotCanonicizeName(page.Name)
+                if wikiname in setOfWikidotPages:
+                    setOfWikidotPages.remove(wikiname)
+
+        listOfOrphanWikidotRedirects=list(setOfWikidotPages)
+        for name in listOfOrphanWikidotRedirects:
+            print(name, file=f)
+
+
+    # List pages which are not referred to anywhere and which are not Wikidot redirects
     Log(f"{datetime.now():%H:%M:%S}: Writing: Pages never referred to.txt")
     with open("Pages never referred to.txt", "w+", encoding='utf-8') as f:
         alloutgoingrefs=set([x.LinkWikiName for y in fancyPagesDictByWikiname.values() for x in y.OutgoingReferences])
@@ -939,6 +954,7 @@ def main():
         f.write(f"  APAs: {napas}\n")
         f.write(f"  Club: {nclubs}\n")
         f.write(f"  Conventions: {nconinstances}\n")
+
 
 
 if __name__ == "__main__":
