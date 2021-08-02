@@ -6,7 +6,7 @@ import re
 
 from F3Page import F3Page
 from Log import LogSetHeader, Log
-from HelpersPackage import SplitOnSpan, WikidotCononicizeName
+from HelpersPackage import SplitOnSpan, WikidotCanonicizeName
 
 
 ############################################################################################
@@ -71,7 +71,7 @@ class Locale:
         if not self.Redirect:
             return False
         #TODO Is there some way we can check on presence of Wikidot tag?
-        return  not self.IsTaggedLocale and self.PageName == WikidotCononicizeName(self.PageName) and "_" in self.PageName
+        return  not self.IsTaggedLocale and self.PageName == WikidotCanonicizeName(self.PageName) and "_" in self.PageName
 
     @property
     # Is this a page in the Fancy wiki?
