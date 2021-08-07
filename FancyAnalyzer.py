@@ -83,10 +83,10 @@ def main():
 
 
     # Build a locale database
-    Log("\n\n***Building a locale dictionary")
+    Log("\n***Building a locale dictionary")
     LocaleHandling().Create(fancyPagesDictByWikiname)
 
-    Log("***Analyzing convention series tables")
+    Log("***Analyzing convention series tables", Clear=True)
 
     # Scan for a virtual flag
     # Return True/False and remaining text after V-flag is removed
@@ -128,18 +128,18 @@ def main():
             listConNameHeaders=["Convention", "Convention Name", "Name"]
             conColumn=CrosscheckListElement(listConNameHeaders, table.Headers)
             if conColumn is None:
-                Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+                Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True, Print=False)
                 continue
 
             listConDateHeaders=["Date", "Dates"]
             dateColumn=CrosscheckListElement(listConDateHeaders, table.Headers)
             if dateColumn is None:
-                Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True)
+                Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True, Print=False)
                 continue
 
             # Make sure the table has rows
             if table.Rows is None:
-                Log(f"***Table {index+1} of {len(page.Tables)} looks like a convention table, but has no rows", isError=True)
+                Log(f"***Table {index+1} of {len(page.Tables)} looks like a convention table, but has no rows", isError=True, Print=False)
                 continue
 
             # We have a convention table.  Walk it, extracting the individual conventions
@@ -217,12 +217,12 @@ def main():
                         dr=FanzineDateRange().Match(s)
                         dr.Cancelled=c
                         if dr.Duration() > 7:
-                            Log("??? convention has long duration: "+str(dr), isError=True)
+                            Log("??? convention has long duration: "+str(dr), isError=True, Print=False)
                         if not dr.IsEmpty():
                             dates.append(dr)
 
                 if len(dates) == 0:
-                    Log(f"***No dates found - {page.Name}  row: {row}", isError=True)
+                    Log(f"***No dates found - {page.Name}  row: {row}", isError=True, Print=False)
                 elif len(dates) == 1:
                     Log(f"{page.Name}  row: {row}: 1 date: {dates[0]}", Print=False)
                 else:
@@ -364,7 +364,7 @@ def main():
 
                 # Now we have cons and dates and need to create the appropriate convention entries.
                 if len(seriesTableRowConEntries) == 0 or len(dates) == 0:
-                    Log("Scan abandoned: ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
+                    Log("Scan abandoned: ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True, Print=False)
                     continue
 
                 # Don't add duplicate entries
@@ -375,13 +375,13 @@ def main():
                         conDict[cii.NameInSeriesList]=cii
                     elif not cii.Locale.IsEmpty:
                         if hits[0].Locale != cii.Locale:
-                            Log("AppendCon:  existing:  "+str(hits[0]))
-                            Log("            duplicate - "+str(cii))
+                            Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
+                            Log("            duplicate - "+str(cii), isError=True, Print=False)
                             # Name exists.  But maybe we have some new information on it?
                             # If there are two sources for the convention's location and one is empty, use the other.
                             if hits[0].Locale.IsEmpty:
                                 hits[0].Locale=cii.Locale
-                                Log("   ...Locale has been updated")
+                                Log("   ...Locale has been updated", isError=True, Print=False)
 
                 # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
                 # This is one con with multiple names
