@@ -351,7 +351,7 @@ class LocaleHandling:
         out: List[Locale]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m1=re.search("in [A-Z][a-z.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
+        m1=re.search("[^A-Za-z]in [A-Z][a-z.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m1 is not None:
             s1=s1[m1.span()[0]+2:]      # Drop the "in" token
@@ -361,7 +361,7 @@ class LocaleHandling:
                 out.extend(self.AppendLocale(rslts, pagename))
 
         if not found:
-            m2=re.search("in \[\[[A-Z][a-z.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
+            m2=re.search("[^A-Za-z]in \[\[[A-Z][a-z.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
             # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
             if m2 is not None:
                 s2=s[m2.span()[0]+2:]  # Drop the "in" token
