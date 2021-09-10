@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import os
 import re
 from datetime import datetime
+from collections import defaultdict
 
 from Locale import LocaleHandling, Locale
 from F3Page import F3Page, DigestPage, TagSet
@@ -558,13 +559,11 @@ def main():
     # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
     Log("***Create inverse redirects tables")
     redirects: Dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
-    inverseRedirects:Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+    inverseRedirects:Dict[str, List[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
     for fancyPage in fancyPagesDictByWikiname.values():
         if fancyPage.Redirect != "":
             redirects[fancyPage.Name]=fancyPage.Redirect
-            inverseRedirects.setdefault(fancyPage.Redirect, [])
             inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
-            inverseRedirects.setdefault(fancyPage.Redirect, [])
             if fancyPage.Redirect != fancyPage.Redirect:
                 inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
@@ -586,10 +585,9 @@ def main():
     ###################################################
     # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
     # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
-    inverseRedirects: Dict[str, List[str]]={}     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+    inverseRedirects: Dict[str, List[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
     for fancyPage in fancyPagesDictByWikiname.values():
         if fancyPage.Redirect != "":
-            inverseRedirects.setdefault(fancyPage.Redirect, [])
             inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
     # Create a dictionary of page references for people pages.
@@ -736,8 +734,8 @@ def main():
     ignoredTags.union({"Fancy1", "Fancy2"})
 
     def ComputeTagCounts(pageDict: Dict[str, F3Page], ignoredTags: set) -> Tuple[Dict[str, int], Dict[str, int]]:
-        tagcounts: Dict[str, int]={}
-        tagsetcounts: Dict[str, int]={"notags": 0}
+        tagcounts: Dict[str, int]=defaultdict(int)
+        tagsetcounts: Dict[str, int]=defaultdict(int)
         for fp in pageDict.values():
             if not fp.IsRedirectpage:
                 tagset=TagSet()
@@ -746,9 +744,7 @@ def main():
                     for tag in tags:
                         if tag not in ignoredTags:
                             tagset.add(tag)
-                        tagcounts.setdefault(tag, 0)
                         tagcounts[tag]+=1
-                    tagsetcounts.setdefault(str(tagset), 0)
                     tagsetcounts[str(tagset)]+=1
                 else:
                     tagsetcounts["notags"]+=1
@@ -783,7 +779,7 @@ def main():
 
     ##################
     # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
-    tagsetcounts: Dict[str, int]={}
+    tagsetcounts: Dict[str, int]=defaultdict(int)
     for fp in fancyPagesDictByWikiname.values():
         if not fp.IsRedirectpage:
             tagpowerset=set()   # of TagSets
@@ -801,7 +797,6 @@ def main():
                     tagpowerset.add(TagSet(tag))  # Then add a TagSet consisting of just the tag, also
             # Now run through all the members of the power set, incrementing the global counts
             for ts in tagpowerset:
-                tagsetcounts.setdefault(str(ts), 0)
                 tagsetcounts[str(ts)]+=1
 
     Log(f"{datetime.now():%H:%M:%S}: Writing: Counts for tagpowersets.txt")

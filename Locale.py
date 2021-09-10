@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List
 from dataclasses import dataclass
+from collections import defaultdict
 
 import re
 
@@ -175,7 +176,7 @@ class LocaleHandling:
 
     # We also identify some things as probable locales which are not tagged directly or indirectly as locales
     # Maintain a dict of lists of pages that contain them
-    probableLocales: Dict[str, List[str]]={}
+    probableLocales: Dict[str, List[str]]=defaultdict(list)
 
     # This will be a pointer to fancyPagesDictByWikiname
     allPages: Dict[str, F3Page]={}
@@ -333,7 +334,6 @@ class LocaleHandling:
                     out.append(Locale(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle))
                 else:
                     out.append(Locale(NonPageName=rslt))
-                    self.probableLocales.setdefault(rslt, [])
                     self.probableLocales[rslt].append(pagename)
         return out
 
@@ -458,7 +458,6 @@ class LocaleHandling:
                         loc=city[-1]+", "+state
                         if len(city) == 1:
                             if loc not in self.locales.keys():
-                                self.probableLocales.setdefault(loc, [])
                                 self.probableLocales[loc].append(pagename)
                             return [loc]
 
@@ -471,7 +470,6 @@ class LocaleHandling:
                                 if tokens == " ".join(city[:-1]):
                                     name=tokens+" "+loc
                                     if name not in self.locales.keys():
-                                        self.probableLocales.setdefault(name, [])
                                         self.probableLocales[name].append(pagename)
                                     return [name]
                             else:
@@ -480,7 +478,6 @@ class LocaleHandling:
                                     if token == " ".join(city[:-1]):
                                         name=token+" "+loc
                                         if name not in self.locales.keys():
-                                            self.probableLocales.setdefault(name, [])
                                             self.probableLocales[name].append(pagename)
                                         return [name]
         return []
