@@ -845,7 +845,7 @@ def main():
     ##################
     # Tagging Oddities
     # Make lists of odd tag combinations which may indicate something wrong
-    Log("Tagging oddities.txt")
+    Log("Writing: Tagging oddities.txt")
 
     def WriteSelectedTags(fancyPagesDictByWikiname: Dict[str, F3Page], select, f):
         f.write("-------------------------------------------------------\n")
