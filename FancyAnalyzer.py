@@ -519,12 +519,12 @@ def main():
             if len(con.Override) > 0:
                 context=con.Override
             else:
-                context="[["+str(con.NameInSeriesList)+"]]"
+                context=f"[[{con.NameInSeriesList}]]"
             if con.Virtual:
-                context="''"+context+" (virtual)''"
+                context=f"''{context} (virtual)''"
             else:
                 if len(con.Locale.Link) > 0:
-                    context+="&nbsp;&nbsp;&nbsp;<small>("+con.Locale.Link+")</small>"
+                    context+=f"&nbsp;&nbsp;&nbsp;<small>({con.Locale.Link})</small>"
 
             # Now write the line
             # We have two levels of date headers:  The year and each unique date within the year
@@ -547,7 +547,7 @@ def main():
             if con.Cancelled:
                 f.write(f"<s>{context}</s>\n")
             else:
-                f.write(context+"\n")
+                f.write(f"{context}\n")
 
 
         f.write("</tab>\n")
