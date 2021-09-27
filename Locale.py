@@ -20,7 +20,7 @@ from HelpersPackage import SplitOnSpan, WikidotCanonicizeName
 # In addition, a local can be created for a non-page.  In this case only member NonPageName is set
 @dataclass
 class Locale:
-    PageName: str=""        # The Fancy 3 page name.
+    PageName: str=""        # The Fancy 3 page name of this Locale.
     DisplayName: str=""     # If there's a MediaWiki Displayname override, put it here. Otherwise empty string
     Redirect: str=""        # If this is a redirect page, the page name of the target. Otherwise empty string
     IsTaggedLocale: bool=False    # Is this page tagged "Locale"?
@@ -33,6 +33,14 @@ class Locale:
             self.IsTaggedLocale == val.IsTaggedLocale and \
             self.NonPageName == val. NonPageName
 
+    def __str__(self) -> str:
+        if len(self.DisplayName) > 0:
+            return self.DisplayName
+        if len(self.PageName) > 0:
+            return self.PageName
+        if len(self.PageName) == 0 and len(self.DisplayName) == 0 and len(self.Redirect) == 0 and not self.IsTaggedLocale and len(self.NonPageName) == 0:
+            return ""
+        return f"Locale({self.PageName=}  {self.DisplayName=}  {self.Redirect=}  {self.IsTaggedLocale=}  {self.NonPageName=})"
 
 
     @property
