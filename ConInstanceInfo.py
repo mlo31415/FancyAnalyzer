@@ -25,13 +25,13 @@ class ConInstanceInfo:
     Override: str=""    # In certain complex cases (a convention with multiple names each of which are linked) we need to override normal name/link handling.
 
     def __str__(self) -> str:
-        s="Link="+self.Link+"  Name="+self.NameInSeriesList+"  Date="+str(self.DateRange)+"  Location="+str(self.Loc)
+        s=f"Link={self.Link}  Name={self.NameInSeriesList}  Date={self.DateRange}  Location={self.Loc}"
         if self.Cancelled and not self.DateRange.Cancelled:     # Print this cancelled only if we have not already done so in the date range
             s+="  cancelled=True"
         if self.Virtual:
-            s+=" virtual=True"
+            s+="  virtual=True"
         if len(self.Override) > 0:
-            s+="  Override="+self.Override
+            s+=f"  Override={self.Override}"
         return s
 
     def __post_init__(self):

@@ -405,7 +405,7 @@ def main():
                         #TODO: This will cause a name of "dummy" to potentially appear in many cases.  Is this a problem?
                         ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
                         AppendCon(conventions, ci)
-                        Log("#append 1: "+str(ci), Print=False)
+                        Log(f"#append 1: {ci}", Print=False)
 
                 # OK, in all the other cases cons is a list[ConInstanceInfo]
                 elif len(seriesTableRowConEntries) == len(dates):
@@ -416,8 +416,8 @@ def main():
                         v=False if cancelled else virtual
                         ci=ConInstanceInfo(_Link=seriesTableRowConEntries[i].Link, NameInSeriesList=seriesTableRowConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
                         if ci.DateRange.IsEmpty():
-                            Log("***"+ci.Link+"has an empty date range: "+str(ci.DateRange), isError=True)
-                        Log("#append 2: "+str(ci), Print=False)
+                            Log(f"***{ci.Link} has an empty date range: {ci.DateRange}", isError=True)
+                        Log(f"#append 2: {ci}", Print=False)
                         AppendCon(conventions, ci)
                 elif len(seriesTableRowConEntries) > 1 and len(dates) == 1:
                     # Multiple cons all with the same dates
@@ -427,7 +427,7 @@ def main():
                         v=False if cancelled else virtual
                         ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
                         AppendCon(conventions, ci)
-                        Log("#append 3: "+str(ci), Print=False)
+                        Log(f"#append 3: {ci}", Print=False)
                 elif len(seriesTableRowConEntries) == 1 and len(dates) > 1:
                     for dt in dates:
                         cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
@@ -435,9 +435,9 @@ def main():
                         v=False if cancelled else virtual
                         ci=ConInstanceInfo(_Link=seriesTableRowConEntries[0].Link, NameInSeriesList=seriesTableRowConEntries[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                         AppendCon(conventions, ci)
-                        Log("#append 4: "+str(ci), Print=False)
+                        Log(f"#append 4: {ci}", Print=False)
                 else:
-                    Log("Can't happen! ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True)
+                    Log(f"Can't happen! ncons={len(seriesTableRowConEntries)}  len(dates)={len(dates)}", isError=True)
 
 
     # OK, all of the con series have been mined.  Now let's look through all the con instances and see if we can get more location information from them.
