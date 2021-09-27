@@ -542,7 +542,7 @@ def main():
                     f.write(f"{con.DateRange}||")
                     currentDateRange=con.DateRange
                 else:
-                    f.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' ' ||")
+                    f.write(" ||")
 
             if con.Cancelled:
                 f.write(f"<s>{context}</s>\n")
