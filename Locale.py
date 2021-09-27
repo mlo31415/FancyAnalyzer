@@ -540,15 +540,18 @@ class LocaleHandling:
 
 
     def ScanForCity(self, s: str) -> List[str]:
-        # Look for the pattern "in [[City Name]]"
-        # This has the fault that it can find something like "....in [[John Campbell]]'s report" and think that "John Campbell" is a locale.
-        # Fortunately, this will nearly always happen *after* the first sentence which contains the actual locale, and we ignore second and later hits
+        # Look for the pattern "[[One Or More Uppercase Names]]"
         # Pattern:
-        # Capture "in" followed by "[[" followed by a group
-        # The group is a possibly-repeated non-capturing group
-        #       which is a UC letter followed by one or more letters followed by an optional period or comma followed by zero or more spaces
+        # [[
+        # One or more
+            # Non-capturing group:
+                # Uppercaseletter followed by
+                # one or more letters
+                # possibly followed by [.,]
+                # followed by one or more spaces
         # ending with "]]"
         lst=re.findall("\[\[((?:[A-Z][A-Za-z]+[.,]?\s*)+)]]", s)
+        # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
         return []
