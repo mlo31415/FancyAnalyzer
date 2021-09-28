@@ -24,6 +24,10 @@ class ConInstanceInfo:
     Cancelled: bool=False
     Override: str=""    # In certain complex cases (a convention with multiple names each of which are linked) we need to override normal name/link handling.
 
+    def __post_init__(self):
+        if type(self.Loc) is str:
+            self._loc=LocaleHandling().LocaleFromName(self.Loc)  #()
+
     def __str__(self) -> str:
         s=f"Link={self.Link}  Name={self.NameInSeriesList}  Date={self.DateRange}  Location={self.Loc}"
         if self.Cancelled and not self.DateRange.Cancelled:     # Print this cancelled only if we have not already done so in the date range
@@ -33,10 +37,6 @@ class ConInstanceInfo:
         if len(self.Override) > 0:
             s+=f"  Override={self.Override}"
         return s
-
-    def __post_init__(self):
-        if type(self.Loc) is str:
-            self._loc=LocaleHandling().LocaleFromName(self.Loc)  #()
 
 
     @property
