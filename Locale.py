@@ -7,7 +7,7 @@ import re
 
 from F3Page import F3Page
 from Log import LogSetHeader, Log
-from HelpersPackage import SplitOnSpan, WikidotCanonicizeName
+from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets
 
 
 ############################################################################################
@@ -26,12 +26,17 @@ class Locale:
     IsTaggedLocale: bool=False    # Is this page tagged "Locale"?
     NonPageName: str=""     # If this is a locale created with no associated page
 
+    # Compare two Locales for equality. Ignore whether or not they are linked
     def __eq__(self, val: Locale) -> bool:
-        return self.PageName == val. PageName and \
-            self.DisplayName == val. DisplayName and \
-            self.Redirect == val. Redirect and \
+        # Compare two strings ignoring [[...]]
+        def CompNoBrackets(s1: str, s2: str) -> bool:
+            return StripWikiBrackets(s1) == StripWikiBrackets(s2)
+
+        return CompNoBrackets(self.PageName, val.PageName) and \
+            CompNoBrackets(self.DisplayName, val.DisplayName) and \
+            CompNoBrackets(self.Redirect, val.Redirect) and \
             self.IsTaggedLocale == val.IsTaggedLocale and \
-            self.NonPageName == val. NonPageName
+            CompNoBrackets(self.NonPageName, val.NonPageName)
 
     def __str__(self) -> str:
         if len(self.DisplayName) > 0:
@@ -549,8 +554,8 @@ class LocaleHandling:
                 # one or more letters
                 # possibly followed by [.,]
                 # followed by one or more spaces
-        # ending with "]]"
-        lst=re.findall("\[\[((?:[A-Z][A-Za-z]+[.,]?\s*)+)]]", s)
+        # ending with an optional "]]"
+        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-z]+[.,]?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
