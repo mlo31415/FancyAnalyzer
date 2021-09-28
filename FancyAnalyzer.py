@@ -11,7 +11,7 @@ from collections import defaultdict
 from Locale import LocaleHandling, Locale
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
-from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText,WikidotCanonicizeName
+from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText, WikidotCanonicizeName, StripWikiBrackets
 from ConInstanceInfo import ConInstanceInfo
 from FanzineIssueSpecPackage import FanzineDateRange
 
@@ -179,7 +179,8 @@ def main():
                 # The strategy is to sort out each column separately and then try to merge them into conventions
                 # Note that we are disallowing the extreme case of three cons in one row!
 
-                # First the dates
+                #............................
+                # First the date column
                 datetext = row[dateColumn]
 
                 # For the dates column, we want to remove the virtual designation as it will just confuse later processing.
@@ -232,33 +233,42 @@ def main():
                         Log(f"           {d}", Print=False)
 
 
+                #............................................
+                # Now handle the names column
                 # Get the corresponding convention name(s).
-                context=row[conColumn]
+                nametext=row[conColumn]
                 # Clean up the text
                 # Convert the HTML characters some people have inserted into their ascii equivalents
-                context=context.replace("&nbsp;", " ").replace("&#8209;", "-")
+                nametext=nametext.replace("&nbsp;", " ").replace("&#8209;", "-")
                 # And get rid of hard line breaks
-                context=context.replace("<br>", " ")
+                nametext=nametext.replace("<br>", " ")
                 # In some pages we italicize or bold the con's name, so remove spans of single quotes 2 or longer
-                context=re.sub("[']{2,}", "", context)
+                nametext=re.sub("[']{2,}", "", nametext)
 
-                context=context.strip()
+                nametext=nametext.strip()
 
-                if context.count("[[") != context.count("]]"):
+                if nametext.count("[[") != nametext.count("]]"):
                     Log("'"+row[conColumn]+"' has unbalanced double brackets. This is unlikely to end well...", isError=True)
 
                 # An individual name is of one of these forms:
                     #   xxx
                     # [[xxx]] zzz               Ignore the "zzz"
                     # [[xxx|yyy]]               Use just xxx
-                    # [[xxx|yyy]] zzz
-                # But! There can be more than one name on a date if a con converted from real to virtual while changing its name and keeping its dates:
-                # E.g., <s>[[FilKONtario 30]]</s> [[FilKONtari-NO]] (trailing stuff)
-                # Whatcon 20: This Year's Theme -- need to split on the colon
-                # Each of the bracketed chunks can be of one of the four forms, above. (Ugh.)
-                # But! con names can also be of the form name1 / name2 / name 3
-                #   These are three (or two) different names for the same con.
-                # We will assume that there is only limited mixing of these forms!
+                    # [[xxx|yyy]] zzz           Ignore the zzz
+                # An individual name can be cancelled:
+                    # <s>name</s>
+                # A convention can have multiple actual alternative names of the form name1 / name2 / name 3
+                    # These are two or three different names for the same con.
+                    # A typical case is where a con is part of multiple series at once, e.g., a DeepSouthCon held with a local con
+                # Note the distinction between multiple cons and multiple names for the same con.  The "/" is the distinguishing mark
+
+                # When the name text has multiple con names that are not alternatives, they may match multiple dates in the date column, like when a
+                # a con converted from real to virtual while changing its name and keeping its dates:
+                    # E.g., <s>[[FilKONtario 30]]</s> [[FilKONtari-NO]] (trailing stuff)
+
+                # Whatcon 20: This Year's Theme -- need to split on the colon and ignore the rest
+
+                # We will assume that there is only limited mixing of these forms!  E.g., a con with multiple names is either cancelled altogether or not cancelled.
 
                 @dataclass
                 # A simple class for holding an individual convention name from a convention series table, including its link and whether it is <s>cancelled</s> or not
@@ -272,7 +282,7 @@ def main():
                         return self.Name < val.Name
 
                 # Take a Wikidot page reference and extract its text and link (if different)
-                def SplitConText(constr: str) -> Tuple[str, str]:
+                def SplitNametext(constr: str) -> Tuple[str, str]:
                     # Now convert all link|text to separate link and text
                     # Do this for s1 and s2
                     m=re.match("\[\[(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
@@ -286,41 +296,41 @@ def main():
                 #----------------------------------------------------------
                 # We assume that the cancelled con names precede the uncancelled ones
                 # On each call, we find the first con name and return it (as a ConName) and the remaining text as a tuple
-                def NibbleCon(constr: str) -> Tuple[Optional[ConName], str]:
-                    constr=constr.strip()
-                    if len(constr) == 0:
-                        return None, constr
+                def NibbleConNametext(connamestr: str) -> Tuple[Optional[ConName], str]:
+                    connamestr=connamestr.strip()
+                    if len(connamestr) == 0:
+                        return None, connamestr
 
                     # We want to take the leading con name
                     # There can be at most one con name which isn't cancelled, and it should be at the end, so first look for a <s>...</s> bracketed con names, if any
                     pat="^<s>(.*?)</s>"
-                    m=re.match(pat, constr)
+                    m=re.match(pat, connamestr)
                     if m is not None:
                         s=m.groups()[0]
-                        constr=re.sub(pat, "", constr).strip()  # Remove the matched part and trim whitespace
-                        l, t=SplitConText(s)
+                        connamestr=re.sub(pat, "", connamestr).strip()  # Remove the matched part and trim whitespace
+                        l, t=SplitNametext(s)
                         con=ConName(Name=t, Link=l, Cancelled=True)
-                        return con, constr
+                        return con, connamestr
 
                     # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
                     pat="^(\[\[.*?]])"    # Anchored; '[['; non-greedy string of characters; ']]'
-                    m=re.match(pat, constr)
+                    m=re.match(pat, connamestr)
                     if m is not None:
                         s=m.groups()[0]     # Get the patched part
-                        constr=re.sub(pat, "", constr).strip()  # And remove it fromt he string and trim whitespace
-                        l, t=SplitConText(s)           # If text contains a "|" split it on the "|"
+                        connamestr=re.sub(pat, "", connamestr).strip()  # And remove it fromt he string and trim whitespace
+                        l, t=SplitNametext(s)           # If text contains a "|" split it on the "|"
                         con=ConName(Name=t, Link=l, Cancelled=False)
-                        return con, constr
+                        return con, connamestr
 
                     # So far we've found nothing
-                    if len(constr) > 0:
+                    if len(connamestr) > 0:
                         # If the remaining stuff starts with a colon, return a null result
-                        if constr[0] == ":":
+                        if connamestr[0] == ":":
                             return None, ""
                         # If it there's a colon later on, the stuff before the colon is a con name.  (Why?)
-                        if ":" in constr:
-                            constr=constr.split(":")[0]
-                        con=ConName(Name=constr)
+                        if ":" in connamestr:
+                            connamestr=connamestr.split(":")[0]
+                        con=ConName(Name=connamestr)
                         return con, ""
 
                 # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
@@ -330,7 +340,7 @@ def main():
                 def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
                     if matchObject.group(1) is not None and matchObject.group(2) is not None:
                         return matchObject.group(1)+"&&&"+matchObject.group(2)
-                contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, context)  # Hide the '/' in html items like </xxx>
+                contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, nametext)  # Hide the '/' in html items like </xxx>
                 contextforsplitting=re.sub("([0-9])/([0-9])", replacer, contextforsplitting)    # Hide the '/' in fractions such as 1/2
                 # Split on any remaining '/'s
                 contextlist=contextforsplitting.split("/")
@@ -340,15 +350,15 @@ def main():
                 if len(contextlist) > 1:
                     alts: List[ConName]=[]
                     for con in contextlist:
-                        c, _=NibbleCon(con)
+                        c, _=NibbleConNametext(con)
                         if c is not None:
                             alts.append(c)
                     alts.sort()     # Sort the list so that when this list is created from two or more different convention index tables, it looks the same and dups can be removed.
                     seriesTableRowConEntries.append(alts)
                 else:
                     # Ok, we have one or more names and they are for different cons
-                    while len(context) > 0:
-                        con, context=NibbleCon(context)
+                    while len(nametext) > 0:
+                        con, nametext=NibbleConNametext(nametext)
                         if con is None:
                             break
                         seriesTableRowConEntries.append(con)
@@ -402,6 +412,7 @@ def main():
                                 override+=co.Link+"|"
                             override+=co.Name+"]]"
                         v = False if cancelled else virtual
+                        # We create a CII with a dummy name, but with the real name in Override
                         #TODO: This will cause a name of "dummy" to potentially appear in many cases.  Is this a problem?
                         ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
                         AppendCon(conventions, ci)
@@ -517,14 +528,14 @@ def main():
         for con in conventionsByDate:
             # Format the convention name and location for tabular output
             if len(con.Override) > 0:
-                context=con.Override
+                nametext=con.Override
             else:
-                context=f"[[{con.NameInSeriesList}]]"
+                nametext=f"[[{con.NameInSeriesList}]]"
             if con.Virtual:
-                context=f"''{context} (virtual)''"
+                nametext=f"''{nametext} (virtual)''"
             else:
                 if len(con.Locale.Link) > 0:
-                    context+=f"&nbsp;&nbsp;&nbsp;<small>({con.Locale.Link})</small>"
+                    nametext+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.Locale.Link)})</small>"
 
             # Now write the line
             # We have two levels of date headers:  The year and each unique date within the year
@@ -545,9 +556,9 @@ def main():
                     f.write(" ||")
 
             if con.Cancelled:
-                f.write(f"<s>{context}</s>\n")
+                f.write(f"<s>{nametext}</s>\n")
             else:
-                f.write(f"{context}\n")
+                f.write(f"{nametext}\n")
 
 
         f.write("</tab>\n")
