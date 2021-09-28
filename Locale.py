@@ -547,7 +547,7 @@ class LocaleHandling:
     def ScanForCity(self, s: str) -> List[str]:
         # Look for the pattern "[[One Or More Uppercase Names]]"
         # Pattern:
-        # [[
+        # optional [[
         # One or more
             # Non-capturing group:
                 # Uppercaseletter followed by
