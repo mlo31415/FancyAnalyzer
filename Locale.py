@@ -7,7 +7,7 @@ import re
 
 from F3Page import F3Page
 from Log import LogSetHeader, Log
-from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets
+from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets, FindWikiBracketedText
 
 
 ############################################################################################
@@ -555,7 +555,14 @@ class LocaleHandling:
                 # possibly followed by [.,]
                 # followed by one or more spaces
         # ending with an optional "]]"
-        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-z]+[.,]?\s*)+)(?:]])?", s)
+
+        # We special-case names like "St. Paul" and "Ft. Bragg" because in general we want to terminate city names on "."
+        lst=re.findall("(?:\[\[)?([SF]St\.\s+(?:[A-Z][A-Za-z]+,?\s*)+)(?:]])?", s)
+        # We return either the first match if there is one or an empty string
+        if len(lst) > 0:
+            return [lst[0]]
+
+        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-z]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
