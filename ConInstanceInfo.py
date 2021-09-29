@@ -28,6 +28,7 @@ class ConInstanceInfo:
         if type(self.Loc) is str:
             self._loc=LocaleHandling().LocaleFromName(self.Loc)  #()
 
+
     def __str__(self) -> str:
         s=f"Link={self.Link}  Name={self.NameInSeriesList}  Date={self.DateRange}  Location={self.Loc}"
         if self.Cancelled and not self.DateRange.Cancelled:     # Print this cancelled only if we have not already done so in the date range
@@ -37,6 +38,9 @@ class ConInstanceInfo:
         if len(self.Override) > 0:
             s+=f"  Override={self.Override}"
         return s
+
+    def __eq__(self, other: ConInstanceInfo) -> bool:
+        return self.NameInSeriesList == other.NameInSeriesList and self.DateRange == other.DateRange and self.Cancelled == other.Cancelled and self.Virtual == other.Virtual and self.Override == other.Override
 
 
     @property
