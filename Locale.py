@@ -367,7 +367,7 @@ class LocaleHandling:
         m1=re.search("[^A-Za-z]in [A-Z][a-z.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m1 is not None:
-            s1=s1[m1.span()[0]+2:]      # Drop the "in" token
+            s1=s1[m1.span()[0]+3:]      # Drop the "in" token
             rslts=self.ScanForCityST(s1, pagename)
             if len(rslts) > 0:
                 found=True
