@@ -420,10 +420,6 @@ def main():
                                 override+=co.Link+"|"
                             override+=co.Name+"]]"
                         v = False if cancelled else virtual
-                        # We create a CII with a dummy name, but with the real name in Override
-                        #TODO: This will cause a name of "dummy" to potentially appear in many cases.  Is this a problem?
-                        #ci=ConInstanceInfo(_Link="dummy", NameInSeriesList="dummy", Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, Override=override)
-                        #AppendCon(conventions, ci)
                         for dt in dates:
                             for co in seriesTableRowConEntries[0]:
                                 ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled)
