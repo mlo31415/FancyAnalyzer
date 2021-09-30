@@ -278,6 +278,9 @@ def main():
                     Cancelled: bool=False
                     Link: str=""
 
+                    def __str__(self) -> str:
+                        return f"{self.Name} {'Link='+self.Link if self.Link != '' else ''}   {'<cancelled>' if self.Cancelled else ''}"
+
                     def __lt__(self, val: ConName) -> bool:
                         return self.Name < val.Name
 
