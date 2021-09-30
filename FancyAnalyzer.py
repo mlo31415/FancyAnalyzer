@@ -400,6 +400,11 @@ def main():
                 # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
                 # This is one con with multiple names
                 if type(seriesTableRowConEntries[0]) is list:
+                    # Log(f"Case 1: {len(seriesTableRowConEntries[0])=}")
+                    # for i in range(len(seriesTableRowConEntries[0])):
+                    #     Log(f"             {str(seriesTableRowConEntries[0][i])}")
+                    # Log(f"         {len(dates)=}")
+                    # Log(f"         {str(dates[0])=}")
                     # By definition there is only one element. Extract it.  There may be more than one date.
                     assert len(seriesTableRowConEntries) == 1 and len(seriesTableRowConEntries[0]) > 0
                     for dt in dates:
@@ -427,6 +432,12 @@ def main():
 
                 # OK, in all the other cases cons is a list[ConInstanceInfo]
                 elif len(seriesTableRowConEntries) == len(dates):
+                    # Log(f"Case 2: {len(seriesTableRowConEntries)=}")
+                    # for i in range(len(seriesTableRowConEntries)):
+                    #     Log(f"             {str(seriesTableRowConEntries[i])}")
+                    # Log(f"         {len(dates)=}")
+                    # for i in range(len(dates)):
+                    #     Log(f"             {str(dates[i])=}")
                     # Add each con with the corresponding date
                     for i in range(len(seriesTableRowConEntries)):
                         cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
@@ -439,6 +450,11 @@ def main():
                         AppendCon(conventions, ci)
 
                 elif len(seriesTableRowConEntries) > 1 and len(dates) == 1:
+                    # Log(f"Case 3: {len(seriesTableRowConEntries)=}")
+                    # for i in range(len(seriesTableRowConEntries)):
+                    #     Log(f"             {str(seriesTableRowConEntries[i])}")
+                    # Log(f"         {len(dates)=}")
+                    # Log(f"         {str(dates[0])=}")
                     # Multiple cons all with the same dates
                     for co in seriesTableRowConEntries:
                         cancelled=co.Cancelled or dates[0].Cancelled
@@ -449,6 +465,12 @@ def main():
                         Log(f"#append 3: {ci}", Print=False)
 
                 elif len(seriesTableRowConEntries) == 1 and len(dates) > 1:
+                    # Log(f"Case 4: {len(seriesTableRowConEntries[0])=}")
+                    # for i in range(len(seriesTableRowConEntries[0])):
+                    #     Log(f"             {str(seriesTableRowConEntries[0][i])}")
+                    # Log(f"         {len(dates)=}")
+                    # for i in range(len(dates)):
+                    #     Log(f"             {str(dates[0][i])=}")
                     for dt in dates:
                         cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
                         dt.Cancelled = False
