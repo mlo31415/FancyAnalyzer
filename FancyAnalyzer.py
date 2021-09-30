@@ -45,7 +45,7 @@ def main():
     # The following lines are for debugging and are used to select a subset of the pages for greater speed
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
-    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:7].lower() == "boskone"]        # Just to cut down the number of pages for debugging purposes
+    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:7].lower() == "mythcon"]        # Just to cut down the number of pages for debugging purposes
 
     # We ignore pages with certain prefixes
     excludedPrefixes=["_admin", "Template;colon", "User;colon", "Log 2"]
@@ -517,7 +517,7 @@ def main():
                                 f.write(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.Locale}'\n")
 
 
-    Log(f"{datetime.now():%H:%M:%S}: Writing: Places that are not tagged as Locales.txt")
+    Log("Writing: Places that are not tagged as Locales.txt", timestamp=True)
     with open("Places that are not tagged as Locales.txt", "w+", encoding='utf-8') as f:
         for key, val in LocaleHandling().probableLocales.items():
             f.write(str(key)+"\n")
@@ -532,8 +532,8 @@ def main():
     #         con.Loc=loc[0]    # Nasty code to get one element from the set
 
 
-    Log(f"{datetime.now():%H:%M:%S}: Writing: Con DateRange oddities.txt")
-    oddities=[x for x in conventions.values() if x.DateRange.IsOdd()]
+    Log("Writing: Con DateRange oddities.txt", timestamp=True)
+    oddities=[y for x in conventions.values() for y in x if y.DateRange.IsOdd()]
     with open("Con DateRange oddities.txt", "w+", encoding='utf-8') as f:
         for con in oddities:
             f.write(str(con)+"\n")
