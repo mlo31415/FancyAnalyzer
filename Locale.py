@@ -432,7 +432,8 @@ class LocaleHandling:
                 found=True
                 out.extend(self.AppendLocale(rslts, pagename))
 
-        if not found and m2 is not None:
+#        if not found and m2 is not None:
+        if not found:
             rslts=self.ScanForCity(s)
             if len(rslts) > 0:
                 out.extend(self.AppendLocale(rslts, pagename))
