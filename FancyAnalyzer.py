@@ -42,9 +42,10 @@ def main():
     allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f.endswith(".txt")]
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("index_")]     # Drop index pages
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
+
     # The following lines are for debugging and are used to select a subset of the pages for greater speed
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
-    allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith(("miscon", "misc^^on"))]        # Just to cut down the number of pages for debugging purposes
+    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith(("miscon", "misc^^on"))]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith("miscon")]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames=["Early Conventions"]
 
@@ -304,6 +305,17 @@ def main():
                     if len(connamestr) == 0:
                         return None, connamestr
 
+                    # Change 'name: stuff' into just 'name'
+                    def DeColonize(name: str) -> str:
+                        if len(name) == 0:
+                            return ""
+                        if name[0] == ":":  # A name starting with a colon is the leftover from a fully processed name with :stuff following it
+                            return ""
+                        # If there's a colon, return the stuff before the colon
+                        if ":" in name:
+                            return name.split(":")[0].strip()
+                        return name
+
                     # We want to take the leading con name
                     # There can be at most one con name which isn't cancelled, and it should be at the end, so first look for a <s>...</s> bracketed con names, if any
                     pat="^<s>(.*?)</s>"
@@ -311,6 +323,7 @@ def main():
                     if m is not None:
                         s=m.groups()[0]
                         connamestr=re.sub(pat, "", connamestr).strip()  # Remove the matched part and trim whitespace
+                        s=DeColonize(s)
                         l, t=SplitNametext(s)
                         con=ConName(Name=t, Link=l, Cancelled=True)
                         return con, connamestr
@@ -320,19 +333,17 @@ def main():
                     m=re.match(pat, connamestr)
                     if m is not None:
                         s=m.groups()[0]     # Get the patched part
-                        connamestr=re.sub(pat, "", connamestr).strip()  # And remove it fromt he string and trim whitespace
+                        connamestr=re.sub(pat, "", connamestr).strip()  # And remove it from the string and trim whitespace
+                        s=DeColonize(s)
                         l, t=SplitNametext(s)           # If text contains a "|" split it on the "|"
                         con=ConName(Name=t, Link=l, Cancelled=False)
                         return con, connamestr
 
                     # So far we've found nothing
                     if len(connamestr) > 0:
-                        # If the remaining stuff starts with a colon, return a null result
-                        if connamestr[0] == ":":
+                        connamestr=DeColonize(connamestr)
+                        if len(connamestr) == 0:
                             return None, ""
-                        # If it there's a colon later on, the stuff before the colon is a con name.  (Why?)
-                        if ":" in connamestr:
-                            connamestr=connamestr.split(":")[0]
                         con=ConName(Name=connamestr)
                         return con, ""
 
@@ -372,7 +383,7 @@ def main():
                 if locColumn is not None:
                     if locColumn < len(row) and len(row[locColumn]) > 0:
                         loc=WikiExtractLink(row[locColumn])     # If there is linked text, get it; otherwise use everything
-                        locale=LocaleHandling().ScanForLocale(loc, "")
+                        locale=LocaleHandling().ScanForLocale(loc, page.Name)
                         if len(locale) > 0:
                             conlocation=locale[0]
 
