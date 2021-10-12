@@ -39,18 +39,18 @@ def main():
     # Create a list of the pages on the site by looking for .txt files and dropping the extension
     Log("***Querying the local copy of Fancy 3 to create a list of all Fancyclopedia pages", timestamp=True)
     Log("   path='"+fancySitePath+"'")
-    allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f[-4:] == ".txt"]
+    allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f.endswith(".txt")]
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("index_")]     # Drop index pages
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
     # The following lines are for debugging and are used to select a subset of the pages for greater speed
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
-    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:6].lower() == "windyc" or f[0:5].lower() == "new z"]        # Just to cut down the number of pages for debugging purposes
-    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0:7].lower() == "mythcon"]        # Just to cut down the number of pages for debugging purposes
+    allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith(("miscon", "misc^^on"))]        # Just to cut down the number of pages for debugging purposes
+    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith("miscon")]        # Just to cut down the number of pages for debugging purposes
+    #allFancy3PagesFnames=["Early Conventions"]
 
     # We ignore pages with certain prefixes
-    excludedPrefixes=["_admin", "Template;colon", "User;colon", "Log 2"]
-    for prefix in excludedPrefixes:
-        allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(prefix)]
+    excludedPrefixes=("_admin", "Template;colon", "User;colon", "Log 2")
+    allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith(excludedPrefixes)]
 
     # And we exclude certain specific pages
     excludedPages=["Admin", "Standards", "Test Templates"]
