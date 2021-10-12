@@ -408,7 +408,7 @@ class LocaleHandling:
         out: List[Locale]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m1=re.search("[A-Z][a-z.,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
+        m1=re.search("[A-Z][a-z,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m1 is not None:
             rslts=self.ScanForCityST(s1, pagename)
