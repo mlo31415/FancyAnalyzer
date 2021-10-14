@@ -39,7 +39,8 @@ def main():
     # Create a list of the pages on the site by looking for .txt files and dropping the extension
     Log("***Querying the local copy of Fancy 3 to create a list of all Fancyclopedia pages", timestamp=True)
     Log("   path='"+fancySitePath+"'")
-    allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f.endswith(".txt")]
+    #allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if os.path.isfile(os.path.join(fancySitePath, f)) and f.endswith(".txt")]
+    allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if  f.endswith(".txt")]
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("index_")]     # Drop index pages
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
 
