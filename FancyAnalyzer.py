@@ -244,7 +244,7 @@ def main():
                 nametext=nametext.replace("&nbsp;", " ").replace("&#8209;", "-")
                 # And get rid of hard line breaks
                 nametext=nametext.replace("<br>", " ")
-                # In some pages we italicize or bold the con's name, so remove spans of single quotes 2 or longer
+                # In some pages we italicize or bold the con's name, so remove spans of single quotes of length 2 or longer
                 nametext=re.sub("[']{2,}", "", nametext)
 
                 nametext=nametext.strip()
