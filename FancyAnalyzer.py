@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Dict, List, Tuple, Optional, Union
-from dataclasses import dataclass
 
 import os
 import re
@@ -12,7 +11,7 @@ from Locale import LocaleHandling, Locale
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText, WikidotCanonicizeName, StripWikiBrackets
-from ConInstanceInfo import ConInstanceInfo
+from ConInstanceInfo import ConInstanceInfo, ConInstanceLink
 from FanzineIssueSpecPackage import FanzineDateRange
 
 
@@ -47,7 +46,7 @@ def main():
     # The following lines are for debugging and are used to select a subset of the pages for greater speed
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith(("miscon", "misc^^on"))]        # Just to cut down the number of pages for debugging purposes
-    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith("miscon")]        # Just to cut down the number of pages for debugging purposes
+    #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f.lower().startswith("eurocon")]        # Just to cut down the number of pages for debugging purposes
     #allFancy3PagesFnames=["Early Conventions"]
 
     # We ignore pages with certain prefixes
@@ -272,20 +271,6 @@ def main():
 
                 # We will assume that there is only limited mixing of these forms!  E.g., a con with multiple names is either cancelled altogether or not cancelled.
 
-                @dataclass
-                # A simple class for holding an individual convention name from a convention series table, including its link and whether it is <s>cancelled</s> or not
-                class ConName:
-                    #def __init__(self, Name: str="", Link: str="", Cancelled: bool=False):
-                    Name: str=""
-                    Cancelled: bool=False
-                    Link: str=""
-
-                    def __str__(self) -> str:
-                        return f"{self.Name} {'Link='+self.Link if self.Link != '' else ''}   {'<cancelled>' if self.Cancelled else ''}"
-
-                    def __lt__(self, val: ConName) -> bool:
-                        return self.Name < val.Name
-
                 # Take a Wikidot page reference and extract its text and link (if different)
                 # Return them as (link, text)
                 def SplitNametext(constr: str) -> Tuple[str, str]:
@@ -302,7 +287,7 @@ def main():
                 #----------------------------------------------------------
                 # We assume that the cancelled con names precede the uncancelled ones
                 # On each call, we find the first con name and return it (as a ConName) and the remaining text as a tuple
-                def NibbleConNametext(connamestr: str) -> Tuple[Optional[ConName], str]:
+                def NibbleConNametext(connamestr: str) -> Tuple[Optional[ConInstanceLink], str]:
                     connamestr=connamestr.strip()
                     if len(connamestr) == 0:
                         return None, connamestr
@@ -327,7 +312,7 @@ def main():
                         connamestr=re.sub(pat, "", connamestr).strip()  # Remove the matched part and trim whitespace
                         s=DeColonize(s)
                         l, t=SplitNametext(s)
-                        con=ConName(Name=t, Link=l, Cancelled=True)
+                        con=ConInstanceLink(Text=t, Link=l, Cancelled=True)
                         return con, connamestr
 
                     # OK, there are no <s>...</s> con names left.  So what is left might be [[name]] or [[link|name]]
@@ -338,7 +323,7 @@ def main():
                         connamestr=re.sub(pat, "", connamestr).strip()  # And remove it from the string and trim whitespace
                         s=DeColonize(s)
                         l, t=SplitNametext(s)           # If text contains a "|" split it on the "|"
-                        con=ConName(Name=t, Link=l, Cancelled=False)
+                        con=ConInstanceLink(Text=t, Link=l, Cancelled=False)
                         return con, connamestr
 
                     # So far we've found nothing
@@ -346,11 +331,11 @@ def main():
                         connamestr=DeColonize(connamestr)
                         if len(connamestr) == 0:
                             return None, ""
-                        con=ConName(Name=connamestr)
+                        con=ConInstanceLink(Text=connamestr)
                         return con, ""
 
                 # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
-                seriesTableRowConEntries: List[Union[ConName, List[ConName]]]=[]
+                seriesTableRowConEntries: List[Union[ConInstanceLink, List[ConInstanceLink]]]=[]
                 # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
                 # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
                 def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
@@ -364,7 +349,7 @@ def main():
                 contextlist=[x.replace("&&&", "/").strip() for x in contextlist]
                 contextlist=[x for x in contextlist if len(x) > 0]  # Squeeze out any empty splits
                 if len(contextlist) > 1:
-                    alts: List[ConName]=[]
+                    alts: List[ConInstanceLink]=[]
                     for con in contextlist:
                         c, _=NibbleConNametext(con)
                         if c is not None:
@@ -420,24 +405,21 @@ def main():
                     # Log(f"         {str(dates[0])=}")
                     # By definition there is only one element. Extract it.  There may be more than one date.
                     assert len(seriesTableRowConEntries) == 1 and len(seriesTableRowConEntries[0]) > 0
+                    links=[]
+                    names=[]
+                    cancelled=False
+                    for co in seriesTableRowConEntries[0]:
+                        links.append(co.Link)
+                        names.append(co.Text)
+                        cancelled=cancelled or co.Cancelled
+
                     for dt in dates:
-                        override=""
-                        cancelled=dt.Cancelled
-                        dt.Cancelled = False
-                        for co in seriesTableRowConEntries[0]:
-                            cancelled=cancelled or co.Cancelled
-                            if len(override) > 0:
-                                override+=" / "
-                            override+="[["
-                            if len(co.Link) > 0:
-                                override+=co.Link+"|"
-                            override+=co.Name+"]]"
+                        cancelled=cancelled or dt.Cancelled
                         v = False if cancelled else virtual
                         for dt in dates:
-                            for co in seriesTableRowConEntries[0]:
-                                ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled)
-                                AppendCon(conventions, ci)
-                                Log(f"#append 1: {ci}", Print=False)
+                            ci=ConInstanceInfo(Link=links, NameInSeriesList=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled)
+                            AppendCon(conventions, ci)
+                            Log(f"#append 1: {ci}", Print=False)
 
                 # OK, in all the other cases cons is a list[ConInstanceInfo]
                 elif len(seriesTableRowConEntries) == len(dates):
@@ -452,7 +434,7 @@ def main():
                         cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
                         dates[i].Cancelled=False    # We've xfered this to ConInstanceInfo and don't still want it here because it would print twice
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(_Link=seriesTableRowConEntries[i].Link, NameInSeriesList=seriesTableRowConEntries[i].Name, Loc=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[i].Link, NameInSeriesList=[seriesTableRowConEntries[i].Text], Locale=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
                         if ci.DateRange.IsEmpty():
                             Log(f"***{ci.Link} has an empty date range: {ci.DateRange}", isError=True)
                         Log(f"#append 2: {ci}", Print=False)
@@ -469,7 +451,7 @@ def main():
                         cancelled=co.Cancelled or dates[0].Cancelled
                         dates[0].Cancelled = False
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(_Link=co.Link, NameInSeriesList=co.Name, Loc=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=co.Link, NameInSeriesList=[co.Text], Locale=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
                         AppendCon(conventions, ci)
                         Log(f"#append 3: {ci}", Print=False)
 
@@ -484,7 +466,7 @@ def main():
                         cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
                         dt.Cancelled = False
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(_Link=seriesTableRowConEntries[0].Link, NameInSeriesList=seriesTableRowConEntries[0].Name, Loc=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, NameInSeriesList=[seriesTableRowConEntries[0].Text], Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                         AppendCon(conventions, ci)
                         Log(f"#append 4: {ci}", Print=False)
                 else:
@@ -549,6 +531,7 @@ def main():
 
     # Created a list of conventions sorted in date order from the con dictionary into
     conventionsByDate: List[ConInstanceInfo]=[y for x in conventions.values() for y in x]
+    conventionsByDate.sort(key=lambda d: d.NameInSeriesList)
     conventionsByDate.sort(key=lambda d: d.DateRange)
 
     #TODO: Add a list of keywords to find and remove.  E.g. "Astra RR" ("Ad Astra XI")
@@ -569,17 +552,16 @@ def main():
         # The date is not repeated when it is the same
         # The con name and location is crossed out when it was cancelled or moved and (virtual) is added when it was virtual
         f.write("<tab>\n")
+        lastcon: ConInstanceInfo=ConInstanceInfo()
         for con in conventionsByDate:
-            # Format the convention name and location for tabular output
-            if len(con.Override) > 0:
-                nametext=con.Override
-            else:
-                nametext=f"[[{con.NameInSeriesList}]]"
-            if con.Virtual:
-                nametext=f"''{nametext} (virtual)''"
-            else:
-                if len(con.Locale.Link) > 0:
-                    nametext+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.Locale.Link)})</small>"
+
+            # When a con has multiple names and is written line this
+            #       [[DeepSouthCon 58]] / [[ConGregate 2020]]
+            # it shows up twice in the list of cons, but in both cases the proper name([[DeepSouthCon 58]] / [[ConGregate 2020]]) is in con.Override
+            # which is only filled in for these complicated thingies.  Since they are on the same date, they sort together and this test ignores ones after the first.
+            # TODO: What if there's another con on that date and it winds up sorted in between?
+            if con.NameInSeriesList == lastcon.NameInSeriesList and con.DateRange == lastcon.DateRange:
+                continue
 
             # Now write the line
             # We have two levels of date headers:  The year and each unique date within the year
@@ -599,10 +581,19 @@ def main():
                 else:
                     f.write(" ||")
 
+            # Format the convention name and location for tabular output
+            nametext=con.LinkedName
             if con.Cancelled:
-                f.write(f"<s>{nametext}</s>\n")
+                nametext=f"<s>{nametext}</s>"
+
+            if con.Virtual:
+                nametext=f"''{nametext} (virtual)''"
             else:
-                f.write(f"{nametext}\n")
+                if len(con.Locale.Link) > 0:
+                    nametext+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.Locale.Link)})</small>"
+            f.write(nametext+"\n")
+
+            lastcon=con
 
 
         f.write("</tab>\n")
