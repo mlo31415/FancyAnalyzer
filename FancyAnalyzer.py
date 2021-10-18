@@ -320,7 +320,7 @@ def main():
 
                     # We want to take the leading con name
                     # There can be at most one con name which isn't cancelled, and it should be at the end, so first look for a <s>...</s> bracketed con names, if any
-                    pat="^<s>(.*?)</s>"
+                    pat="^<s>(.*?)</s>"     # Note that .*? is non-greedy
                     m=re.match(pat, connamestr)
                     if m is not None:
                         s=m.groups()[0]
