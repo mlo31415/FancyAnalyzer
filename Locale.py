@@ -558,7 +558,7 @@ class LocaleHandling:
         # ending with an optional "]]"
 
         # We special-case names like "St. Paul" and "Ft. Bragg" because in general we want to terminate city names on "."
-        lst=re.findall("(?:\[\[)?([SF]St\.\s+(?:[A-Z][A-Za-z]+,?\s*)+)(?:]])?", s)
+        lst=re.findall("(?:\[\[)?([SF]t\.\s+(?:[A-Z][A-Za-z]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
