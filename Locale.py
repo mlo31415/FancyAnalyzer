@@ -358,13 +358,13 @@ class LocaleHandling:
 
         # Find the first locale
         # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
-        # ([A-Z][a-z]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
+        # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
-        # The "[^a-zA-Z]"           Prohibits another letter immediately following the putative 2-UC state
+        # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         out: List[Locale]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m1=re.search("[^A-Za-z]in [A-Z][a-z.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
+        m1=re.search("[^A-Za-zé]in [A-Z][a-zé.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m1 is not None:
             s1=s1[m1.span()[0]+3:]      # Drop the "in" token
@@ -374,7 +374,7 @@ class LocaleHandling:
                 out.extend(self.AppendLocale(rslts, pagename))
 
         if not found:
-            m2=re.search("[^A-Za-z]in \[\[[A-Z][a-z.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
+            m2=re.search("[^A-Za-zé]in \[\[[A-Z][a-zé.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
             # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
             if m2 is not None:
                 s2=s[m2.span()[0]+2:]  # Drop the "in" token
@@ -402,13 +402,13 @@ class LocaleHandling:
 
         # Find the first locale
         # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
-        # ([A-Z][a-z]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
+        # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
-        # The "[^a-zA-Z]"           Prohibits another letter immediately following the putative 2-UC state
+        # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         out: List[Locale]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m1=re.search("[A-Z][a-z,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
+        m1=re.search("[A-Z][a-zé,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m1 is not None:
             rslts=self.ScanForCityST(s1, pagename)
@@ -417,7 +417,7 @@ class LocaleHandling:
                 out.extend(self.AppendLocale(rslts, pagename))
 
         if not found:
-            m2=re.search("\[\[[A-Z][a-z.,]+", s)  # Search for '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
+            m2=re.search("\[\[[A-Z][a-zé.,]+", s)  # Search for '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
             # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
             if m2 is not None:
                 rslts=self.ScanForCityCountry(s)
@@ -445,11 +445,11 @@ class LocaleHandling:
 
         # Find the first locale
         # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
-        # ([A-Z][a-z]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
+        # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
-        # The "[^a-zA-Z]"           Prohibits another letter immediately following the putative 2-UC state
+        # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m=re.search("([A-Z][a-z.]+\s+)?([A-Z][a-z.]+\s+)?([A-Z][a-z]+,?\s+)([A-Z]{2})[^a-zA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
+        m=re.search("([A-Z][a-zé.]+\s+)?([A-Z][a-zé.]+\s+)?([A-Z][a-zé]+,?\s+)([A-Z]{2})[^a-zéA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m is not None and len(m.groups()) > 1:
             groups=[x for x in m.groups() if x is not None]
@@ -517,7 +517,7 @@ class LocaleHandling:
                         rest=""
                         sep=""
                         for i in range(len(splt)-1, max(len(splt)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
-                            if re.match("^[A-Z][a-z]+$", splt[i]):  # Look for Xxxxx
+                            if re.match("^[A-Z][a-zé]+$", splt[i]):  # Look for Xxxxx
                                 rest=splt[i]+sep+rest       # Build up the locale string by prepending the matched token
                                 locale=rest+", "+country
                             if splt[i-1] == "in":
@@ -558,12 +558,12 @@ class LocaleHandling:
         # ending with an optional "]]"
 
         # We special-case names like "St. Paul" and "Ft. Bragg" because in general we want to terminate city names on "."
-        lst=re.findall("(?:\[\[)?([SF]t\.\s+(?:[A-Z][A-Za-z]+,?\s*)+)(?:]])?", s)
+        lst=re.findall("(?:\[\[)?([SF]t\.\s+(?:[A-Z][A-Za-zé]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
 
-        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-z]+,?\s*)+)(?:]])?", s)
+        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-zé]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
