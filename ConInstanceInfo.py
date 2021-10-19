@@ -13,7 +13,7 @@ from Locale import Locale, LocaleHandling
 class ConInstanceLink:
     Link: str=""        # The link if different from the display text, else the empty string
     Text: str=""        # The display text. This will always be present
-    Cancelled: bool=True
+    Cancelled: bool=False
 
     def __str__(self) -> str:
         return f"{self.Text} {'Link='+self.Link if self.Link != '' else ''}   {'<cancelled>' if self.Cancelled else ''}"
