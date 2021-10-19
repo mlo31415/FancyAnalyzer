@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Union, List
 from collections import defaultdict
 from dataclasses import dataclass
+import itertools
 
 from FanzineIssueSpecPackage import FanzineDateRange
 from Locale import Locale, LocaleHandling
@@ -27,20 +28,40 @@ class ConInstanceLink:
 # Just a simple class to conveniently wrap a bunch of data
 class ConInstanceInfo:
     #def __init__(self, Link: str="", Text: str="", Loc: str="", DateRange: FanzineDateRange=FanzineDateRange(), Virtual: bool=False, Cancelled: bool=False):
-    # NameInSeriesList is the name *displayed* in the table's link
-    # If the link is simple, e.g. [[simple link]], then that value should go in NameInSeriesList
-    # If the link is complex E.g., [[Link|NameInSeriesList]], the name displayed goes in NameInSeriesList and the page referred to goes in _Link
+    # Text is the name *displayed* in the table's link
+    # If the link is simple, e.g. [[simple link]], then that value should go in Text.
+    # If the link is complex E.g., [[Link|Text]], the name displayed goes in Text and the page referred to goes in _Link
     # The property Link will always return the actual page referred to
     def __init__(self, **kwds):
         kwds=defaultdict(lambda: None, **kwds)    # Turn the dict into a defaultdict with default value None
 
-        self._Link: List[str]=[]
-        if kwds["Link"] is not None:
-            self._Link=kwds["Link"]
+        self._CIL: List[ConInstanceLink]=[]
 
-        self._NameInSeriesList: List[str]=[]
-        if kwds["NameInSeriesList"] is not None:
-            self._NameInSeriesList=kwds["NameInSeriesList"]
+        # You can initialize a single Link, Text using the keywords in the constructor
+        if kwds["Link"] is not None:
+            kwd=kwds["Link"]
+            if type(kwd) is str:
+                if len(self._CIL) == 0:
+                    self._CIL.append(ConInstanceLink())
+                self._CIL[0].Link=kwd
+            if type(kwd) is list:
+                if len(self._CIL) == 0:
+                    self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
+                for i in range(len(kwd)):
+                    self._CIL[i].Link=kwd[i]
+
+
+        if kwds["Text"] is not None:
+            kwd=kwds["Text"]
+            if type(kwd) is str:
+                if len(self._CIL) == 0:
+                    self._CIL.append(ConInstanceLink())
+                self._CIL[0].Text=kwd
+            if type(kwd) is list:
+                if len(self._CIL) == 0:
+                    self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
+                for i in range(len(kwd)):
+                    self._CIL[i].Text=kwd[i]
 
         self._Locale: Locale=Locale()
         if kwds["Locale"] is not None:
@@ -67,7 +88,7 @@ class ConInstanceInfo:
 
 
     def __str__(self) -> str:
-        s=f"Link={self.Link}  Name={self._NameInSeriesList}  Date={self.DateRange}  Location={self.Locale}"
+        s=f"Link={self._CIL[0].Link}  Name={self._CIL[0].Text}  Date={self.DateRange}  Location={self.Locale}"
         if self.Cancelled and not self.DateRange.Cancelled:     # Print this cancelled only if we have not already done so in the date range
             s+="  cancelled=True"
         if self.Virtual:
@@ -75,7 +96,42 @@ class ConInstanceInfo:
         return s
 
     def __eq__(self, other: ConInstanceInfo) -> bool:
-        return self.NameInSeriesList == other.NameInSeriesList and self.DateRange == other.DateRange and self.Cancelled == other.Cancelled and self.Virtual == other.Virtual
+        if self.DateRange != other.DateRange or self.Cancelled != other.Cancelled or self.Virtual != other.Virtual:
+            return False
+        if len(self._CIL) != len(other._CIL):
+            return False
+        for s, o in zip(self._CIL, other._CIL):
+            if s.Text != o.Text:
+                return False
+            if s.Link != o.Link:
+                return False
+        return True
+
+
+    @property
+    def Set(self) -> None:
+        raise Exception
+
+    # Input: type(text)=str and link left off
+    # Input: typw(text)=str and type(link)=str
+    # Input: type(text)=list and type(link)=list and len(type) == len(list)
+    # Input: type(text)=list and link left off
+    @Set.setter
+    def Set(self, text: Union[str, List[str]], link:Union[str, List[str]]="") -> None:
+        assert (type(text) == str and type(list) == str) or (type(text) == list and type(link) == list and len(text) == len(link)) or (type(text) == list and type(link) == str and link == "")
+        if type(text) is str:
+            if len(self._CIL) == 0:
+                self._CIL.append(ConInstanceLink())
+            self._CIL[0].Text=text
+            self._CIL[0].Link=link
+            return
+        if type(text) is list:
+            if type(link) == list:
+                for t, l in zip(text, link):
+                    self._CIL.append(ConInstanceLink(Text=t, Link=l))
+            else:
+                for t in text:
+                    self._CIL.append(ConInstanceLink(Text=t))
 
 
     @property
@@ -97,16 +153,16 @@ class ConInstanceInfo:
         self._DateRange=val
 
     @property
-    def NameInSeriesList(self) -> str:
-        if len(self._NameInSeriesList) == 0:
+    def Text(self) -> str:
+        if len(self._CIL) == 0:
             return ""
-        nl=self._NameInSeriesList[0]
-        if len(self._NameInSeriesList) > 1:
-            for i in range(1,len(self._NameInSeriesList)):
-                nl=nl+" / "+self._NameInSeriesList[i]
+        nl=self._CIL[0].Text
+        if len(self._CIL) > 1:
+            for i in range(1,len(self._CIL)):
+                nl=nl+" / "+self._CIL[i].Text
         return nl
-    @NameInSeriesList.setter
-    def NameInSeriesList(self, val: Union[str, List[str]]) -> None:
+    @Text.setter
+    def Text(self, val: Union[str, List[str]]) -> None:
         if type(val) == str:
             val=[val]
         self._NameInSeriesList=val
@@ -114,29 +170,44 @@ class ConInstanceInfo:
 
     @property
     def Link(self) -> str:
-        if self._Link == "":    # If the link was not set, it's a simple link and just use the displayed text
-            return self.NameInSeriesList
-        return self._Link
+        if len(self._CIL) == 0:
+            return ""
+        if self._CIL[0].Link == "":    # If the link was not set, it's a simple link and just use the displayed text
+            return self._CIL[0].Text
+        return self._CIL[0].Link
     @Link.setter
     def Link(self, val: Union[str, List[str]]) -> None:
         if type(val) == str:
             val=[val]
         self._Link=val
 
+    # The bare name
+    #   Con
+    #   Con1 / con 2 / con 3
+    @property
+    def Name(self) -> str:
+        if len(self._CIL) == 0:
+            return ""
+        out=""
+        for i in range(len(self._CIL)):
+            if i > 0:
+                out+=" / "
+            out+=self._CIL[i].Text
+        return out
+
+    # The name displayed as a properly linked wiki entry
+    # [[link|text]]
     @property
     def LinkedName(self) -> str:
-        if len(self._NameInSeriesList[0]) == 0:
+        if len(self._CIL) == 0:
             return ""
         out="[["
-        for i in range(len(self._NameInSeriesList)):
+        for i in range(len(self._CIL)):
             if i > 0:
                 out+="]] / [["
-            name=self._NameInSeriesList[i]
-            link=""
-            if i < len(self._Link):
-                link=self._Link[i]
+            link=self._CIL[i].Link
             if link != "":
                 out+=link+"|"
-            out+=name
+            out+=self._CIL[i].Text
         out+="]]"
         return out

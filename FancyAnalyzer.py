@@ -384,7 +384,7 @@ def main():
                     hits=[y for x in conDict.values() for y in x if cii == y]
                     if len(hits) == 0:
                         # This is a new name: Just append it
-                        conDict[cii.NameInSeriesList].append(cii)
+                        conDict[cii.Name].append(cii)
                     elif not cii.Locale.IsEmpty:
                         if hits[0].Locale != cii.Locale:
                             Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
@@ -417,7 +417,7 @@ def main():
                         cancelled=cancelled or dt.Cancelled
                         v = False if cancelled else virtual
                         for dt in dates:
-                            ci=ConInstanceInfo(Link=links, NameInSeriesList=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled)
+                            ci=ConInstanceInfo(Link=links, Text=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled)
                             AppendCon(conventions, ci)
                             Log(f"#append 1: {ci}", Print=False)
 
@@ -434,7 +434,7 @@ def main():
                         cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
                         dates[i].Cancelled=False    # We've xfered this to ConInstanceInfo and don't still want it here because it would print twice
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[i].Link, NameInSeriesList=[seriesTableRowConEntries[i].Text], Locale=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[i].Link, Text=seriesTableRowConEntries[i].Text, Locale=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
                         if ci.DateRange.IsEmpty():
                             Log(f"***{ci.Link} has an empty date range: {ci.DateRange}", isError=True)
                         Log(f"#append 2: {ci}", Print=False)
@@ -451,7 +451,7 @@ def main():
                         cancelled=co.Cancelled or dates[0].Cancelled
                         dates[0].Cancelled = False
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(Link=co.Link, NameInSeriesList=[co.Text], Locale=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=co.Link, Text=co.Text, Locale=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
                         AppendCon(conventions, ci)
                         Log(f"#append 3: {ci}", Print=False)
 
@@ -466,7 +466,7 @@ def main():
                         cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
                         dt.Cancelled = False
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, NameInSeriesList=[seriesTableRowConEntries[0].Text], Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, Text=seriesTableRowConEntries[0].Text, Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
                         AppendCon(conventions, ci)
                         Log(f"#append 4: {ci}", Print=False)
                 else:
@@ -516,9 +516,9 @@ def main():
     # Normalize convention locations to the standard City, ST form.
     # Log("***Normalizing con locations")
     # for con in conventions.values():
-    #     loc=LocaleHandling().ScanConPageforLocale(con.Loc, con.NameInSeriesList)    # TODO: What the hell is this doing??
+    #     loc=LocaleHandling().ScanConPageforLocale(con.Loc, con.Text)    # TODO: What the hell is this doing??
     #     if len(loc) > 1:
-    #         Log("  In "+con.NameInSeriesList+"  found more than one location: "+str(loc))
+    #         Log("  In "+con.Text+"  found more than one location: "+str(loc))
     #     if len(loc) > 0:
     #         con.Loc=loc[0]    # Nasty code to get one element from the set
 
@@ -531,7 +531,7 @@ def main():
 
     # Created a list of conventions sorted in date order from the con dictionary into
     conventionsByDate: List[ConInstanceInfo]=[y for x in conventions.values() for y in x]
-    conventionsByDate.sort(key=lambda d: d.NameInSeriesList)
+    conventionsByDate.sort(key=lambda d: d.Text)
     conventionsByDate.sort(key=lambda d: d.DateRange)
 
     #TODO: Add a list of keywords to find and remove.  E.g. "Astra RR" ("Ad Astra XI")
@@ -560,7 +560,7 @@ def main():
             # it shows up twice in the list of cons, but in both cases the proper name([[DeepSouthCon 58]] / [[ConGregate 2020]]) is in con.Override
             # which is only filled in for these complicated thingies.  Since they are on the same date, they sort together and this test ignores ones after the first.
             # TODO: What if there's another con on that date and it winds up sorted in between?
-            if con.NameInSeriesList == lastcon.NameInSeriesList and con.DateRange == lastcon.DateRange:
+            if con.Text == lastcon.Text and con.DateRange == lastcon.DateRange:
                 continue
 
             # Now write the line
