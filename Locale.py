@@ -319,6 +319,7 @@ class LocaleHandling:
         "Plainfield, NJ": "South",
         "Plains, NY": "White",
         "Point, NC": "High",
+        "Rapids, IA": "Cedar",
         "Raton, FL": "Boca",
         "Rock, AR": ["Little", "North Little"],
         "Rosa, CA": "Santa",
