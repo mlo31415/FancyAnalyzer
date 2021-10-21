@@ -1,6 +1,5 @@
-from __future__ import annotations
 
-from typing import Dict, List, Tuple, Optional, Union
+from typing import Optional, Union
 
 import os
 import re
@@ -59,7 +58,7 @@ def main():
     Log("   "+str(len(allFancy3PagesFnames))+" pages found")
 
     # The master dictionary of all Fancy 3 pages.
-    fancyPagesDictByWikiname: Dict[str, F3Page]={}     # Key is page's name on the wiki; Value is a F3Page class containing all the references, tags, etc. on the page
+    fancyPagesDictByWikiname: dict[str, F3Page]={}     # Key is page's name on the wiki; Value is a F3Page class containing all the references, tags, etc. on the page
 
     Log("***Scanning local copies of pages for links and other info", timestamp=True)
     for pageFname in allFancy3PagesFnames:
@@ -92,7 +91,7 @@ def main():
 
     # Scan for a virtual flag
     # Return True/False and remaining text after V-flag is removed
-    def ScanForVirtual(s: str) -> Tuple[bool, str]:
+    def ScanForVirtual(s: str) -> tuple[bool, str]:
         pattern = "\((:?virtual|online|held online|moved online|virtual convention)\)"
 
         # First look for the alternative contained in parens *anywhere* in the text
@@ -110,7 +109,7 @@ def main():
 
     # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
     # We do this be reading all the convention series pages' convention tables
-    conventions: defaultdict[str, List[ConInstanceInfo]]=defaultdict(list)
+    conventions: defaultdict[str, list[ConInstanceInfo]]=defaultdict(list)
     for page in fancyPagesDictByWikiname.values():
 
         # First, see if this is a Conseries page
@@ -213,7 +212,7 @@ def main():
                     continue
 
                 # We have N groups up to N-1 of which might be None
-                dates:List[FanzineDateRange]=[]
+                dates:list[FanzineDateRange]=[]
                 for d in ds:
                     if len(d) > 0:
                         c, s=ScanForBracketedText(d, "s")
@@ -273,7 +272,7 @@ def main():
 
                 # Take a Wikidot page reference and extract its text and link (if different)
                 # Return them as (link, text)
-                def SplitNametext(constr: str) -> Tuple[str, str]:
+                def SplitNametext(constr: str) -> tuple[str, str]:
                     # Now convert all link|text to separate link and text
                     # Do this for s1 and s2
                     m=re.match("\[\[(.+)\|(.+)]]$", constr)       # Split xxx|yyy into xxx and yyy
@@ -287,7 +286,7 @@ def main():
                 #----------------------------------------------------------
                 # We assume that the cancelled con names precede the uncancelled ones
                 # On each call, we find the first con name and return it (as a ConName) and the remaining text as a tuple
-                def NibbleConNametext(connamestr: str) -> Tuple[Optional[ConInstanceLink], str]:
+                def NibbleConNametext(connamestr: str) -> tuple[Optional[ConInstanceLink], str]:
                     connamestr=connamestr.strip()
                     if len(connamestr) == 0:
                         return None, connamestr
@@ -335,7 +334,7 @@ def main():
                         return con, ""
 
                 # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
-                seriesTableRowConEntries: List[Union[ConInstanceLink, List[ConInstanceLink]]]=[]
+                seriesTableRowConEntries: list[Union[ConInstanceLink, list[ConInstanceLink]]]=[]
                 # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
                 # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
                 def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
@@ -349,7 +348,7 @@ def main():
                 contextlist=[x.replace("&&&", "/").strip() for x in contextlist]
                 contextlist=[x for x in contextlist if len(x) > 0]  # Squeeze out any empty splits
                 if len(contextlist) > 1:
-                    alts: List[ConInstanceLink]=[]
+                    alts: list[ConInstanceLink]=[]
                     for con in contextlist:
                         c, _=NibbleConNametext(con)
                         if c is not None:
@@ -380,7 +379,7 @@ def main():
                     continue
 
                 # Don't add duplicate entries to the conlist
-                def AppendCon(conDict: defaultdict[str, List[ConInstanceInfo]], cii: ConInstanceInfo) -> None:
+                def AppendCon(conDict: defaultdict[str, list[ConInstanceInfo]], cii: ConInstanceInfo) -> None:
                     hits=[y for x in conDict.values() for y in x if cii == y]
                     if len(hits) == 0:
                         # This is a new name: Just append it
@@ -530,7 +529,7 @@ def main():
             f.write(str(con)+"\n")
 
     # Created a list of conventions sorted in date order from the con dictionary into
-    conventionsByDate: List[ConInstanceInfo]=[y for x in conventions.values() for y in x]
+    conventionsByDate: list[ConInstanceInfo]=[y for x in conventions.values() for y in x]
     conventionsByDate.sort(key=lambda d: d.Text)
     conventionsByDate.sort(key=lambda d: d.DateRange)
 
@@ -604,8 +603,8 @@ def main():
     # Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
     # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
     Log("***Create inverse redirects tables", timestamp=True)
-    redirects: Dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
-    inverseRedirects:Dict[str, List[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+    redirects: dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
+    inverseRedirects:dict[str, list[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
     for fancyPage in fancyPagesDictByWikiname.values():
         if fancyPage.Redirect != "":
             redirects[fancyPage.Name]=fancyPage.Redirect
@@ -631,14 +630,14 @@ def main():
     ###################################################
     # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
     # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
-    inverseRedirects: Dict[str, List[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+    inverseRedirects: dict[str, list[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
     for fancyPage in fancyPagesDictByWikiname.values():
         if fancyPage.Redirect != "":
             inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
     # Create a dictionary of page references for people pages.
     # The key is a page's canonical name; the value is a list of pages at which they are referenced.
-    peopleReferences: Dict[str, List[str]]={}
+    peopleReferences: dict[str, list[str]]={}
     Log("***Creating dict of people references", timestamp=True)
     for fancyPage in fancyPagesDictByWikiname.values():
         if fancyPage.IsPerson:
@@ -740,7 +739,7 @@ def main():
 
 
     Log("Writing: Peoples rejected names.txt", timestamp=True)
-    peopleNames: List[str]=[]
+    peopleNames: list[str]=[]
     # Go through the list of all the pages labelled as Person
     # Build a list of people's names
     with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
@@ -779,9 +778,9 @@ def main():
     ignoredTags=adminTags.copy()
     ignoredTags.union({"Fancy1", "Fancy2"})
 
-    def ComputeTagCounts(pageDict: Dict[str, F3Page], ignoredTags: set) -> Tuple[Dict[str, int], Dict[str, int]]:
-        tagcounts: Dict[str, int]=defaultdict(int)
-        tagsetcounts: Dict[str, int]=defaultdict(int)
+    def ComputeTagCounts(pageDict: dict[str, F3Page], ignoredTags: set) -> tuple[dict[str, int], dict[str, int]]:
+        tagcounts: dict[str, int]=defaultdict(int)
+        tagsetcounts: dict[str, int]=defaultdict(int)
         for fp in pageDict.values():
             if not fp.IsRedirectpage:
                 tagset=TagSet()
@@ -876,7 +875,7 @@ def main():
                 if fpn[0] == "'" and fpn[1:3].isnumeric():
                     continue
                 # We skip certain pages because while they may look like initilaisms, they aren't or because we only flag con series, and not the individual cons
-                ignorelist: List[str]=["DSC", "CAN*CON", "ICFA", "NJAC", "OASIS", "OVFF", "URCON", "VCON"]
+                ignorelist: list[str]=["DSC", "CAN*CON", "ICFA", "NJAC", "OASIS", "OVFF", "URCON", "VCON"]
                 if any([fpn.startswith(x+" ") for x in ignorelist]):
                     continue
                 # Bail if there are no alphabetic characters at all

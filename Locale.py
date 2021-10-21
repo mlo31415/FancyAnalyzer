@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Dict, List
 from dataclasses import dataclass
 from collections import defaultdict
 
@@ -160,7 +159,7 @@ class Locale:
 ############################################################################################
 class LocaleDict:
     def __init__(self):
-        self.d: Dict[str, Locale]={}
+        self.d: dict[str, Locale]={}
 
     def __getitem__(self, i: str) -> Locale:
         if i not in self.d.keys():
@@ -189,13 +188,13 @@ class LocaleHandling:
 
     # We also identify some things as probable locales which are not tagged directly or indirectly as locales
     # Maintain a dict of lists of pages that contain them
-    probableLocales: Dict[str, List[str]]=defaultdict(list)
+    probableLocales: dict[str, list[str]]=defaultdict(list)
 
     # This will be a pointer to fancyPagesDictByWikiname
-    allPages: Dict[str, F3Page]={}
+    allPages: dict[str, F3Page]={}
 
     # Go through the entire set of pages looking for locales and harvest the information to create the list of all locales
-    def Create(self, fancyPagesDictByWikiname: Dict[str, F3Page]) -> None:
+    def Create(self, fancyPagesDictByWikiname: dict[str, F3Page]) -> None:
         LocaleHandling.allPages=fancyPagesDictByWikiname
         for page in LocaleHandling.allPages.values():
             # Add locale pages to the set
@@ -211,7 +210,7 @@ class LocaleHandling:
 
     # key is full name, value is preferred name
     # Generally these will only be major (in both the fannish and mundane sense) cities.
-    specialNames: Dict[str, str]={
+    specialNames: dict[str, str]={
         "Boston, MA": "Boston",
         "Chicago, IL": "Chicago",
         "Dublin, IE": "Dublin",
@@ -339,7 +338,7 @@ class LocaleHandling:
     }
 
 
-    def AppendLocale(self, rslts: List[str], pagename: str) -> List[Locale]:
+    def AppendLocale(self, rslts: list[str], pagename: str) -> list[Locale]:
         out=[]
         if len(rslts) > 0:
             for rslt in rslts:
@@ -355,11 +354,11 @@ class LocaleHandling:
     #   in Word, XX
     #   where Word is one or more strings of letters each with an initial capital, the comma is optional, and XX is a pair of upper case letters
     # Note that this will also pick up roman-numeraled con names, E.g., Fantasycon XI, so we need to remove these later
-    def ScanConPageforLocale(self, s: str, pagename: str) -> List[Locale]:
+    def ScanConPageforLocale(self, s: str, pagename: str) -> list[Locale]:
 
         # Find the first locale
         # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
-        # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
+        # ([A-Z][a-z\-]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
         # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         out: List[Locale]=[]
@@ -399,14 +398,14 @@ class LocaleHandling:
         return out
 
     # We have text which is supposedly a locale: Try to interpret it
-    def ScanForLocale(self, s: str, pagename: str) -> List[Locale]:
+    def ScanForLocale(self, s: str, pagename: str) -> list[Locale]:
 
         # Find the first locale
         # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
         # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
         # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
-        out: List[Locale]=[]
+        out: list[Locale]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
         m1=re.search("[A-Z][a-zé,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
@@ -418,7 +417,7 @@ class LocaleHandling:
                 out.extend(self.AppendLocale(rslts, pagename))
 
         if not found:
-            m2=re.search("\[\[[A-Z][a-zé.,]+", s)  # Search for '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
+            m2=re.search("\[\[[A-Z][a-zé.,-]+", s)  # Search for '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
             # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
             if m2 is not None:
                 rslts=self.ScanForCityCountry(s)
@@ -442,15 +441,15 @@ class LocaleHandling:
         return out
 
 
-    def ScanForCityST(self, s: str, pagename: str) -> List[str]:
+    def ScanForCityST(self, s: str, pagename: str) -> list[str]:
 
         # Find the first locale
         # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
-        # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
+        # ([A-Z][a-zé]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '-' to handle things like "Port-Royal")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
         # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m=re.search("([A-Z][a-zé.]+\s+)?([A-Z][a-zé.]+\s+)?([A-Z][a-zé]+,?\s+)([A-Z]{2})[^a-zéA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
+        m=re.search("([A-Z][a-zé-]+\s+)?([A-Z][a-zé-]+\s+)?([A-Z][a-zé-]+,?\s+)([A-Z]{2})[^a-zéA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m is not None and len(m.groups()) > 1:
             groups=[x for x in m.groups() if x is not None]
@@ -498,7 +497,7 @@ class LocaleHandling:
         return []
 
 
-    def ScanForCityCountry(self, s: str) -> List[str]:
+    def ScanForCityCountry(self, s: str) -> list[str]:
         # OK, we can't find the Xxxx, XX pattern
         # Look for 'in'+city+[,]+spelled-out-country
         # We'll look for a country name preceded by the word 'in' and one or two Capitalized words
@@ -518,7 +517,7 @@ class LocaleHandling:
                         rest=""
                         sep=""
                         for i in range(len(splt)-1, max(len(splt)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
-                            if re.match("^[A-Z][a-zé]+$", splt[i]):  # Look for Xxxxx
+                            if re.match("^[A-Z][a-zé-]+$", splt[i]):  # Look for Xxxxx
                                 rest=splt[i]+sep+rest       # Build up the locale string by prepending the matched token
                                 locale=rest+", "+country
                             if splt[i-1] == "in":
@@ -546,7 +545,7 @@ class LocaleHandling:
         return out
 
 
-    def ScanForCity(self, s: str) -> List[str]:
+    def ScanForCity(self, s: str) -> list[str]:
         # Look for the pattern "[[One Or More Uppercase Names]]"
         # Pattern:
         # optional [[
@@ -564,7 +563,7 @@ class LocaleHandling:
         if len(lst) > 0:
             return [lst[0]]
 
-        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-zé]+,?\s*)+)(?:]])?", s)
+        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-zé-]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
