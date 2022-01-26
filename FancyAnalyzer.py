@@ -1,4 +1,3 @@
-
 from typing import Optional, Union
 
 import os
@@ -824,7 +823,7 @@ def main():
 
     ##################
     # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
-    tagsetcounts: Dict[str, int]=defaultdict(int)
+    tagsetcounts: dict[str, int]=defaultdict(int)
     for fp in fancyPagesDictByWikiname.values():
         if not fp.IsRedirectpage:
             tagpowerset=set()   # of TagSets
@@ -892,7 +891,7 @@ def main():
     # Make lists of odd tag combinations which may indicate something wrong
     Log("Writing: Tagging oddities.txt", timestamp=True)
 
-    def WriteSelectedTags(fancyPagesDictByWikiname: Dict[str, F3Page], select, f):
+    def WriteSelectedTags(fancyPagesDictByWikiname: dict[str, F3Page], select, f):
         f.write("-------------------------------------------------------\n")
         found=False
         for fancyPage in fancyPagesDictByWikiname.values():
