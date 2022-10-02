@@ -736,7 +736,6 @@ def main():
         return True
 
 
-
     Log("Writing: Peoples rejected names.txt", timestamp=True)
     peopleNames: list[str]=[]
     # Go through the list of all the pages labelled as Person
@@ -769,6 +768,20 @@ def main():
         peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
         for name in peopleNames:
             f.write(name+"\n")
+
+    # Create and write out a file of preferred forms of peoples' names
+    # Each line is of the form
+    #   <redirected page. -> <people page>
+    # A people page is a page tagged as a person which is not a redirect
+    with open("People Cannonical Names.txt", "w+", encoding='utf-8') as f:
+        for fancyPage in fancyPagesDictByWikiname.values():
+            if fancyPage.IsPerson:
+                if fancyPage.IsRedirectpage:
+                    redirect=fancyPage.Redirect
+                    redirectPage=fancyPagesDictByWikiname[redirect]
+                    if redirectPage.IsPerson:
+                        f.write(f"{RemoveTrailingParens(fancyPage.Name)} --> {RemoveTrailingParens(RemoveTrailingParens(redirectPage.Name))}\n")
+
 
     # Create some reports on tags/Categories
     adminTags={"Admin", "mlo", "jrb", "Nofiles", "Nodates", "Nostart", "Noseries", "Noend", "Nowebsite", "Hasfiles", "Haslink", "Haswebsite", "Fixme", "Details", "Redirect", "Wikidot", "Multiple",
