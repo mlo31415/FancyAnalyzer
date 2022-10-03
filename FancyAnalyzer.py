@@ -773,14 +773,21 @@ def main():
     # Each line is of the form
     #   <redirected page. -> <people page>
     # A people page is a page tagged as a person which is not a redirect
+    Log("Writing: Peoples Cannonical Names.txt", timestamp=True)
     with open("People Cannonical Names.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
-            if fancyPage.IsPerson:
-                if fancyPage.IsRedirectpage:
+            if fancyPage.IsRedirectpage:    # If a redirect page
+                if not fancyPage.IsWikidot:  # Which is not a remnant Wikidot redirect page
                     redirect=fancyPage.Redirect
-                    redirectPage=fancyPagesDictByWikiname[redirect]
-                    if redirectPage.IsPerson:
-                        f.write(f"{RemoveTrailingParens(fancyPage.Name)} --> {RemoveTrailingParens(RemoveTrailingParens(redirectPage.Name))}\n")
+                    if redirect in fancyPagesDictByWikiname:    # Points to a page that exists
+                        redirectPage=fancyPagesDictByWikiname[redirect]
+                        if redirectPage.IsPerson:   # Which is a person page or...
+                            if fancyPage.IsPerson or not \
+                                (fancyPage.IsAPA or fancyPage.IsLocale or fancyPage.IsClub or fancyPage.IsFanzine or fancyPage.IsPublisher or fancyPage.IsStore or
+                                 fancyPage.IsConrunning or fancyPage.IsConInstance or fancyPage.IsCatchphrase or fancyPage.IsFiction):
+                                # ...is not some other kind of page (sometimes something like a one-person store is documented by a redirect to the owner's page, and we don't
+                                # want those redirects to be alternate names of the owner
+                                    f.write(f"{RemoveTrailingParens(fancyPage.Name)} --> {RemoveTrailingParens(RemoveTrailingParens(redirectPage.Name))}\n")
 
 
     # Create some reports on tags/Categories
