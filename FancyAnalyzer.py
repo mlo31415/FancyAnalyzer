@@ -784,7 +784,7 @@ def main():
                         if redirectPage.IsPerson:   # Which is a person page or...
                             if fancyPage.IsPerson or not \
                                 (fancyPage.IsAPA or fancyPage.IsLocale or fancyPage.IsClub or fancyPage.IsFanzine or fancyPage.IsPublisher or fancyPage.IsStore or
-                                 fancyPage.IsConrunning or fancyPage.IsConInstance or fancyPage.IsCatchphrase or fancyPage.IsFiction):
+                                 fancyPage.IsConrunning or fancyPage.IsConInstance or fancyPage.IsCatchphrase or fancyPage.IsFiction or fancyPage.IsBook):
                                 # ...is not some other kind of page (sometimes something like a one-person store is documented by a redirect to the owner's page, and we don't
                                 # want those redirects to be alternate names of the owner
                                     f.write(f"{RemoveTrailingParens(fancyPage.Name)} --> {RemoveTrailingParens(RemoveTrailingParens(redirectPage.Name))}\n")
