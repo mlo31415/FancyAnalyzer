@@ -773,8 +773,8 @@ def main():
     # Each line is of the form
     #   <redirected page. -> <people page>
     # A people page is a page tagged as a person which is not a redirect
-    Log("Writing: Peoples Cannonical Names.txt", timestamp=True)
-    with open("People Cannonical Names.txt", "w+", encoding='utf-8') as f:
+    Log("Writing: Peoples Canonical Names.txt", timestamp=True)
+    with open("People Canonical Names.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             if fancyPage.IsRedirectpage:    # If a redirect page
                 if not fancyPage.IsWikidot:  # Which is not a remnant Wikidot redirect page
