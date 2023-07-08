@@ -361,7 +361,7 @@ class LocaleHandling:
         # ([A-Z][a-z\-]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
         # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
-        out: List[Locale]=[]
+        out: list[Locale]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
         m1=re.search("[^A-Za-zé]in [A-Z][a-zé.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
@@ -504,7 +504,7 @@ class LocaleHandling:
         countries=["Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
                    "Israel", "Italy", "New Zealand", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
                    "Poland", "Russia", "Scotland", "Wales"]
-        out: List[str]=[]
+        out: list[str]=[]
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
         splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space
         for country in countries:
