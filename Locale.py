@@ -538,6 +538,7 @@ class LocaleHandling:
                                     if locale in self.locales.keys():   # Is this local recognized?
                                         return [locale]
                                 Log(f"{locale} not in locales (5)")
+                                Log(f"       line={s}")
                                 return []
                             sep=" "
             except ValueError:
