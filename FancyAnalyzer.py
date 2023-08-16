@@ -10,7 +10,7 @@ from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText, WikidotCanonicizeName, StripWikiBrackets
 from ConInstanceInfo import ConInstanceInfo, ConInstanceLink
-from FanzineIssueSpecPackage import FanzineDateRange
+from FanzineIssueSpecPackage import FanzineDateRange, FanzineDate
 
 
 def main():
@@ -97,6 +97,7 @@ def main():
         newval = re.sub(pattern, "", s, flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
         if s != newval:
             return True, newval.strip()
+
 
         # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
         newval = re.sub("\s*" + pattern + "\s*$", "", s, flags=re.IGNORECASE)
@@ -415,7 +416,7 @@ def main():
                         cancelled=cancelled or dt.Cancelled
                         v = False if cancelled else virtual
                         for dt in dates:
-                            ci=ConInstanceInfo(Link=links, Text=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled)
+                            ci=ConInstanceInfo(Link=links, Text=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled, SeriesName=page.Name)
                             AppendCon(conventions, ci)
                             Log(f"#append 1: {ci}", Print=False)
 
@@ -432,7 +433,7 @@ def main():
                         cancelled=seriesTableRowConEntries[i].Cancelled or dates[i].Cancelled
                         dates[i].Cancelled=False    # We've xfered this to ConInstanceInfo and don't still want it here because it would print twice
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[i].Link, Text=seriesTableRowConEntries[i].Text, Locale=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[i].Link, Text=seriesTableRowConEntries[i].Text, Locale=conlocation, DateRange=dates[i], Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
                         if ci.DateRange.IsEmpty():
                             Log(f"***{ci.Link} has an empty date range: {ci.DateRange}", isError=True)
                         Log(f"#append 2: {ci}", Print=False)
@@ -449,7 +450,7 @@ def main():
                         cancelled=co.Cancelled or dates[0].Cancelled
                         dates[0].Cancelled = False
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(Link=co.Link, Text=co.Text, Locale=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=co.Link, Text=co.Text, Locale=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
                         AppendCon(conventions, ci)
                         Log(f"#append 3: {ci}", Print=False)
 
@@ -464,7 +465,7 @@ def main():
                         cancelled=seriesTableRowConEntries[0].Cancelled or dt.Cancelled
                         dt.Cancelled = False
                         v=False if cancelled else virtual
-                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, Text=seriesTableRowConEntries[0].Text, Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled)
+                        ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, Text=seriesTableRowConEntries[0].Text, Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
                         AppendCon(conventions, ci)
                         Log(f"#append 4: {ci}", Print=False)
                 else:
@@ -538,7 +539,7 @@ def main():
     Log("Writing: Convention timeline (Fancy).txt", timestamp=True)
     with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
         f.write("This is a chronological list of SF conventions automatically extracted from Fancyclopedia 3\n\n")
-        f.write("If a convention is missing from the list, it may be due to it having been added only recently, (this list was generated ")
+        f.write("If a convention is missing from the list, we may not know about it or it may have been added only recently, (this list was generated ")
         f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
         f.write(" or because we do not yet have information on the convention or because the convention's listing in Fancy 3 is a bit odd ")
         f.write("and the program which creates this list isn't parsing it.  In any case, we welcome help making it more complete!\n\n")
@@ -593,6 +594,72 @@ def main():
 
             lastcon=con
 
+
+        f.write("</tab>\n")
+        f.write("{{conrunning}}\n[[Category:List]]\n")
+
+
+    #..................................................
+    # Generate a list of forthcoming and recent conventions:
+    # All cons dated the day the report is generated (including two of a series if they are both announced)
+    # If we have no instance of a con going forward, then go back as far as 2021 (skipping pure-virtual cons) and keep only the most recent
+    # First, get rid of anything prior to 2022.
+    recentCons=[x for x in conventionsByDate if x.DateRange.StartDate > FanzineDate(Year=2021, Month=12, Day=31)]
+
+    # Now a list of all cons still in the future
+    futureCons=[x for x in recentCons if x.DateRange.EndDate > FanzineDate(DateTime=datetime.now())]
+    # And all cons in the 1/1/2022 to now period
+    pastCons=[x for x in recentCons if x.DateRange.StartDate < FanzineDate(DateTime=datetime.now())]
+
+    # Remove conventions from the pastCons list if the series is  reprepresented in the futureCons list
+    futureSeriesNames=set([x.SeriesName for x in futureCons])
+    pastCons=[x for x in pastCons if x.SeriesName not in futureSeriesNames]
+
+    # Keep only the latest convention in a series in the pastCons list
+    latestPastCons: dict[str, ConInstanceInfo]={}
+    for con in pastCons:
+        if con.SeriesName in latestPastCons.keys():     # Keep only the most recent past con
+            if con.DateRange.StartDate < latestPastCons[con.SeriesName].DateRange.StartDate:
+                continue
+        latestPastCons[con.SeriesName]=con
+    # And combine it all into a single list of relevant recent cons sorted by name
+    currentCons=futureCons+[x for x in latestPastCons.values()]
+    currentCons.sort(key=lambda x: x.Name)
+
+    Log("Writing: Current Conventions (Fancy).txt", timestamp=True)
+    with open("Current Conventions (Fancy).txt", "w+", encoding='utf-8') as f:
+        f.write("This is a list of current SF conventions automatically extracted from Fancyclopedia 3\n\n")
+        f.write("If a convention is missing from the list, it may have been added only recently, (this list was generated ")
+        f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
+        f.write(" or because we do not yet have information on the convention or because the convention's listing in Fancy 3 is a bit odd ")
+        f.write("and the program which creates this list isn't parsing it.  In any case, we welcome help making it more complete!\n\n")
+        f.write(f"The list currently has {len(currentCons)} conventions.\n")
+
+        currentLetter=None
+        # We're going to write a Fancy 3 wiki table
+        # Two columns: Daterange and convention name and location
+        # The date is not repeated when it is the same
+        # The con name and location is crossed out when it was cancelled or moved and (virtual) is added when it was virtual
+        f.write("<tab>\n")
+        for con in currentCons:
+
+            # Format the convention name and location for tabular output
+            nametext=con.LinkedName
+            if con.Cancelled:
+                nametext=f"<s>{nametext}</s>"
+            if con.Virtual:
+                nametext=f"''{nametext} (virtual)''"
+
+            dateText=str(con.DateRange)
+            if con.Cancelled:
+                dateText=f"<s>{dateText}</s>"
+
+            localeText=""
+            if not con.Virtual:
+                if len(con.Locale.Link) > 0:
+                    localeText=StripWikiBrackets(con.Locale.Link)
+
+            f.write(f"{nametext}&nbsp;&nbsp;&nbsp;{dateText}&nbsp;&nbsp;&nbsp;{localeText}\n")
 
         f.write("</tab>\n")
         f.write("{{conrunning}}\n[[Category:List]]\n")
@@ -881,7 +948,7 @@ def main():
 
     ##################
     # Make a list of all all-upper-case pages which are not tagged initialism.
-    Log("Writing: Uppercase name which aren't marked as Initialisms.txt", timestamp=True)
+    Log("Writing: Uppercase names which aren't marked as Initialisms.txt", timestamp=True)
     with open("Uppercase names which aren't marked as initialisms.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             # A page might be an initialism if ALL alpha characters are upper case
