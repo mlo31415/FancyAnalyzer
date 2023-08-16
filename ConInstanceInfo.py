@@ -32,7 +32,7 @@ class ConInstanceInfo:
     # If the link is simple, e.g. [[simple link]], then that value should go in Text.
     # If the link is complex E.g., [[Link|Text]], the name displayed goes in Text and the page referred to goes in _Link
     # The property Link will always return the actual page referred to
-    def __init__(self, **kwds):
+    def __init__(self, SeriesName: str | None = None, **kwds):
         kwds=defaultdict(lambda: None, **kwds)    # Turn the dict into a defaultdict with default value None
 
         self._CIL: List[ConInstanceLink]=[]
@@ -62,6 +62,7 @@ class ConInstanceInfo:
                     self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
                 for i in range(len(kwd)):
                     self._CIL[i].Text=kwd[i]
+        self.SeriesName=SeriesName
 
         self._Locale: Locale=Locale()
         if kwds["Locale"] is not None:
