@@ -122,18 +122,15 @@ def main():
         for index, table in enumerate(page.Tables):
             numcolumns=len(table.Headers)
 
-            listConLocationHeaders=["Location"]
-            locColumn=CrosscheckListElement(listConLocationHeaders, table.Headers)
+            locColumn=CrosscheckListElement("Locations", table.Headers)
             # We don't log a missing location column because that is common and not an error -- we'll try to get the location later from the con instance's page
 
-            listConNameHeaders=["Convention", "Convention Name", "Name"]
-            conColumn=CrosscheckListElement(listConNameHeaders, table.Headers)
+            conColumn=CrosscheckListElement(["Convention", "Convention Name", "Name"], table.Headers)
             if conColumn is None:
                 Log("***Can't find Convention column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True, Print=False)
                 continue
 
-            listConDateHeaders=["Date", "Dates"]
-            dateColumn=CrosscheckListElement(listConDateHeaders, table.Headers)
+            dateColumn=CrosscheckListElement(["Date", "Dates"], table.Headers)
             if dateColumn is None:
                 Log("***Can't find Dates column in table "+str(index+1)+" of "+str(len(page.Tables)), isError=True, Print=False)
                 continue
