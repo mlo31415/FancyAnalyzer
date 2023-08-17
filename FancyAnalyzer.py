@@ -9,6 +9,7 @@ from Locale import LocaleHandling, Locale
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText, WikidotCanonicizeName, StripWikiBrackets
+from HelpersPackage import CompressWhitespace
 from ConInstanceInfo import ConInstanceInfo, ConInstanceLink
 from FanzineIssueSpecPackage import FanzineDateRange, FanzineDate
 
@@ -187,7 +188,7 @@ def main():
                 # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
                 datetext=re.sub("\(.*\)\s?$", "", datetext)   # Note that this is greedy. Is that the correct things to do?
                 # Convert the HTML characters some people have inserted into their ascii equivalents
-                datetext=datetext.replace("&nbsp;", " ").replace("&#8209;", "-")
+                datetext=CompressWhitespace(datetext)
                 # Remove leading and trailing spaces
                 datetext=datetext.strip()
 
@@ -331,7 +332,7 @@ def main():
                         return con, ""
 
                 # Create a list of convention names found along with any attached cancellation/virtual flags and date ranges
-                seriesTableRowConEntries: list[Union[ConInstanceLink, list[ConInstanceLink]]]=[]
+                seriesTableRowConEntries: list[ConInstanceLink | list[ConInstanceLink]]=[]
                 # Do we have "/" in the con name that is not part of a </s> and not part of a fraction? If so, we have alternate names, not separate cons
                 # The strategy here is to recognize the '/' which are *not* con name separators and turn them into '&&&', then split on the remaining '/' and restore the real ones
                 def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
@@ -621,7 +622,7 @@ def main():
         latestPastCons[con.SeriesName]=con
     # And combine it all into a single list of relevant recent cons sorted by name
     currentCons=futureCons+[x for x in latestPastCons.values()]
-    currentCons.sort(key=lambda x: x.Name)
+    currentCons.sort(key=lambda x: x.DateRange)
 
     Log("Writing: Current Conventions (Fancy).txt", timestamp=True)
     with open("Current Conventions (Fancy).txt", "w+", encoding='utf-8') as f:
@@ -629,7 +630,7 @@ def main():
         f.write("If a convention is missing from the list, it may have been added only recently, (this list was generated ")
         f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
         f.write(" or because we do not yet have information on the convention or because the convention's listing in Fancy 3 is a bit odd ")
-        f.write("and the program which creates this list isn't parsing it.  In any case, we welcome help making it more complete!\n\n")
+        f.write("and the program which creates this list isn't parsing it.  In any case, we welcome help making it more complete!  Send corrections and updates to webmaster@fancyclopedia.org\n\n")
         f.write(f"The list currently has {len(currentCons)} conventions.\n")
 
         currentLetter=None
@@ -844,6 +845,7 @@ def main():
                 if not fancyPage.IsWikidot:  # Which is not a remnant Wikidot redirect page
                     redirect=fancyPage.Redirect
                     if redirect in fancyPagesDictByWikiname:    # Points to a page that exists
+                        redirectPage=fancyPagesDictByWikiname[redirect]
                         redirectPage=fancyPagesDictByWikiname[redirect]
                         if redirectPage.IsPerson:   # Which is a person page or...
                             if fancyPage.IsPerson or not \
