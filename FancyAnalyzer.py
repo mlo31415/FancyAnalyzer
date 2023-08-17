@@ -155,7 +155,7 @@ def main():
                     if v2:
                         row[idx]=col      # Update row with the virtual flag removed
                     virtual=virtual or v2
-                Log("Virtual="+str(virtual), Print=False)
+                Log(f"{virtual=}", Print=False)
 
                 # Decode the convention and date columns add the resulting convention(s) to the list
                 # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:
