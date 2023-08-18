@@ -649,6 +649,14 @@ def main():
                 nametext=f"''{nametext} (virtual)''"
                 nameText=f"''{nameText} (virtual)''"
 
+            seriesText=""
+            # We want to add series info to conventions where the series is not in the convention name (e.g., Eastercons)
+            # The series name may have differener capitaization (ignore) and may have some sort of designator in parens at the end (eg., Unicon (MD)).  Ignore that.
+            sn=con.SeriesName.lower()
+            sn=re.sub("\(.*\)\s*$", "", sn)
+            if sn not in nameText.lower() and sn != "onesie conventions":
+                seriesText=f"&nbsp;({con.SeriesName})"
+
             dateText=str(con.DateRange)
             if con.Cancelled:
                 dateText=f"<s>{dateText}</s>"
@@ -658,7 +666,7 @@ def main():
                 if len(con.Locale.Link) > 0:
                     localeText=StripWikiBrackets(con.Locale.Link)
 
-            f.write(f"{nametext}&nbsp;&nbsp;&nbsp;{dateText}&nbsp;&nbsp;&nbsp;{localeText}\n")
+            f.write(f"{nameText}{seriesText}&nbsp;&nbsp;&nbsp;{dateText}&nbsp;&nbsp;&nbsp;{localeText}\n")
 
         f.write("</tab>\n")
         f.write("{{conrunning}}\n[[Category:List]]\n")
