@@ -654,7 +654,7 @@ def main():
             sn=con.SeriesName.lower()
             sn=re.sub("\(.*\)\s*$", "", sn)
             if sn not in nameText.lower() and sn != "onesie conventions":
-                seriesText=f"&nbsp;({con.SeriesName})"
+                seriesText=f"&nbsp;([[{con.SeriesName}]])"
 
             dateText=str(con.DateRange)
             if con.Cancelled:
