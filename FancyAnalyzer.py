@@ -234,18 +234,18 @@ def main():
                 #............................................
                 # Now handle the names column
                 # Get the corresponding convention name(s).
-                nametext=row[conColumn]
+                nameText=row[conColumn]
                 # Clean up the text
                 # Convert the HTML characters some people have inserted into their ascii equivalents
-                nametext=nametext.replace("&nbsp;", " ").replace("&#8209;", "-")
+                nameText=nameText.replace("&nbsp;", " ").replace("&#8209;", "-")
                 # And get rid of hard line breaks
-                nametext=nametext.replace("<br>", " ")
+                nameText=nameText.replace("<br>", " ")
                 # In some pages we italicize or bold the con's name, so remove spans of single quotes of length 2 or longer
-                nametext=re.sub("[']{2,}", "", nametext)
+                nameText=re.sub("[']{2,}", "", nameText)
 
-                nametext=nametext.strip()
+                nameText=nameText.strip()
 
-                if nametext.count("[[") != nametext.count("]]"):
+                if nameText.count("[[") != nameText.count("]]"):
                     Log("'"+row[conColumn]+"' has unbalanced double brackets. This is unlikely to end well...", isError=True)
 
                 # An individual name is of one of these forms:
@@ -338,7 +338,7 @@ def main():
                 def replacer(matchObject) -> str:   # This generates the replacement text when used in a re.sub() call
                     if matchObject.group(1) is not None and matchObject.group(2) is not None:
                         return matchObject.group(1)+"&&&"+matchObject.group(2)
-                contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, nametext)  # Hide the '/' in html items like </xxx>
+                contextforsplitting=re.sub("(<)/([A-Za-z])", replacer, nameText)  # Hide the '/' in html items like </xxx>
                 contextforsplitting=re.sub("([0-9])/([0-9])", replacer, contextforsplitting)    # Hide the '/' in fractions such as 1/2
                 # Split on any remaining '/'s
                 contextlist=contextforsplitting.split("/")
@@ -355,8 +355,8 @@ def main():
                     seriesTableRowConEntries.append(alts)
                 else:
                     # Ok, we have one or more names and they are for different cons
-                    while len(nametext) > 0:
-                        con, nametext=NibbleConNametext(nametext)
+                    while len(nameText) > 0:
+                        con, nameText=NibbleConNametext(nameText)
                         if con is None:
                             break
                         seriesTableRowConEntries.append(con)
@@ -579,16 +579,16 @@ def main():
                     f.write(" ||")
 
             # Format the convention name and location for tabular output
-            nametext=con.LinkedName
+            nameText=con.LinkedName
             if con.Cancelled:
-                nametext=f"<s>{nametext}</s>"
+                nameText=f"<s>{nameText}</s>"
 
             if con.Virtual:
-                nametext=f"''{nametext} (virtual)''"
+                nameText=f"''{nameText} (virtual)''"
             else:
                 if len(con.Locale.Link) > 0:
-                    nametext+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.Locale.Link)})</small>"
-            f.write(nametext+"\n")
+                    nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.Locale.Link)})</small>"
+            f.write(nameText+"\n")
 
             lastcon=con
 
@@ -642,11 +642,12 @@ def main():
         for con in currentCons:
 
             # Format the convention name and location for tabular output
-            nametext=con.LinkedName
+            nameText=con.LinkedName
             if con.Cancelled:
-                nametext=f"<s>{nametext}</s>"
+                nameText=f"<s>{nameText}</s>"
             if con.Virtual:
                 nametext=f"''{nametext} (virtual)''"
+                nameText=f"''{nameText} (virtual)''"
 
             dateText=str(con.DateRange)
             if con.Cancelled:
@@ -661,6 +662,7 @@ def main():
 
         f.write("</tab>\n")
         f.write("{{conrunning}}\n[[Category:List]]\n")
+
 
     # ...
     # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
