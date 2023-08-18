@@ -646,7 +646,6 @@ def main():
             if con.Cancelled:
                 nameText=f"<s>{nameText}</s>"
             if con.Virtual:
-                nametext=f"''{nametext} (virtual)''"
                 nameText=f"''{nameText} (virtual)''"
 
             seriesText=""
