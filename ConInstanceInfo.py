@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import itertools
 
 from FanzineIssueSpecPackage import FanzineDateRange
-from Locale import Locale, LocaleHandling
+from LocalePage import LocalePage, LocaleHandling
 
 @dataclass
 # A class to hold a wiki link of the form [[<link>|<text>]] with the link being optional
@@ -64,11 +64,11 @@ class ConInstanceInfo:
                     self._CIL[i].Text=kwd[i]
         self.SeriesName=SeriesName
 
-        self._Locale: Locale=Locale()
+        self._LocalePage: LocalePage=LocalePage()
         if kwds["Locale"] is not None:
-            self._Locale=kwds["Locale"]
-            if type(self._Locale) is str:
-                self._Locale=LocaleHandling().LocaleFromName(self._Locale)  # ()
+            self._LocalePage=kwds["Locale"]
+            if type(self._LocalePage) is str:
+                self._LocalePage=LocaleHandling().LocaleFromName(self._LocalePage)  # ()
 
         self._DateRange: FanzineDateRange=FanzineDateRange()
         if kwds["DateRange"] is not None:
@@ -89,7 +89,7 @@ class ConInstanceInfo:
 
 
     def __str__(self) -> str:
-        s=f"Link={self._CIL[0].Link}  Name={self._CIL[0].Text}  Date={self.DateRange}  Location={self.Locale}"
+        s=f"Link={self._CIL[0].Link}  Name={self._CIL[0].Text}  Date={self.DateRange}  Location={self.LocalePage}"
         if self.Cancelled and not self.DateRange.Cancelled:     # Print this cancelled only if we have not already done so in the date range
             s+="  cancelled=True"
         if self.Virtual:
@@ -136,15 +136,15 @@ class ConInstanceInfo:
 
 
     @property
-    def Locale(self) -> Locale:
-        if not self._Locale.IsEmpty:
-            return self._Locale
-        return self._Locale
-    @Locale.setter
-    def Locale(self, val: Union[str, Locale]):
+    def LocalePage(self) -> LocalePage:
+        if not self._LocalePage.IsEmpty:
+            return self._LocalePage
+        return self._LocalePage
+    @LocalePage.setter
+    def LocalePage(self, val: Union[str, LocalePage]):
         if type(val) is str:
             val=LocaleHandling().LocaleFromName(val)  #()
-        self._Locale=val
+        self._LocalePage=val
 
     @property
     def DateRange(self) -> FanzineDateRange:

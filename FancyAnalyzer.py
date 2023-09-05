@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from collections import defaultdict
 
-from Locale import LocaleHandling, Locale
+from LocalePage import LocaleHandling, LocalePage
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText, WikidotCanonicizeName, StripWikiBrackets
@@ -363,7 +363,7 @@ def main():
 
 
                 # If the con series table has a location column, extract the text from that cell
-                conlocation: Locale=Locale()
+                conlocation: LocalePage=LocalePage()
                 if locColumn is not None:
                     if locColumn < len(row) and len(row[locColumn]) > 0:
                         loc=WikiExtractLink(row[locColumn])     # If there is linked text, get it; otherwise use everything
@@ -382,14 +382,14 @@ def main():
                     if len(hits) == 0:
                         # This is a new name: Just append it
                         conDict[cii.Name].append(cii)
-                    elif not cii.Locale.IsEmpty:
-                        if hits[0].Locale != cii.Locale:
+                    elif not cii.LocalePage.IsEmpty:
+                        if hits[0].LocalePage != cii.LocalePage:
                             Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
                             Log("            duplicate - "+str(cii), isError=True, Print=False)
                             # Name exists.  But maybe we have some new information on it?
                             # If there are two sources for the convention's location and one is empty, use the other.
-                            if hits[0].Locale.IsEmpty:
-                                hits[0].Locale=cii.Locale
+                            if hits[0].LocalePage.IsEmpty:
+                                hits[0].LocalePage=cii.LocalePage
                                 Log("   ...Locale has been updated", isError=True, Print=False)
 
                 # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
@@ -498,11 +498,11 @@ def main():
                     # Find the convention in the conventions dictionary and add the location if appropriate.
                     if page.Name in conventions.keys():
                         for con in conventions[page.Name]:
-                            if not locale.LocMatch(con.Locale.PreferredName):
-                                if con.Locale.IsEmpty:   # If there previously was no location from the con series page, substitute what we found in the con instance page
-                                    con.Locale=locale
+                            if not locale.LocMatch(con.LocalePage.PreferredName):
+                                if con.LocalePage.IsEmpty:   # If there previously was no location from the con series page, substitute what we found in the con instance page
+                                    con.LocalePage=locale
                                     continue
-                                f.write(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.Locale}'\n")
+                                f.write(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.LocalePage}'\n")
 
 
     Log("Writing: Places that are not tagged as Locales.txt", timestamp=True)
@@ -586,8 +586,8 @@ def main():
             if con.Virtual:
                 nameText=f"''{nameText} (virtual)''"
             else:
-                if len(con.Locale.Link) > 0:
-                    nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.Locale.Link)})</small>"
+                if len(con.LocalePage.Link) > 0:
+                    nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.Link)})</small>"
             f.write(nameText+"\n")
 
             lastcon=con
@@ -662,8 +662,8 @@ def main():
 
             localeText=""
             if not con.Virtual:
-                if len(con.Locale.Link) > 0:
-                    localeText=StripWikiBrackets(con.Locale.Link)
+                if len(con.LocalePage.Link) > 0:
+                    localeText=StripWikiBrackets(con.LocalePage.Link)
 
             f.write(f"{nameText}{seriesText}&nbsp;&nbsp;&nbsp;{dateText}&nbsp;&nbsp;&nbsp;{localeText}\n")
 
@@ -686,8 +686,8 @@ def main():
                 inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
     # Analyze the Locales
-    # Create a list of things that redirect to a Locale, but are not tagged as a locale.
-    Log("***Look for things that redirect to a Locale, but are not tagged as a Locale", timestamp=True)
+    # Create a list of things that redirect to a LocalePage, but are not tagged as a locale.
+    Log("***Look for things that redirect to a LocalePage, but are not tagged as a Locale", timestamp=True)
     with open("Untagged locales.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             if fancyPage.IsLocale:                        # We only care about locales
@@ -697,7 +697,7 @@ def main():
                             if not fancyPagesDictByWikiname[inverse].IsLocale:
                                 if "-" not in inverse:                  # If there's a hyphen, it's probably a Wikidot redirect
                                     if inverse[1:] != inverse[1:].lower() and " " in inverse:   # There's a capital letter after the 1st and also a space
-                                        f.write(f"{fancyPage.Name} is pointed to by {inverse} which is not a Locale\n")
+                                        f.write(f"{fancyPage.Name} is pointed to by {inverse} which is not a LocalePage\n")
 
 
     ###################################################
