@@ -466,8 +466,10 @@ def main():
                         ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, Text=seriesTableRowConEntries[0].Text, Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
                         AppendCon(conventions, ci)
                         Log(f"#append 4: {ci}", Print=False)
+
                 else:
-                    Log(f"Can't happen! ncons={len(seriesTableRowConEntries)}  len(dates)={len(dates)}", isError=True)
+                    # We really should deal with the case of Westercon 75/Loscon 49... What an ugly mess!
+                    Log(f"Shouldn't happen! ncons={len(seriesTableRowConEntries)}  {len(dates)=}", isError=True)
 
 
     # OK, all of the con series have been mined.  Now let's look through all the con instances and see if we can get more location information from them.
