@@ -123,7 +123,7 @@ def main():
         for index, table in enumerate(page.Tables):
             numcolumns=len(table.Headers)
 
-            locColumn=CrosscheckListElement("Locations", table.Headers)
+            locColumn=CrosscheckListElement(["Locations", "Location"], table.Headers)
             # We don't log a missing location column because that is common and not an error -- we'll try to get the location later from the con instance's page
 
             conColumn=CrosscheckListElement(["Convention", "Convention Name", "Name"], table.Headers)
