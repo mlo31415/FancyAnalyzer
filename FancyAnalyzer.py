@@ -9,7 +9,7 @@ from LocalePage import LocaleHandling, LocalePage
 from F3Page import F3Page, DigestPage, TagSet
 from Log import Log, LogOpen, LogSetHeader
 from HelpersPackage import WindowsFilenameToWikiPagename, WikiExtractLink, CrosscheckListElement, ScanForBracketedText, WikidotCanonicizeName, StripWikiBrackets
-from HelpersPackage import CompressWhitespace
+from HelpersPackage import CompressWhitespace, ConvertHTMLishCharacters
 from ConInstanceInfo import ConInstanceInfo, ConInstanceLink
 from FanzineIssueSpecPackage import FanzineDateRange, FanzineDate
 
@@ -237,7 +237,7 @@ def main():
                 nameText=row[conColumn]
                 # Clean up the text
                 # Convert the HTML characters some people have inserted into their ascii equivalents
-                nameText=nameText.replace("&nbsp;", " ").replace("&#8209;", "-")
+                nameText=ConvertHTMLishCharacters(nameText)
                 # And get rid of hard line breaks
                 nameText=nameText.replace("<br>", " ")
                 # In some pages we italicize or bold the con's name, so remove spans of single quotes of length 2 or longer
