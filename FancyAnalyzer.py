@@ -477,9 +477,12 @@ def main():
     # Generate a report of cases where we have non-identical con information from both sources.
     with open("Con location discrepancies.txt", "w+", encoding='utf-8') as f:
         for page in fancyPagesDictByWikiname.values():
+
             if not page.IsConInstance:
-                #Log(f"{page=}")
+                #Log(f"Not  a con instance: {page=}")
                 continue
+
+            Log(f" {page.Name=}")
 
             # The page is a convention page
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
