@@ -222,7 +222,7 @@ def main():
                             dates.append(dr)
 
                 if len(dates) == 0:
-                    Log(f"***No dates found - {page.Name}  row: {row}", isError=True, Print=False)
+                    Log(f"***No dates found - {page.Name}:  {datetext=}  {row=}", isError=True, Print=False)
                 elif len(dates) == 1:
                     Log(f"{page.Name}  row: {row}: 1 date: {dates[0]}", Print=False)
                 else:
