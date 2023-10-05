@@ -504,6 +504,7 @@ class LocaleHandling:
         # We'll look for a country name preceded by the word 'in' and one or two Capitalized words
         countries=defaultdict(lambda: None)
         # Note that this does not work for two-word country names, e.g., New Zealand
+        # What I'm building here is a fast lookup for country names that can beapplied to a whole list in a comprehension.
         countries.update({"Australia":"Australia", "Belgium":"Belgium", "Bulgaria":"Bulgaria", "Canada":"Canada", "China":"China",
                           "England":"England", "Germany":"Germany", "Holland":"Holland", "Ireland":"Ireland",
                           "Israel":"Israel", "Italy":"Italy", "Netherlands":"Netherlands", "Norway":"Norway",
