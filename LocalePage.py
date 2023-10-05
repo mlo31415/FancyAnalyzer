@@ -502,48 +502,75 @@ class LocaleHandling:
         # OK, we can't find the Xxxx, XX pattern
         # Look for 'in'+city+[,]+spelled-out-country
         # We'll look for a country name preceded by the word 'in' and one or two Capitalized words
-        countries=["Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
-                   "Israel", "Italy", "New Zealand", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
-                   "Poland", "Russia", "Scotland", "Wales"]
+        countries=defaultdict(lambda: None)
+        # Note that this does not work for two-word country names, e.g., New Zealand
+        countries.update({"Australia":"Australia", "Belgium":"Belgium", "Bulgaria":"Bulgaria", "Canada":"Canada", "China":"China",
+                          "England":"England", "Germany":"Germany", "Holland":"Holland", "Ireland":"Ireland",
+                          "Israel":"Israel", "Italy":"Italy", "Netherlands":"Netherlands", "Norway":"Norway",
+                          "Sweden":"Sweden", "Finland":"Finland", "Japan":"Japan", "France":"France",
+                          "Poland":"Poland", "Russia":"Russia", "Scotland":"Scotland", "Wales":"Wales",
+                          "New Zealand": "New Zealand", "Zealand": "Zealand"})
+        # countries=["Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
+        #            "Israel", "Italy", "New Zealand", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
+        #            "Poland", "Russia", "Scotland", "Wales"]
+        s1=s.replace("[", "").replace("]", "")  # Remove all brackets
+        splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space which should leave a list of word tokens
+        countriesfound=[countries[x] for x in splt]
+        countriesfound=[x for x in countriesfound if x is not None]
+        if len(countriesfound) == 0:
+            return []
+
         out: list[str]=[]
-        s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space
-        for country in countries:
-            try:
-                if country in splt:
-                    loc=splt.index(country)     # Find the index of the country name in the list of tokens
-                    if loc > 2:  # Minimum is 'in City, Country', so there must be at least two tokens
-                        splt=splt[:loc]     # Drop the country and everything after it
-                        locale=""
-                        rest=""
-                        sep=""
-                        for i in range(len(splt)-1, max(len(splt)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
-                            if re.match("^[A-Z][a-zé-]+$", splt[i]):  # Look for Xxxxx
-                                rest=splt[i]+sep+rest       # Build up the locale string by prepending the matched token
-                                locale=rest+", "+country
-                            if splt[i-1] == "in":
-                                # OK, we've found a string of tokens: "in Xxxx Xxxx...Xxxx Country"
-                                if locale in self.locales.keys():   # Is this locale recognized?
-                                    return [locale]
-                                if country == "Australia" or country == "AU":
-                                    # OK, some places have more complicated structures, e.g., Australia
-                                    #       Perth, Western Australia
-                                    #       Sydney NSW, Australia
-                                    #       Sydney New South Wales, Australia
-                                    # Create a list of "middle" phrases that point unambiguously to a city in Australia.  We can then just drop them
-                                    aussies=["Australian Capital Territory", "Western", "NSW", "N.S.W.", "New South Wales", "Queensland", "South", "Victoria", "Vic", "ACT", "A.C.T."]
-                                    for aus in aussies:
-                                        if rest.endswith(aus):
-                                            locale=rest[:-len(aus)].strip()+", "+country
-                                            break
-                                    if locale in self.locales.keys():   # Is this local recognized?
-                                        return [locale]
-                                Log(f"{locale} not in locales (5)")
-                                Log(f"       line={s}")
-                                return []
-                            sep=" "
-            except ValueError:
-                continue
+        for country in countriesfound:
+
+            # Deal with some two word countries.
+            # Note that some are states which look like countries
+            if country == "Australia":
+                loc=splt.index(country)
+                # South Australia and Western Australia --> Australia (This is OK since the only cities with cons are unique.)
+                if loc > 0 and splt[loc-1] == "South":
+                    del splt[loc-1]
+                if loc > 0 and splt[loc-1] == "Western":
+                    del splt[loc-1]
+            elif country == "Zealand":
+                loc=splt.index(country)
+                if loc > 0 and splt[loc-1] == "New":
+                    # Here we fudge "new Zealand" into being treated as one word
+                    splt=splt[:loc-1]+["New Zealand"]+splt[loc+1:]
+                    country="New Zealand"
+
+
+            loc=splt.index(country)     # Find the index of the country name in the list of tokens
+            if loc > 2:  # Minimum is 'in City, Country', so there must be at least two tokens
+                start=splt[:loc]     # Drop the country and everything after it
+                locale=""
+                rest=""
+                sep=""
+                for i in range(len(start)-1, max(len(start)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
+                    if re.match("^[A-Z][a-zé-]+$", start[i]):  # Look for Xxxxx
+                        rest=splt[i]+sep+rest       # Build up the locale string by prepending the matched token
+                        locale=rest+", "+country
+                    if start[i-1] == "in":
+                        # OK, we've found a string of tokens: "in Xxxx Xxxx...Xxxx Country"
+                        if locale in self.locales.keys():   # Is this locale recognized?
+                            return [locale]
+                        if country == "Australia" or country == "AU":
+                            # OK, some places have more complicated structures, e.g., Australia
+                            #       Perth, Western Australia
+                            #       Sydney NSW, Australia
+                            #       Sydney New South Wales, Australia
+                            # Create a list of "middle" phrases that point unambiguously to a city in Australia.  We can then just drop them
+                            aussies=["Australian Capital Territory", "Western", "NSW", "N.S.W.", "New South Wales", "Queensland", "South", "Victoria", "Vic", "ACT", "A.C.T."]
+                            for aus in aussies:
+                                if rest.endswith(aus):
+                                    locale=rest[:-len(aus)].strip()+", "+country
+                                    break
+                            if locale in self.locales.keys():   # Is this local recognized?
+                                return [locale]
+                        Log(f"{locale} not in locales (5)")
+                        Log(f"       line={s}")
+                        return []
+                    sep=" "
         return out
 
 
