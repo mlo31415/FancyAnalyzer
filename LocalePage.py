@@ -510,9 +510,6 @@ class LocaleHandling:
                           "Sweden":"Sweden", "Finland":"Finland", "Japan":"Japan", "France":"France",
                           "Poland":"Poland", "Russia":"Russia", "Scotland":"Scotland", "Wales":"Wales",
                           "New Zealand": "New Zealand", "Zealand": "Zealand"})
-        # countries=["Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
-        #            "Israel", "Italy", "New Zealand", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
-        #            "Poland", "Russia", "Scotland", "Wales"]
         s1=s.replace("[", "").replace("]", "")  # Remove all brackets
         splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space which should leave a list of word tokens
         countriesfound=[countries[x] for x in splt]
