@@ -378,7 +378,7 @@ class LocaleHandling:
             m2=re.search("[^A-Za-zé]in \[\[[A-Z][a-zé.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
             # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
             if m2 is not None:
-                s2=s[m2.span()[0]+2:]  # Drop the "in" token
+                s2=s[m2.span()[0]+1:]  # Drop the "in" token
                 rslts=self.ScanForCityCountry(s2)
                 if len(rslts) > 0:
                     found=True
