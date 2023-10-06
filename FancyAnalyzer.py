@@ -490,7 +490,7 @@ def main():
                     f.write(f"{page.Name} not in conventions.keys()\n")
                     continue
                 for con in conventions[page.Name]:
-                    con.Locale=loc        #TODO: We really ought to locate the specific con in the list
+                    con.LocalePage=loc        #TODO: We really ought to locate the specific con in the list
                 continue
 
             # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
