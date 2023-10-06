@@ -505,6 +505,22 @@ class LocaleHandling:
         #countries=defaultdict(lambda: None)
         # Note that this does not work for two-word country names, e.g., New Zealand
         # What I'm building here is a fast lookup for country names that can beapplied to a whole list in a comprehension.
+        # countries=defaultdict(lambda: None)
+        # # Note that this does not work for two-word country names, e.g., New Zealand
+        # countries.update({"Australia":"Australia", "Belgium":"Belgium", "Bulgaria":"Bulgaria", "Canada":"Canada", "China":"China",
+        #                   "England":"England", "Germany":"Germany", "Holland":"Holland", "Ireland":"Ireland",
+        #                   "Israel":"Israel", "Italy":"Italy", "Netherlands":"Netherlands", "Norway":"Norway",
+        #                   "Sweden":"Sweden", "Finland":"Finland", "Japan":"Japan", "France":"France",
+        #                   "Poland":"Poland", "Russia":"Russia", "Scotland":"Scotland", "Wales":"Wales",
+        #                   "New Zealand": "New Zealand", "Zealand": "Zealand"})
+        # # countries=["Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
+        # #            "Israel", "Italy", "New Zealand", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
+        # #            "Poland", "Russia", "Scotland", "Wales"]
+        # s1=s.replace("[", "").replace("]", "")  # Remove all brackets
+        # splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space which should leave a list of word tokens
+        # countriesfound=[countries[x] for x in splt]
+        # countriesfound=[x for x in countriesfound if x is not None]
+
         countries={"Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
                           "Israel", "Italy", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
                           "Poland", "Russia", "Scotland", "Wales", "New Zealand", "Zealand"}
