@@ -504,7 +504,7 @@ def main():
                 #Log(f"Not  a con instance: {page=}")
                 continue
 
-            Log(f" {page.Name=}")
+            #Log(f" {page.Name=}")
 
             # The page is a convention page
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
