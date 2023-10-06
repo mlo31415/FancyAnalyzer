@@ -522,11 +522,12 @@ class LocaleHandling:
         # countriesfound=[x for x in countriesfound if x is not None]
 
         countries={"Australia", "Belgium", "Bulgaria", "Canada", "China", "England", "Germany", "Holland", "Ireland",
-                          "Israel", "Italy", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
-                          "Poland", "Russia", "Scotland", "Wales", "New Zealand", "Zealand"}
+                   "Israel", "Italy", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
+                   "Poland", "Russia", "Scotland", "Wales", "New Zealand", "Zealand"}
         s1=s.replace("[", "").replace("]", "")  # Remove all brackets
         splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space which should leave a list of word tokens
         countriesfound=[x for x in splt if x in countries]
+
         if len(countriesfound) == 0:
             return []
 
