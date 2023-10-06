@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 import os
 import re
@@ -110,7 +110,46 @@ def main():
 
     # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
     # We do this be reading all the convention series pages' convention tables
-    conventions: defaultdict[str, list[ConInstanceInfo]]=defaultdict(list)
+    # Searching for duplicates in the obvious way used to be O(N**2), where N gets to be ~10,000.  This is O(N) and significantly faster.
+    class Conventions:
+        def __init__(self):
+            self._conDict: defaultdict[str, list[ConInstanceInfo]]=defaultdict(list)
+            self._setOfCIIs: set[ConInstanceInfo]=set()
+
+        def __getitem__(self, index: str) -> list[ConInstanceInfo]:
+            return self._conDict[index]
+
+        def __setitem__(self, index: str, val: ConInstanceInfo):
+            self._conDict[index].append(val)
+            self._setOfCIIs.add(val)
+
+        def __contains__(self, item) -> bool:
+            return item in self._conDict.keys()
+
+        def values(self):
+            return self._conDict.values()
+
+        # Don't add duplicate entries to the conlist
+        def Append(self, cii: ConInstanceInfo) -> None:
+            if cii not in self._setOfCIIs:
+                # This is a new name: Just append it
+                self[cii.Name]=cii
+                return
+
+            if not cii.LocalePage.IsEmpty:
+                hits=[y for x in self._conDict.values() for y in x if cii == y]
+                if hits[0].LocalePage != cii.LocalePage:
+                    Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
+                    Log("            duplicate - "+str(cii), isError=True, Print=False)
+                    # Name exists.  But maybe we have some new information on it?
+                    # If there are two sources for the convention's location and one is empty, use the other.
+                    if hits[0].LocalePage.IsEmpty:
+                        hits[0].LocalePage=cii.LocalePage
+                        Log("   ...Locale has been updated", isError=True, Print=False)
+            return
+
+
+    conventions: Conventions=Conventions()
     for page in fancyPagesDictByWikiname.values():
 
         # First, see if this is a Conseries page
@@ -374,21 +413,6 @@ def main():
                     Log("Scan abandoned: ncons="+str(len(seriesTableRowConEntries))+"  len(dates)="+str(len(dates)), isError=True, Print=False)
                     continue
 
-                # Don't add duplicate entries to the conlist
-                def AppendCon(conDict: defaultdict[str, list[ConInstanceInfo]], cii: ConInstanceInfo) -> None:
-                    hits=[y for x in conDict.values() for y in x if cii == y]
-                    if len(hits) == 0:
-                        # This is a new name: Just append it
-                        conDict[cii.Name].append(cii)
-                    elif not cii.LocalePage.IsEmpty:
-                        if hits[0].LocalePage != cii.LocalePage:
-                            Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
-                            Log("            duplicate - "+str(cii), isError=True, Print=False)
-                            # Name exists.  But maybe we have some new information on it?
-                            # If there are two sources for the convention's location and one is empty, use the other.
-                            if hits[0].LocalePage.IsEmpty:
-                                hits[0].LocalePage=cii.LocalePage
-                                Log("   ...Locale has been updated", isError=True, Print=False)
 
                 # The first case we need to look at it whether cons[0] has a type of list of ConInstanceInfo
                 # This is one con with multiple names
@@ -413,7 +437,7 @@ def main():
                         v = False if cancelled else virtual
                         for dt in dates:
                             ci=ConInstanceInfo(Link=links, Text=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled, SeriesName=page.Name)
-                            AppendCon(conventions, ci)
+                            conventions.Append(ci)
                             Log(f"#append 1: {ci}", Print=False)
 
                 # OK, in all the other cases cons is a list[ConInstanceInfo]
@@ -433,7 +457,7 @@ def main():
                         if ci.DateRange.IsEmpty():
                             Log(f"***{ci.Link} has an empty date range: {ci.DateRange}", isError=True)
                         Log(f"#append 2: {ci}", Print=False)
-                        AppendCon(conventions, ci)
+                        conventions.Append(ci)
 
                 elif len(seriesTableRowConEntries) > 1 and len(dates) == 1:
                     # Log(f"Case 3: {len(seriesTableRowConEntries)=}")
@@ -447,7 +471,7 @@ def main():
                         dates[0].Cancelled = False
                         v=False if cancelled else virtual
                         ci=ConInstanceInfo(Link=co.Link, Text=co.Text, Locale=conlocation, DateRange=dates[0], Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
-                        AppendCon(conventions, ci)
+                        conventions.Append(ci)
                         Log(f"#append 3: {ci}", Print=False)
 
                 elif len(seriesTableRowConEntries) == 1 and len(dates) > 1:
@@ -462,7 +486,7 @@ def main():
                         dt.Cancelled = False
                         v=False if cancelled else virtual
                         ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, Text=seriesTableRowConEntries[0].Text, Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
-                        AppendCon(conventions, ci)
+                        conventions.Append(ci)
                         Log(f"#append 4: {ci}", Print=False)
 
                 else:
@@ -486,8 +510,8 @@ def main():
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
             # If the page has a Locale set, it overrides any internal data
             if not loc.IsEmpty:
-                if page.Name not in conventions.keys():
-                    f.write(f"{page.Name} not in conventions.keys()\n")
+                if page.Name not in conventions:
+                    f.write(f"{page.Name} not in conventions\n")
                     continue
                 for con in conventions[page.Name]:
                     con.LocalePage=loc        #TODO: We really ought to locate the specific con in the list
@@ -499,7 +523,7 @@ def main():
             if m is not None and len(m) > 0:
                 for locale in m:
                     # Find the convention in the conventions dictionary and add the location if appropriate.
-                    if page.Name in conventions.keys():
+                    if page.Name in conventions:
                         for con in conventions[page.Name]:
                             if not locale.LocMatch(con.LocalePage.PreferredName):
                                 if con.LocalePage.IsEmpty:   # If there previously was no location from the con series page, substitute what we found in the con instance page
