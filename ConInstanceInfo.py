@@ -23,6 +23,9 @@ class ConInstanceLink:
     def __lt__(self, val: ConInstanceLink) -> bool:
         return self.Text < val.Text
 
+    def __hash__(self):
+        return self.Link.__hash__()+self.Text.__hash__()+self.Cancelled.__hash__()
+
 
 #------------------------------------
 # Just a simple class to conveniently wrap a bunch of data
@@ -107,6 +110,16 @@ class ConInstanceInfo:
             if s.Link != o.Link:
                 return False
         return True
+
+    def __hash__(self):
+        h=self.Cancelled.__hash__()
+        if self.Link is not None:
+            h+=self.Link.__hash__()
+        if self.DateRange is not None:
+            h+=self.DateRange.__hash__()
+        if self._CIL is not None:
+            h+=sum([x.__hash__() for x in self._CIL if x is not None])
+        return h
 
 
     @property
