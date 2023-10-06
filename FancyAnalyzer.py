@@ -293,8 +293,6 @@ def main():
                     def DeColonize(name: str) -> str:
                         if len(name) == 0:
                             return ""
-                        if name[0] == ":":  # A name starting with a colon is the leftover from a fully processed name with :stuff following it
-                            return ""
                         # If there's a colon, return the stuff before the colon
                         if ":" in name:
                             return name.split(":")[0].strip()
