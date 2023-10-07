@@ -563,8 +563,7 @@ class LocaleHandling:
                         locale=rest+", "+country
                         localetext=rest+", "+country
                     if start[i-1] == "in":
-                        if locale in self.locales.keys():   # Is this locale recognized?
-                            return [locale]
+                        # OK, we've found the beginning of a string of tokens: "in Xxxx Xxxx...Xxxx Country"
                         if localetext in self.locales.keys():   # Is this possible locale recognized?
                             return [localetext]
                         if country == "Australia" or country == "AU":
