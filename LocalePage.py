@@ -557,8 +557,8 @@ class LocaleHandling:
                 localetext=""
                 rest=""
                 sep=""
-                for i in range(len(start)-1, max(len(start)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
                 # City can be up to five tokens before we get to the country.  Match from shortest to longest.
+                for i in range(len(start)-1, max(len(start)-7, 0), -1):
                     if re.match("^[A-Z][a-zé-]+$", start[i]):  # Look for Xxxxx
                         locale=rest+", "+country
                         localetext=rest+", "+country
