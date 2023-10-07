@@ -130,22 +130,26 @@ def main():
             return self._conDict.values()
 
         # Don't add duplicate entries to the conlist
-        def Append(self, cii: ConInstanceInfo) -> None:
-            if cii not in self._setOfCIIs:
-                # This is a new name: Just append it
-                self[cii.Name]=cii
-                return
+        def Append(self, ciilist: ConInstanceInfo | list[ConInstanceInfo]) -> None:
+            if type(ciilist) is ConInstanceInfo:
+                ciilist=[ciilist]
 
-            if not cii.LocalePage.IsEmpty:
-                hits=[y for x in self._conDict.values() for y in x if cii == y]
-                if hits[0].LocalePage != cii.LocalePage:
-                    Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
-                    Log("            duplicate - "+str(cii), isError=True, Print=False)
-                    # Name exists.  But maybe we have some new information on it?
-                    # If there are two sources for the convention's location and one is empty, use the other.
-                    if hits[0].LocalePage.IsEmpty:
-                        hits[0].LocalePage=cii.LocalePage
-                        Log("   ...Locale has been updated", isError=True, Print=False)
+            for cii in ciilist:
+                if cii not in self._setOfCIIs:
+                    # This is a new name: Just append it
+                    self[cii.Name]=cii
+                    return
+
+                if not cii.LocalePage.IsEmpty:
+                    hits=[y for x in self._conDict.values() for y in x if cii == y]
+                    if hits[0].LocalePage != cii.LocalePage:
+                        Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
+                        Log("            duplicate - "+str(cii), isError=True, Print=False)
+                        # Name exists.  But maybe we have some new information on it?
+                        # If there are two sources for the convention's location and one is empty, use the other.
+                        if hits[0].LocalePage.IsEmpty:
+                            hits[0].LocalePage=cii.LocalePage
+                            Log("   ...Locale has been updated", isError=True, Print=False)
             return
 
 
@@ -434,11 +438,10 @@ def main():
 
                     for dt in dates:
                         cancelled=cancelled or dt.Cancelled
-                        v = False if cancelled else virtual
-                        for dt in dates:
-                            ci=ConInstanceInfo(Link=links, Text=names, Locale=conlocation, DateRange=dt, Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled, SeriesName=page.Name)
-                            conventions.Append(ci)
-                            Log(f"#append 1: {ci}", Print=False)
+                        ci=ConInstanceInfo(Link=links, Text=names, Locale=conlocation, DateRange=dt,
+                                           Virtual=False if cancelled else virtual, Cancelled=dt.Cancelled, SeriesName=page.Name)
+                        conventions.Append(ci)
+                        Log(f"#append 1: {ci}", Print=False)
 
                 # OK, in all the other cases cons is a list[ConInstanceInfo]
                 elif len(seriesTableRowConEntries) == len(dates):
@@ -486,7 +489,7 @@ def main():
                         dt.Cancelled = False
                         v=False if cancelled else virtual
                         ci=ConInstanceInfo(Link=seriesTableRowConEntries[0].Link, Text=seriesTableRowConEntries[0].Text, Locale=conlocation, DateRange=dt, Virtual=v, Cancelled=cancelled, SeriesName=page.Name)
-                        conventions.Append(ci)
+                        conventions.Append(ci.Unwind())
                         Log(f"#append 4: {ci}", Print=False)
 
                 else:
@@ -530,6 +533,7 @@ def main():
                                     con.LocalePage=locale
                                     continue
                                 f.write(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.LocalePage}'\n")
+                                f.flush()
 
 
     Log("Writing: Places that are not tagged as Locales.txt", timestamp=True)

@@ -38,50 +38,49 @@ class ConInstanceInfo:
     def __init__(self, SeriesName: str | None = None, **kwds):
         kwds=defaultdict(lambda: None, **kwds)    # Turn the dict into a defaultdict with default value None
 
-        self._CIL: List[ConInstanceLink]=[]
+        self._CIL: list[ConInstanceLink]=[]
+        self.SeriesName: str=""
+        self._LocalePage: LocalePage=LocalePage()
+        self._DateRange: FanzineDateRange=FanzineDateRange()
+        self.Virtual: bool=False
+        self.Cancelled: bool=False
+
+
+        # It is required that there be the same number of Links (it can be "") and Texts and that ther be at least one
+        assert kwds["Link"] is not None and kwds["Text"] is not None
+        assert type(kwds["Link"]) == type(kwds["Text"])
 
         # You can initialize a single Link, Text using the keywords in the constructor
-        if kwds["Link"] is not None:
-            kwd=kwds["Link"]
-            if type(kwd) is str:
-                if len(self._CIL) == 0:
-                    self._CIL.append(ConInstanceLink())
-                self._CIL[0].Link=kwd
-            if type(kwd) is list:
-                if len(self._CIL) == 0:
-                    self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
-                for i in range(len(kwd)):
-                    self._CIL[i].Link=kwd[i]
 
+        kwd=kwds["Link"]
+        if type(kwd) is str:
+            self._CIL.append(ConInstanceLink())
+            self._CIL[0].Link=kwd
+        if type(kwd) is list:
+            self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
+            for i in range(len(kwd)):
+                self._CIL[i].Link=kwd[i]
 
-        if kwds["Text"] is not None:
-            kwd=kwds["Text"]
-            if type(kwd) is str:
-                if len(self._CIL) == 0:
-                    self._CIL.append(ConInstanceLink())
-                self._CIL[0].Text=kwd
-            if type(kwd) is list:
-                if len(self._CIL) == 0:
-                    self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
-                for i in range(len(kwd)):
-                    self._CIL[i].Text=kwd[i]
+        kwd=kwds["Text"]
+        if type(kwd) is str:
+            self._CIL[0].Text=kwd
+        if type(kwd) is list:
+            for i in range(len(kwd)):
+                self._CIL[i].Text=kwd[i]
+
         self.SeriesName=SeriesName
 
-        self._LocalePage: LocalePage=LocalePage()
         if kwds["Locale"] is not None:
             self._LocalePage=kwds["Locale"]
             if type(self._LocalePage) is str:
                 self._LocalePage=LocaleHandling().LocaleFromName(self._LocalePage)  # ()
 
-        self._DateRange: FanzineDateRange=FanzineDateRange()
         if kwds["DateRange"] is not None:
             self._DateRange=kwds["DateRange"]
 
-        self.Virtual: bool=False
         if kwds["Virtual"] is not None:
             self.Virtual=kwds["Virtual"]
 
-        self.Cancelled: bool=False
         if kwds["Cancelled"] is not None:
             self.Cancelled=kwds["Cancelled"]
 
@@ -225,3 +224,8 @@ class ConInstanceInfo:
             out+=self._CIL[i].Text
         out+="]]"
         return out
+
+
+    def Unwind(self) -> list[ConInstanceInfo]:
+        return [ConInstanceInfo(Link=x.Link, Text=x.Text, SeriesName=self.SeriesName, LocalePage=self.LocalePage,
+                                DateRange=self.DateRange, Virtual=self.Virtual, Cancelled=self.Cancelled) for x in self._CIL]
