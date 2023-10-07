@@ -560,7 +560,7 @@ class LocaleHandling:
                 # City can be up to five tokens before we get to the country.  Match from shortest to longest.
                 for i in range(len(start)-1, max(len(start)-7, 0), -1):
                     if re.match("^[A-Z][a-zé-]+$", start[i]):  # Look for Xxxxx
-                        locale=rest+", "+country
+                        rest=splt[i]+sep+rest       # Build up the localetext string by prepending the matched token
                         localetext=rest+", "+country
                     if start[i-1] == "in":
                         # OK, we've found the beginning of a string of tokens: "in Xxxx Xxxx...Xxxx Country"
