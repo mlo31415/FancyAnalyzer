@@ -558,12 +558,11 @@ class LocaleHandling:
                 rest=""
                 sep=""
                 for i in range(len(start)-1, max(len(start)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
+                # City can be up to five tokens before we get to the country.  Match from shortest to longest.
                     if re.match("^[A-Z][a-zé-]+$", start[i]):  # Look for Xxxxx
-                        rest=splt[i]+sep+rest       # Build up the locale string by prepending the matched token
                         locale=rest+", "+country
                         localetext=rest+", "+country
                     if start[i-1] == "in":
-                        # OK, we've found a string of tokens: "in Xxxx Xxxx...Xxxx Country"
                         if locale in self.locales.keys():   # Is this locale recognized?
                             return [locale]
                         if localetext in self.locales.keys():   # Is this possible locale recognized?
@@ -574,10 +573,11 @@ class LocaleHandling:
                             #       Sydney NSW, Australia
                             #       Sydney New South Wales, Australia
                             # Create a list of "middle" phrases that point unambiguously to a city in Australia.  We can then just drop them
-                            aussies=["Australian Capital Territory", "Western", "NSW", "N.S.W.", "New South Wales", "Queensland", "South", "Victoria", "Vic", "ACT", "A.C.T."]
+                            aussies=["Australian Capital Territory", "Western", "NSW", "N.S.W.", "New South Wales", "Queensland", "South",
+                                     "Victoria", "Vic", "ACT", "A.C.T.", "Tasmania"]
                             for aus in aussies:
                                 if rest.endswith(aus):
-                                    locale=rest[:-len(aus)].strip()+", "+country
+                                    localetext=rest[:-len(aus)].strip()+", "+country
                                     break
                             if localetext in self.locales.keys():   # Is this possible locale recognized?
                                 return [localetext]
