@@ -554,19 +554,22 @@ class LocaleHandling:
             loc=splt.index(country)     # Find the index of the country name in the list of tokens
             if loc > 2:  # Minimum is 'in City, Country', so there must be at least two tokens
                 start=splt[:loc]     # Drop the country and everything after it
-                locale=""
+                localetext=""
                 rest=""
                 sep=""
                 for i in range(len(start)-1, max(len(start)-7, 0), -1):  # City can be up to five tokens before we get to the country.  Match from shortest to longest.
                     if re.match("^[A-Z][a-zé-]+$", start[i]):  # Look for Xxxxx
                         rest=splt[i]+sep+rest       # Build up the locale string by prepending the matched token
                         locale=rest+", "+country
+                        localetext=rest+", "+country
                     if start[i-1] == "in":
                         # OK, we've found a string of tokens: "in Xxxx Xxxx...Xxxx Country"
                         if locale in self.locales.keys():   # Is this locale recognized?
                             return [locale]
+                        if localetext in self.locales.keys():   # Is this possible locale recognized?
+                            return [localetext]
                         if country == "Australia" or country == "AU":
-                            # OK, some places have more complicated structures, e.g., Australia
+                            # Some places have more complicated structures, e.g., Australia
                             #       Perth, Western Australia
                             #       Sydney NSW, Australia
                             #       Sydney New South Wales, Australia
@@ -576,9 +579,9 @@ class LocaleHandling:
                                 if rest.endswith(aus):
                                     locale=rest[:-len(aus)].strip()+", "+country
                                     break
-                            if locale in self.locales.keys():   # Is this local recognized?
-                                return [locale]
-                        Log(f"{locale} not in locales (5)")
+                            if localetext in self.locales.keys():   # Is this possible locale recognized?
+                                return [localetext]
+                        Log(f"{localetext} not in locales (5)")
                         Log(f"       line={s}")
                         return []
                     sep=" "
