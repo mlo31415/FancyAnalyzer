@@ -284,7 +284,7 @@ def main():
                 # And get rid of hard line breaks
                 nameText=nameText.replace("<br>", " ")
                 # In some pages we italicize or bold the con's name, so remove spans of single quotes of length 2 or longer
-                nameText=re.sub("[']{2,}", "", nameText)
+                nameText=re.sub("'{2,}", "", nameText)
 
                 nameText=nameText.strip()
 
