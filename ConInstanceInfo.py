@@ -215,6 +215,7 @@ class ConInstanceInfo:
     def LinkedName(self) -> str:
         if len(self._CIL) == 0:
             return ""
+        # If there is more than one linked name, create a single name using "/" between the names
         out="[["
         for i in range(len(self._CIL)):
             if i > 0:
