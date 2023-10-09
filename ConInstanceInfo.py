@@ -47,7 +47,7 @@ class ConInstanceInfo:
         if SeriesName == "" and len(kwds) == 0:
             return
 
-        # It is required that there be the same number of Links (it can be "") and Texts and that ther be at least one
+        # It is required that there be the same number of Links (it can be "") and Texts and that there be at least one
         assert type(kwds["Link"]) == type(kwds["Text"])
 
         # You can initialize a single Link, Text using the keywords in the constructor
