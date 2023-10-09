@@ -2,8 +2,11 @@ from typing import Optional
 
 import os
 import re
+import json
 from datetime import datetime
 from collections import defaultdict
+
+import jsonpickle
 
 from LocalePage import LocaleHandling, LocalePage
 from F3Page import F3Page, DigestPage, TagSet
@@ -60,18 +63,25 @@ def main():
     # The master dictionary of all Fancy 3 pages.
     fancyPagesDictByWikiname: dict[str, F3Page]={}     # Key is page's name on the wiki; Value is a F3Page class containing all the references, tags, etc. on the page
 
-    Log("***Scanning local copies of pages for links and other info", timestamp=True)
-    for pageFname in allFancy3PagesFnames:
-        val=DigestPage(fancySitePath, pageFname)
-        if val is not None:
-            fancyPagesDictByWikiname[val.Name]=val
-        # This is a very slow process, so print progress indication on the console
-        l=len(fancyPagesDictByWikiname)
-        if l%1000 == 0:     # Print only when divisible by 1000
-            if l>1000:
-                Log("--", noNewLine=l%20000 != 0)  # Add a newline only when divisible by 20,000
-            Log(str(l), noNewLine=True)
-    Log(f"   {len(fancyPagesDictByWikiname)} semi-unique links found")
+    if os.path.exists("__skip reading files.txt"):
+        with open("fancyPagesDictByWikiname.json", "r", encoding='utf-8') as f:
+            fancyPagesDictByWikiname=jsonpickle.decode(f.read())
+    else:
+        Log("***Scanning local copies of pages for links and other info", timestamp=True)
+        for pageFname in allFancy3PagesFnames:
+            val=DigestPage(fancySitePath, pageFname)
+            if val is not None:
+                fancyPagesDictByWikiname[val.Name]=val
+            # This is a very slow process, so print progress indication on the console
+            l=len(fancyPagesDictByWikiname)
+            if l%1000 == 0:     # Print only when divisible by 1000
+                if l>1000:
+                    Log("--", noNewLine=l%20000 != 0)  # Add a newline only when divisible by 20,000
+                Log(str(l), noNewLine=True)
+        Log(f"   {len(fancyPagesDictByWikiname)} semi-unique links found")
+
+        with open("fancyPagesDictByWikiname.json", "w+", encoding='utf-8') as f:
+            f.write(jsonpickle.encode(fancyPagesDictByWikiname))
 
 
     Log("Writing: Redirects to Wikidot pages.txt", timestamp=True)
