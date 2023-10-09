@@ -796,20 +796,6 @@ def main():
                 f.write(f"{fancyPage.Name} --> {dest}\n")
 
 
-    # List pages which are not referred to anywhere and which are not Wikidot redirects
-    Log("Writing: Wikidot redirects with no Mediawiki equivalent.txt", timestamp=True)
-    with open("Wikidot redirects with no Mediawiki equivalent.txt", "w+", encoding='utf-8') as f:
-        setOfWikidotPages=set(x.Name for x in fancyPagesDictByWikiname.values() if x.IsWikidotRedirectPage)
-        for page in fancyPagesDictByWikiname.values():
-            if not page.IsWikidotRedirectPage:
-                wikiname=WikidotCanonicizeName(page.Name)
-                if wikiname in setOfWikidotPages:
-                    setOfWikidotPages.remove(wikiname)
-
-        listOfOrphanWikidotRedirects=list(setOfWikidotPages)
-        for name in listOfOrphanWikidotRedirects:
-            print(name, file=f)
-
 
     # List pages which are not referred to anywhere and which are not Wikidot redirects
     Log("Writing: Pages never referred to.txt", timestamp=True)
