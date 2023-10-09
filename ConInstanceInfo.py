@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Union, List
 from collections import defaultdict
 from dataclasses import dataclass
-import itertools
 
 from FanzineIssueSpecPackage import FanzineDateRange
 from LocalePage import LocalePage, LocaleHandling
