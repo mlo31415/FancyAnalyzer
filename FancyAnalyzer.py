@@ -816,10 +816,8 @@ def main():
             if x in fancyPagesDictByWikiname.keys():
                 alloutgoingrefsF3name.append(x)
         for fancyPage in fancyPagesDictByWikiname.values():
-            if fancyPage.IsWikidotRedirectPage:
-                continue        # We don't care about these!
-            if fancyPage.Name not in alloutgoingrefsF3name:
-                f.write(f"{fancyPage.Name}\n")  # We're not OK
+            if fancyPage.Name not in alloutgoingrefsF3name and not fancyPage.IsRedirectpage:
+                f.write(f"{fancyPage.Name}\n")
 
 
     ##################
