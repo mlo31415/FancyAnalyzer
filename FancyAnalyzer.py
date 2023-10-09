@@ -158,10 +158,11 @@ def main():
 
         # First, see if this is a Conseries page
         if not page.IsConSeries:
+            Log("Not a Conseries: "+page.Name)
             continue
 
-        LogSetHeader("Processing "+page.Name)
-
+        Log("Processing "+page.Name)
+        i=0
         # Sometimes there will be multiple tables, so we check each of them
         for index, table in enumerate(page.Tables):
             numcolumns=len(table.Headers)
@@ -504,10 +505,10 @@ def main():
         for page in fancyPagesDictByWikiname.values():
 
             if not page.IsConInstance:
-                #Log(f"Not  a con instance: {page=}")
+                Log(f"Not  a con instance: {page=}")
                 continue
 
-            #Log(f" {page.Name=}")
+            Log(f" Location discrepencies: {page.Name=}", Flush=True)
 
             # The page is a convention page
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
@@ -518,6 +519,7 @@ def main():
                     continue
                 for con in conventions[page.Name]:
                     con.LocalePage=loc        #TODO: We really ought to locate the specific con in the list
+                Log(f" {page.Name=}  gets loc{{loc=}}", Flush=True)
                 continue
 
             # If it's an individual convention page and doesn't have a Locale, we search through its text for something that looks like a placename.
@@ -532,8 +534,11 @@ def main():
                                 if con.LocalePage.IsEmpty:   # If there previously was no location from the con series page, substitute what we found in the con instance page
                                     con.LocalePage=locale
                                     continue
-                                f.write(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.LocalePage}'\n")
+                                Log(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.LocalePage.PreferredName}'\n")
+                                f.write(f"{page.Name}: Location mismatch: '{locale.PreferredName}' != '{con.LocalePage.PreferredName}'\n")
                                 f.flush()
+
+            Log("    loop complete")
 
 
     Log("Writing: Places that are not tagged as Locales.txt", timestamp=True)
