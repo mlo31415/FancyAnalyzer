@@ -174,11 +174,11 @@ class ConInstanceInfo:
             for i in range(1,len(self._CIL)):
                 nl=nl+" / "+self._CIL[i].Text
         return nl
-    @Text.setter
-    def Text(self, val: Union[str, List[str]]) -> None:
-        if type(val) == str:
-            val=[val]
-        self._NameInSeriesList=val
+    # @Text.setter
+    # def Text(self, val: Union[str, List[str]]) -> None:
+    #     if type(val) == str:
+    #         val=[val]
+    #     self._NameInSeriesList=val
 
 
     @property
@@ -188,11 +188,11 @@ class ConInstanceInfo:
         if self._CIL[0].Link == "":    # If the link was not set, it's a simple link and just use the displayed text
             return self._CIL[0].Text
         return self._CIL[0].Link
-    @Link.setter
-    def Link(self, val: Union[str, List[str]]) -> None:
-        if type(val) == str:
-            val=[val]
-        self._Link=val
+    # @Link.setter
+    # def Link(self, val: Union[str, List[str]]) -> None:
+    #     if type(val) == str:
+    #         val=[val]
+    #     self._Link=val
 
     # The bare name
     #   Con
