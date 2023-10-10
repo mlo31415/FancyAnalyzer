@@ -855,8 +855,6 @@ def main():
                             peopleNames.append(RemoveTrailingParens(fancyPagesDictByWikiname[p].Redirect))
                             if IsInterestingName(p):
                                 peopleNames.append(p)
-                            else:
-                                f.write(f"Uninteresting: {p}\n")
                         else:
                             Log(p+" does not point to a person's name")
                 else:
