@@ -64,6 +64,7 @@ def main():
     fancyPagesDictByWikiname: dict[str, F3Page]={}     # Key is page's name on the wiki; Value is a F3Page class containing all the references, tags, etc. on the page
 
     if os.path.exists("__skip reading files.txt"):
+        Log("Loading F3Pages from fancyPagesDictByWikiname.json", timestamp=True)
         with open("fancyPagesDictByWikiname.json", "r", encoding='utf-8') as f:
             fancyPagesDictByWikiname=jsonpickle.decode(f.read())
     else:
@@ -80,6 +81,7 @@ def main():
                 Log(str(l), noNewLine=True)
         Log(f"   {len(fancyPagesDictByWikiname)} semi-unique links found")
 
+        Log("Writing F3Pages to fancyPagesDictByWikiname.json", timestamp=True)
         with open("fancyPagesDictByWikiname.json", "w+", encoding='utf-8') as f:
             f.write(jsonpickle.encode(fancyPagesDictByWikiname))
 
