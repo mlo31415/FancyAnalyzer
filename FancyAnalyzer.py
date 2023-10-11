@@ -101,6 +101,7 @@ def main():
 
     Log("***Analyzing convention series tables", Clear=True, timestamp=True)
 
+    #---------------------------------------------------------------------------
     # Scan for a virtual flag
     # Return True/False and remaining text after V-flag is removed
     def ScanForVirtual(s: str) -> tuple[bool, str]:
@@ -120,12 +121,14 @@ def main():
         return False, s
 
 
-    # Create a list of convention instances with useful information about them stored in a ConInstanceInfo structure
-    # We do this be reading all the convention series pages' convention tables
-    # Searching for duplicates in the obvious way used to be O(N**2), where N gets to be ~10,000.  This is O(N) and significantly faster.
+    #---------------------------------------------------------------------------
+    # This class implements a smart list of convention instances with useful information about them stored in a ConInstanceInfo structure
+    # We do this by reading all the convention series pages' convention tables as well as the individual convention pages
     class Conventions:
         def __init__(self):
+            # This is a dictionary of all conventions with the convention name as the key.
             self._conDict: defaultdict[str, list[ConInstanceInfo]]=defaultdict(list)
+            # Searching for duplicates in the obvious way used to be O(N**2), where N gets to be ~10,000.  Usingthe set is O(N) and significantly faster.
             self._setOfCIIs: set[ConInstanceInfo]=set()
 
         def __getitem__(self, index: str) -> list[ConInstanceInfo]:
