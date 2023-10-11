@@ -152,7 +152,7 @@ def main():
             for cii in ciilist:
                 if cii not in self._setOfCIIs:
                     # This is a new name: Just append it
-                    self[cii.Name]=cii
+                    self[cii.DisplayName]=cii
                     return
 
                 if not cii.LocalePage.IsEmpty:

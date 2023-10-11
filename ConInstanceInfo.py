@@ -201,7 +201,7 @@ class ConInstanceInfo:
     #   Con
     #   Con1 / con 2 / con 3
     @property
-    def Name(self) -> str:
+    def DisplayName(self) -> str:
         if len(self._CIL) == 0:
             return ""
         out=""
