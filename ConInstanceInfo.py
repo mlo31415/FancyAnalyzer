@@ -28,6 +28,8 @@ class ConInstanceLink:
 
 #------------------------------------
 # Just a simple class to conveniently wrap a bunch of data
+# This represents one instance of a con.
+# Note that a con which has been rescheduled is two instances
 class ConInstanceInfo:
     #def __init__(self, Link: str="", Text: str="", Loc: str="", DateRange: FanzineDateRange=FanzineDateRange(), Virtual: bool=False, Cancelled: bool=False):
     # Text is the name *displayed* in the table's link
@@ -193,6 +195,7 @@ class ConInstanceInfo:
     #     if type(val) == str:
     #         val=[val]
     #     self._Link=val
+
 
     # The bare name
     #   Con
