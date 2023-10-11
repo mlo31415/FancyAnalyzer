@@ -181,7 +181,37 @@ class LocaleDict:
         return self.d.keys()
 
 
+
 ############################################################################################
+class AllPagesDict:
+    def __init__(self, val: dict=None):
+        if val is None:
+            self.d: dict[str, LocalePage]={}
+        else:
+            self.d=val
+
+    def __getitem__(self, i: str) -> LocalePage:
+        i=CompressAllWhitespaceAndRemovePunctuation(i)
+        if i not in self.d.keys():
+            Log(f"AllPagesDict({i}) does not exist")
+            raise IndexError
+        return self.d[i]
+
+    def __setitem__(self, i: str, val: LocalePage) -> None:
+        self.d[CompressAllWhitespaceAndRemovePunctuation(i)]=val
+
+    def __len__(self):
+        return len(self.d)
+
+    def values(self):
+        return self.d.values()
+
+    def keys(self):
+        return self.d.keys()
+
+
+############################################################################################
+# This class is meant to globally encapsulate everything FancyAnalyze know about locales in one database.  It is never instantiated.
 class LocaleHandling:
     # A set of the names of all LocalePages
     # We use a set to eliminate duplicates and to speed checks
