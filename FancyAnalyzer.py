@@ -860,7 +860,7 @@ def main():
                             if IsInterestingName(p):
                                 peopleNames.append(p)
                         else:
-                            Log(p+" does not point to a person's name")
+                            Log(f"{p} does not point to a person's name")
                 else:
                     f.write(f"{fancyPage.Name}: Good name -- ignored\n")
 
