@@ -103,11 +103,11 @@ def main():
 
     #---------------------------------------------------------------------------
     # Scan for a virtual flag
-    # Return True/False and remaining text after V-flag is removed
+    # Return True/False and the remaining text after the V-flag is removed
     def ScanForVirtual(s: str) -> tuple[bool, str]:
         pattern = "\((:?virtual|online|held online|moved online|virtual convention)\)"
 
-        # First look for the alternative contained in parens *anywhere* in the text
+        # First look for one of the alternatives (contained in parens) *anywhere* in the text
         newval = re.sub(pattern, "", s, flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
         if s != newval:
             return True, newval.strip()
@@ -144,7 +144,7 @@ def main():
         def values(self):
             return self._conDict.values()
 
-        # Don't add duplicate entries to the conlist
+        # Add entries to the conlist, but filter out duplicate entries
         def Append(self, ciilist: ConInstanceInfo | list[ConInstanceInfo]) -> None:
             if type(ciilist) is ConInstanceInfo:
                 ciilist=[ciilist]
@@ -811,8 +811,7 @@ def main():
                 f.write(f"{fancyPage.Name} --> {dest}\n")
 
 
-
-    # List pages which are not referred to anywhere and which are not Wikidot redirects
+    # List pages which are not referred to anywhere and which are not redirects
     Log("Writing: Pages never referred to.txt", timestamp=True)
     with open("Pages never referred to.txt", "w+", encoding='utf-8') as f:
         alloutgoingrefs=set([x.LinkWikiName for y in fancyPagesDictByWikiname.values() for x in y.OutgoingReferences])
@@ -828,7 +827,7 @@ def main():
     ##################
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
 
-    # Ambiguous names will often end with something in parenthesis which need to be removed for this particular file
+    # Ambiguous names will often end with something in parenthesis which needs to be removed for this particular file
     def RemoveTrailingParens(ss: str) -> str:
         return re.sub("\s\(.*\)$", "", ss)       # Delete any trailing ()
 
