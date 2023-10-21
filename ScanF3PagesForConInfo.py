@@ -81,7 +81,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                 # Now handle the names and dates columns.  Get the corresponding convention name(s) and dates.
                 nameEntryList=ExtractConNameInfo(row[conColumn], conseries)
                 x=nameEntryList.DisplayNameMarkup
-                dateEntryList=ExtractDateInfo(row[dateColumn], page.Name, row)
+                dateEntryList=ExtractDateInfo(row[dateColumn], page.Name, row)      #TODO: Really should return a IndexTableDateEntry(() object
 
                 # Now for the hard work of making sense of this...
                 # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:
@@ -108,26 +108,23 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                     continue
 
                 if len(nameEntryList) == len(dateEntryList):
-                    # Easy-peasy. N cons with N dates.  Either a boring con that was simplay held or onw which was renamed when it went to a new date.
-                    for i in range(len(nameEntryList)):
-                        nel=nameEntryList[i]
-                        dtel=dateEntryList[i]
-                        conventions.Append([ConInstanceInfo(Link=nel.Link, Text=nel.Text, DateRange=dtel, Locale=location, Virtual=nel.Virtual, Cancelled=nel.Cancelled or dtel.Cancelled)])
+                    # Easy-peasy. N cons with N dates.
+                    # Either a boring con that was simply held as scheduled or one which was renamed when it went to a new date.
+                    conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
+
+                if len(nameEntryList) == 1 and len(dateEntryList) > 1:
+                    # This is the case of a convention which was postponed and perhaps cancelled, but retained the same name.  One con, two (or more) dates.
+                    for date in dateEntryList:
+                        conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=date)])
                     continue
 
-                if len(dateEntryList) > 1 and len(nameEntryList) == 1:
-                    # This is the case of a convention which was postponed and perhaps cancelled, but retained the same name.
-                    for i in range(len(dateEntryList)):
-                        nel=nameEntryList[0]
-                        dtel=dateEntryList[i]
-                        conventions.Append([ConInstanceInfo(Link=nel.Link, Text=nel.Text, DateRange=dtel, Locale=location, Virtual=nel.Virtual, Cancelled=nel.Cancelled or dtel.Cancelled)])
+                if len(nameEntryList) > 1 and len(dateEntryList) == 1:
+                    # This is a case of a con with two or more names.  E.g., "[[DSC 35]] / MidSouthCon 17"
+                    conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
                     continue
 
                 # The leftovers will be uncommon, but we still do need to handle them.
                 LogError(f"ScanF3PagesForConInfo() Name/date combinations not yet handled: {page.Name}: {len(dateEntryList)=}  {len(nameEntryList)=}  {row=}")
-
-
-
 
 
 

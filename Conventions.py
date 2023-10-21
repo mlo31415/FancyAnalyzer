@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, List
+from typing import Union
 
 from FanzineIssueSpecPackage import FanzineDateRange
 from LocalePage import LocalePage, LocaleHandling
@@ -42,7 +42,7 @@ class Conventions:
         for cii in ciilist:
             if cii not in self._setOfCIIs:
                 # This is a new name: Just append it
-                self[cii.DisplayName]=cii
+                self[cii.DisplayNameText]=cii
                 return
 
             if not cii.LocalePage.IsEmpty:
@@ -69,6 +69,10 @@ class IndexTableSingleNameEntry:
     Cancelled: bool=False
     Virtual: bool=False
     # A convention's display name comes from the convention series table; a convention's page name is the name of the F3Page
+
+    def __hash__(self):
+        return hash(self.Text)+hash(self.Link)+hash(self.Lead)+hash(self.Remainder)+hash(self.Cancelled)+hash(self.Virtual)
+
 
     def HasLink(self) -> bool:
         return self.Link != "" or self.Text != ""
@@ -98,6 +102,13 @@ class IndexTableNameEntry:
 
     def __getitem__(self, i: int) -> IndexTableSingleNameEntry:
         return self._listOfEntries[i]
+
+    def __hash__(self):
+        h=0
+        if self._listOfEntries is not None:
+            for entry in self._listOfEntries:
+                h+=entry.__hash__()
+        return h
 
     @property
     def DisplayNameMarkup(self) -> str:
@@ -148,6 +159,62 @@ class IndexTableNameEntry:
         return displayName
 
 
+    @property
+    def DisplayNameText(self) -> str:
+        # Construct the display name
+        displayName=""
+
+        if len(self._listOfEntries) == 1:
+            displayName+=self._listOfEntries[0].Lead+" "
+            displayName+=self._listOfEntries[0].Text+" "
+            displayName+=self._listOfEntries[0].Remainder
+        else:
+            first=True
+            for el in self._listOfEntries:
+                if not first:
+                    displayName+=" / "
+                first=False
+                displayName+=el.Lead+" "
+                displayName+=el.Text+" "
+                displayName+=el.Remainder
+
+        return displayName.strip()
+
+
+###################################################################################
+class IndexTableDateEntry:
+    def __init__(self, Dates: list[FanzineDateRange]=None ):
+        self._listDatesRanges=Dates
+
+    def __hash__(self):
+        h=0
+        if self._listDatesRanges is not None:
+            for dr in self._listDatesRanges:
+                h+=dr.__hash__()
+        return h
+
+    def __getitem__(self, item) -> FanzineDateRange:
+        return self._listDatesRanges[item]
+
+    def __setitem__(self, key, value):
+        self._listDatesRanges[key]=value
+
+    def __len__(self) -> int:
+        return len(self._listDatesRanges)
+
+    def __eq__(self, other: IndexTableDateEntry) -> bool:
+        if self._listDatesRanges is None and other._listDatesRanges is None:
+            return True
+        if self._listDatesRanges is None or other._listDatesRanges is None:
+            return False
+
+        if len(self._listDatesRanges) != len(other._listDatesRanges):
+            return False
+
+        return all([x == y for (x, y) in zip(self._listDatesRanges, other._listDatesRanges)])
+
+
+
 ###################################################################################
 @dataclass
 # A class to hold a wiki link of the form [[<link>|<text>]] with the link being optional
@@ -179,178 +246,97 @@ class ConInstanceInfo:
     # If the link is simple, e.g. [[simple link]], then that value should go in Text.
     # If the link is complex E.g., [[Link|Text]], the name displayed goes in Text and the page referred to goes in _Link
     # The property Link will always return the actual page referred to
-    def __init__(self, **kwds):
-        kwds=defaultdict(lambda: None, **kwds)    # Turn the dict into a defaultdict with default value None
-
-        self._CIL: list[ConInstanceLink]=[]     # This holds a name/link/cancelled for a con.   A ConInstanceInfo might have more than one.
-                                                # But when a con is part of two series (e.g., "[[DeepSouthCon 35]] / MidSouthCon 17") but has a single
-                                                # F3 page, then the two names is stored in _displayName
-        self._seriesName: str=""
-        self._displayName: str=""
-        self._LocalePage: LocalePage=LocalePage()
-        self._DateRange: FanzineDateRange=FanzineDateRange()
-        self.Virtual: bool=False
-        self.Cancelled: bool=False
-
-        # if kwds["SeriesName"] is None:
-        #     return
-        # self._seriesName=kwds["SeriesName"]
-
-
-        # It is required that there be the same number of Links (it can be "") and Texts and that there be at least one
-        if type(kwds["Link"]) != type(kwds["Text"]):
-            i=0
-
-        # You can initialize a single Link, Text using the keywords in the constructor
-        kwd=kwds["Link"]
-        if type(kwd) is str:
-            self._CIL.append(ConInstanceLink())
-            self._CIL[0].Link=kwd
-        if type(kwd) is list:
-            self._CIL=[ConInstanceLink() for _ in range(len(kwd))]  # Ugly way to initialize to a list of N mutable items
-            for i in range(len(kwd)):
-                self._CIL[i].Link=kwd[i]
-
-        kwd=kwds["Text"]
-        if type(kwd) is str:
-            self._CIL[0].Text=kwd
-        if type(kwd) is list:
-            for i in range(len(kwd)):
-                self._CIL[i].Text=kwd[i]
-
-        if kwds["Locale"] is not None:
-            self._LocalePage=kwds["Locale"]
-            if type(self._LocalePage) is str:
-                self._LocalePage=LocaleHandling().LocaleFromName(self._LocalePage)  # ()
-
-
-        if kwds["DsiplayName"] is not None:
-            self._displayName=kwds["DisplayName"]
-
-        if kwds["DateRange"] is not None:
-            self._DateRange=kwds["DateRange"]
-
-        if kwds["Virtual"] is not None:
-            self.Virtual=kwds["Virtual"]
-
-        if kwds["Cancelled"] is not None:
-            self.Cancelled=kwds["Cancelled"]
-
-        # If there's a True cancelled indication in the date range, transfer it to the ConInstanceInfo structure
-        if self._DateRange.Cancelled:
-            self.Cancelled=True
-            self._DateRange.Cancelled=False
+    def __init__(self, Names: IndexTableNameEntry=IndexTableNameEntry(), Location: str="", Date: FanzineDateRange=FanzineDateRange(), SeriesName: str= ""):
+        self._Names=Names
+        self._localePage: LocalePage=LocaleHandling().LocaleFromName(Location)
+        self._Date=Date
+        self._seriesName=SeriesName
 
 
     def __str__(self) -> str:
-        if len(self._CIL) > 0:
-            s=f"Link={self._CIL[0].Link}  Name={self._CIL[0].Text}  Date={self.DateRange}  Location={self.LocalePage}"
-        else:
-            s=f"Link=None  Name=None  Date={self.DateRange}  Location={self.LocalePage}"
-
-        if self.Cancelled and not self.DateRange.Cancelled:     # Print this cancelled only if we have not already done so in the date range
-            s+="  cancelled=True"
-        if self.Virtual:
-            s+="  virtual=True"
+        s=f"{self._Names.DisplayNameMarkup} {self._Date} {self._localePage})"
         return s
 
     def __eq__(self, other: ConInstanceInfo) -> bool:
-        if self.DateRange != other.DateRange or self.Cancelled != other.Cancelled or self.Virtual != other.Virtual:
+        if self._Names != other._Names:
             return False
-        if len(self._CIL) != len(other._CIL):
+        if self._localePage != other._localePage:
             return False
-        for s, o in zip(self._CIL, other._CIL):
-            if s.Text != o.Text:
-                return False
-            if s.Link != o.Link:
-                return False
+        if self._Date != other._Date:
+            return False
+
         return True
 
+
     def __hash__(self):
-        h=self.Cancelled.__hash__()
-        if self.Link is not None:
-            h+=self.Link.__hash__()
-        if self.DateRange is not None:
-            h+=self.DateRange.__hash__()
-        if self._CIL is not None:
-            h+=sum([x.__hash__() for x in self._CIL if x is not None])
-        return h
-
-
-    @property
-    def Set(self) -> None:
-        raise Exception
-
-    # Input: type(text)=str and link left off
-    # Input: typw(text)=str and type(link)=str
-    # Input: type(text)=list and type(link)=list and len(type) == len(list)
-    # Input: type(text)=list and link left off
-    @Set.setter
-    def Set(self, text: Union[str, List[str]], link:Union[str, List[str]]="") -> None:
-        assert (type(text) == str and type(list) == str) or (type(text) == list and type(link) == list and len(text) == len(link)) or (type(text) == list and type(link) == str and link == "")
-        if type(text) is str:
-            if len(self._CIL) == 0:
-                self._CIL.append(ConInstanceLink())
-            self._CIL[0].Text=text
-            self._CIL[0].Link=link
-            return
-        if type(text) is list:
-            if type(link) == list:
-                for t, l in zip(text, link):
-                    self._CIL.append(ConInstanceLink(Text=t, Link=l))
-            else:
-                for t in text:
-                    self._CIL.append(ConInstanceLink(Text=t))
+        return self._Names.__hash__() + self._localePage.__hash__() + self._Date.__hash__() + self._seriesName.__hash__()
 
 
     @property
     def LocalePage(self) -> LocalePage:
-        if not self._LocalePage.IsEmpty:
-            return self._LocalePage
-        return self._LocalePage
+        if not self._localePage.IsEmpty:
+            return self._localePage
+        return self._localePage
     @LocalePage.setter
     def LocalePage(self, val: Union[str, LocalePage]):
         if type(val) is str:
             val=LocaleHandling().LocaleFromName(val)  #()
-        self._LocalePage=val
+        self._localePage=val
+
 
     @property
     def DateRange(self) -> FanzineDateRange:
-        return self._DateRange
+        return self._Date
     @DateRange.setter
     def DateRange(self, val: FanzineDateRange) -> None:
-        self._DateRange=val
-
-    @property
-    def Text(self) -> str:
-        if len(self._CIL) == 0:
-            return ""
-        nl=self._CIL[0].Text
-        if len(self._CIL) > 1:
-            for i in range(1,len(self._CIL)):
-                nl=nl+" / "+self._CIL[i].Text
-        return nl
-    @Text.setter
-    def Text(self, val: Union[str, List[str]]) -> None:
-        if type(val) == str:
-            val=[val]
-        self._NameInSeriesList=val
-        assert False    # Should never do a set
+        self._Date=val
 
 
     @property
-    def Link(self) -> str:
-        if len(self._CIL) == 0:
-            return ""
-        if self._CIL[0].Link == "":    # If the link was not set, it's a simple link and just use the displayed text
-            return self._CIL[0].Text
-        return self._CIL[0].Link
-    @Link.setter
-    def Link(self, val: Union[str, List[str]]) -> None:
-        if type(val) == str:
-            val=[val]
-        self._Link=val
-        assert False    # Should never do a set
+    def Cancelled(self) -> bool:
+        return self._Names[0].Cancelled
+
+
+    @property
+    def Virtual(self) -> bool:
+        return self._Names[0].Virtual
+
+
+
+    # @property
+    # def Text(self) -> str:
+    #     assert False
+    #     if len(self._CIL) == 0:
+    #         return ""
+    #     nl=self._CIL[0].Text
+    #     if len(self._CIL) > 1:
+    #         for i in range(1,len(self._CIL)):
+    #             nl=nl+" / "+self._CIL[i].Text
+    #     return nl
+    # @Text.setter
+    # def Text(self, val: Union[str, List[str]]) -> None:
+    #     assert False
+    #     if type(val) == str:
+    #         val=[val]
+    #     self._NameInSeriesList=val
+    #     assert False    # Should never do a set
+
+    #
+    # @property
+    # def Link(self) -> str:
+    #     assert False
+    #     if len(self._CIL) == 0:
+    #         return ""
+    #     if self._CIL[0].Link == "":    # If the link was not set, it's a simple link and just use the displayed text
+    #         return self._CIL[0].Text
+    #     return self._CIL[0].Link
+    # @Link.setter
+    # def Link(self, val: Union[str, List[str]]) -> None:
+    #     assert False
+    #     if type(val) == str:
+    #         val=[val]
+    #     self._Link=val
+    #     assert False    # Should never do a set
 
 
     # The name of the series this con is a member of
@@ -366,35 +352,38 @@ class ConInstanceInfo:
     #   Con
     #   Con1 / con 2 / con 3
     @property
-    def DisplayName(self) -> str:
-        # if len(self._CIL) == 0:
-        #     return ""
-        # out=""
-        # for i in range(len(self._CIL)):
-        #     if i > 0:
-        #         out+=" / "
-        #     out+=self._CIL[i].Text
-        # return out
-        return self._displayName
-    @DisplayName.setter
-    def DisplayName(self, val: str):
-        self._displayName=val
+    def DisplayNameText(self) -> str:
+        return self._Names.DisplayNameText
+    @DisplayNameText.setter
+    def DisplayNameText(self, val: str):
+        assert False
 
 
-    # The name displayed as a properly linked wiki entry
-    # [[link|text]]
+    # The name with wiki markup, e.g., "[[Con]]"
     @property
-    def LinkedName(self) -> str:
-        if len(self._CIL) == 0:
-            return ""
-        # If there is more than one linked name, create a single name using "/" between the names
-        out="[["
-        for i in range(len(self._CIL)):
-            if i > 0:
-                out+="]] / [["
-            link=self._CIL[i].Link
-            if link != "":
-                out+=link+"|"
-            out+=self._CIL[i].Text
-        out+="]]"
-        return out
+    def DisplayNameMarkup(self) -> str:
+        return self._Names.DisplayNameMarkup
+    @DisplayNameMarkup.setter
+    def DisplayNameMarkup(self, val: str):
+        assert False
+
+
+
+    # # The name displayed as a properly linked wiki entry
+    # # [[link|text]]
+    # @property
+    # def LinkedName(self) -> str:
+    #     assert False
+    #     if len(self._CIL) == 0:
+    #         return ""
+    #     # If there is more than one linked name, create a single name using "/" between the names
+    #     out="[["
+    #     for i in range(len(self._CIL)):
+    #         if i > 0:
+    #             out+="]] / [["
+    #         link=self._CIL[i].Link
+    #         if link != "":
+    #             out+=link+"|"
+    #         out+=self._CIL[i].Text
+    #     out+="]]"
+    #     return out

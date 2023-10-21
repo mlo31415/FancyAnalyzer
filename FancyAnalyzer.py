@@ -128,7 +128,7 @@ def main():
 
     # Created a list of conventions sorted in date order from the con dictionary into
     conventionsByDate: list[ConInstanceInfo]=[y for x in conventions.values() for y in x]
-    conventionsByDate.sort(key=lambda d: d.Text)
+    conventionsByDate.sort(key=lambda d: d.DisplayNameText)
     conventionsByDate.sort(key=lambda d: d.DateRange)
 
     #TODO: Add a list of keywords to find and remove.  E.g. "Astra RR" ("Ad Astra XI")
@@ -157,7 +157,7 @@ def main():
             # it shows up twice in the list of cons, but in both cases the proper name([[DeepSouthCon 58]] / [[ConGregate 2020]]) is in con.Override
             # which is only filled in for these complicated thingies.  Since they are on the same date, they sort together and this test ignores ones after the first.
             # TODO: What if there's another con on that date and it winds up sorted in between?
-            if con.Text == lastcon.Text and con.DateRange == lastcon.DateRange:
+            if con.DisplayNameText == lastcon.DisplayNameText and con.DateRange == lastcon.DateRange:
                 continue
 
             # Now write the line
@@ -179,9 +179,7 @@ def main():
                     f.write(" ||")
 
             # Format the convention name and location for tabular output
-            nameText=con.LinkedName
-            if con.Cancelled:
-                nameText=f"<s>{nameText}</s>"
+            nameText=con.DisplayNameMarkup
 
             if con.Virtual:
                 nameText=f"''{nameText} (virtual)''"
@@ -242,7 +240,7 @@ def main():
         for con in currentCons:
 
             # Format the convention name and location for tabular output
-            nameText=con.LinkedName
+            nameText=con.DisplayNameMarkup
             if con.Cancelled:           #TODO: Can we move these lines into ConInstanceInfo?
                 nameText=f"<s>{nameText}</s>"
             if con.Virtual:
