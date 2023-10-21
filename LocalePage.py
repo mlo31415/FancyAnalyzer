@@ -48,6 +48,10 @@ class LocalePage:
         return f"LocalePage({self.PageName=}  {self.DisplayName=}  {self.Redirect=}  {self.IsTaggedLocale=}  {self.NonPageName=})"
 
 
+    def __hash__(self):
+        return self.PageName.__hash__() + self.DisplayName.__hash__() + self.Redirect.__hash__() + self.IsTaggedLocale.__hash__() + self.NonPageName.__hash__()
+
+
     @property
     # Provides a formatted link to this LocalePage (or just the name if there is no associated page)
     def Link(self) -> str:
