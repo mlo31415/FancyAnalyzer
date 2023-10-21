@@ -398,8 +398,3 @@ class ConInstanceInfo:
             out+=self._CIL[i].Text
         out+="]]"
         return out
-
-
-    def Unwind(self) -> list[ConInstanceInfo]:
-        return [ConInstanceInfo(Link=x.Link, Text=x.Text, SeriesName=self.SeriesName, LocalePage=self.LocalePage,
-                                DateRange=self.DateRange, Virtual=self.Virtual, Cancelled=self.Cancelled) for x in self._CIL]
