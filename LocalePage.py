@@ -5,15 +5,15 @@ from collections import defaultdict
 import re
 
 from F3Page import F3Page
-from Log import LogSetHeader, Log
-from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets, FindWikiBracketedText
+from Log import Log
+from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets, CompressAllWhitespace, CompressAllWhitespaceAndRemovePunctuation
 
 
 ############################################################################################
 # This class encapsulates our knowledge of Locale pages
 
 # There are four kinds of pages which generate a LocalePage:
-#   A base Locale: typically a metropolitan name in standard form, e.g., Boston, MA).  It is tagged as a Locale and is not a redirect
+#   A base Locale: typically a metropolitan name in standard form, (e.g., Boston, MA).  It is tagged as a Locale and is not a redirect
 #   A shortname: Some cities, e.g., Boston, London, New York, are usually referred to without state/country.
 #   A non-base Locale: typically a location in a metro area, e.g., Cambridge, MA. It is tagged as a Locale, but redirects to a base Locale
 #   A synonym: typically a variant spelling or Wikidot form of a base (or non-base) Locale, e.g., Cambridge_ma. It is a redirect to a Locale, but not tagged as one
@@ -224,19 +224,32 @@ class LocaleHandling:
     # This will be a pointer to fancyPagesDictByWikiname
     allPages: dict[str, F3Page]={}
 
+    # A Dictionary of all locales keys by the first word.  (E.g., "New York, NY" is keyed by "New")
+    # This will be used for quick searching for locales in text.
+    # The value is a list of all locales which start with the key.  Each local is stored as a list of tokens subsequent to the key.
+    # E.g., "Boston, MA" would have key="Boston" and value=[["MA"]].
+    # and the key "New" would have [["York" "NY"], ["York", "New", "York"], ["York", "City"], ["Carrolton", "MD"]...]
+    LocaleDict: defaultdict[str, list[list[str]]]=defaultdict(list)
+
     # Go through the entire set of pages looking for locales and harvest the information to create the list of all locales
     def Create(self, fancyPagesDictByWikiname: dict[str, F3Page]) -> None:
-        LocaleHandling.allPages=fancyPagesDictByWikiname
+        # Create a copy of fancyPagesDictByWikiname indexed with keys without punctuation or extra spaces.
+        val={CompressAllWhitespaceAndRemovePunctuation(k): v for (k, v) in fancyPagesDictByWikiname.items()}
+        LocaleHandling.allPages=AllPagesDict(val)
         for page in LocaleHandling.allPages.values():
             # Add locale pages to the set
             if page.IsLocale:
-                LogSetHeader("Found LocalePage "+page.Name)
+                #LogSetHeader("Found LocalePage "+page.Name)
+                #Log(f"Locale.Create: Locale page: {page.Name}")
                 self.locales[page.Name]=LocalePage(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
+                tokens=CompressAllWhitespaceAndRemovePunctuation(page.Name).split()
+                self.LocaleDict[tokens[0]].append(tokens[1:])
             else:
                 # If this page is a redirect to a locale page, add this page to the locale set
                 # TODO: Do we want all redirects to locale pages or just those tagged as a locale?
-                if page.IsRedirectpage and page.Redirect in LocaleHandling.allPages.keys() and LocaleHandling.allPages[page.Redirect].IsLocale:
-                    LogSetHeader("Processing LocalePage redirect "+page.Name)
+                if page.IsRedirectpage and page.Redirect in LocaleHandling.allPages.keys() and LocaleHandling.allPages[CompressAllWhitespaceAndRemovePunctuation(page.Redirect)].IsLocale:
+                    #LogSetHeader("Processing LocalePage redirect "+page.Name)
+                    #Log(f"Locale.Create: Add redirect: {page.Name}")
                     self.locales[page.Name]=LocalePage(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
 
     # key is full name, value is preferred name
@@ -381,52 +394,46 @@ class LocaleHandling:
                     self.probableLocales[rslt].append(pagename)
         return out
 
-    # Look for a pattern of the form:
-    #   in Word, XX
-    #   where Word is one or more strings of letters each with an initial capital, the comma is optional, and XX is a pair of upper case letters
-    # Note that this will also pick up roman-numeraled con names, E.g., Fantasycon XI, so we need to remove these later
-    def ScanConPageforLocale(self, s: str, pagename: str) -> list[LocalePage]:
 
-        # Find the first locale
-        # Detect locales of the form Name [Name..Name], XX  -- One or more capitalized words followed by an optional comma followed by exactly two UC characters
-        # ([A-Z][a-z\-]+\]*,?\s)+     Picks up one or more leading capitalized, space (or comma)-separated words (we allow a '.' to handle things like "St. Paul")
-        # \[*  and  \]*             Lets us ignore spans of [[brackets]]
-        # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
-        out: list[LocalePage]=[]
-        found=False
-        s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m1=re.search("[^A-Za-zé]in [A-Z][a-zé.,]+\s+", s1)  # Search for the word "in" followed by an upper-case word.  This may be the start of ...in City, State...
-        # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
-        if m1 is not None:
-            s1=s1[m1.span()[0]+3:]      # Drop the "in" token
-            rslts=self.ScanForCityST(s1, pagename)
-            if len(rslts) > 0:
-                found=True
-                out.extend(self.AppendLocale(rslts, pagename))
+    # Locate a locale by looking for occurances of "in" followed by a known locale
+    # We only search the first 500 characters
+    # We also accept the very specific pattern of " in [[Xxxxxx, XX]]"
+    def ScanConPageforLocale2(self, s: str) -> LocalePage:
 
-        if not found:
-            m2=re.search("[^A-Za-zé]in \[\[[A-Z][a-zé.,]+", s)  # Search for the word "in" followed by '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
-            # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
-            if m2 is not None:
-                s2=s[m2.span()[0]+1:]  # Drop the "in" token
-                rslts=self.ScanForCityCountry(s2)
-                if len(rslts) > 0:
-                    found=True
-                    out.extend(self.AppendLocale(rslts, pagename))
+        # Look for " in [[Xxxxxx, XX]]"
+        m=re.match(r" in \[\[([A-Z][a-z]+, [A-Z]{2})]]", s)
+        if m is not None:
+            rslt=m.groups()[0]
+            if rslt in LocaleHandling().allPages.keys():
+                page=LocaleHandling().allPages[rslt]
+                return LocalePage(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
 
-        if not found and m1 is not None:
-            # Now scan for a stand-alone City name
-            rslts=self.ScanForCity(s1)
-            if len(rslts) > 0:
-                found=True
-                out.extend(self.AppendLocale(rslts, pagename))
+        # Look for " in " followed by any local defined by pages marked as locale.
+        s1=s[:700]     # Look only in the 1st 700 characters
+        s1=s1.replace("[", "").replace("]", "")  # Remove brackets
+        while " in " in s1:
+            loc=s1.index(" in ")
+            end=min(loc+100, len(s1)-1)
+            if loc+3 >= end:
+                break
+            tokens=CompressAllWhitespaceAndRemovePunctuation(s1[loc+3:end]).split()
+            s1=s1[loc+4:]   # In case this "in" is not part of a locale, remove it so we find the next.
+            if len(tokens) > 0:
+                key=tokens[0]
+                if key in LocaleHandling().LocaleDict.keys():
+                    possibles=LocaleHandling().LocaleDict[key]
+                    for possmatch in possibles:
+                        smaller=min(len(possmatch), len(tokens)-1)
+                        if tokens[1:smaller+1] == possmatch[:smaller]:
+                            rslt=" ".join(tokens[:smaller+1])
+                            if rslt in LocaleHandling().allPages.keys():
+                                page=LocaleHandling().allPages[rslt]
+                                return LocalePage(PageName=page.Name, Redirect=page.Redirect, IsTaggedLocale=page.IsLocale, DisplayName=page.DisplayTitle)
+        return None
 
-        if not found and m2 is not None:
-            rslts=self.ScanForCity(s2)
-            if len(rslts) > 0:
-                out.extend(self.AppendLocale(rslts, pagename))
 
-        return out
+
+
 
     # We have text which is supposedly a locale: Try to interpret it
     def ScanForLocale(self, s: str, pagename: str) -> list[LocalePage]:
