@@ -59,16 +59,17 @@ class Conventions:
 
 
 ###################################################################################
-@dataclass
 class IndexTableSingleNameEntry:
-    Text: str=""     # The name as given in a convention index table. Link brackets removed.
-    Link: str=""            # The link to the convention page.  (This is a page name.)
-                            # If there is more than one link in the table entry, we ignore links to convention series pages
-    Lead:str =""
-    Remainder: str=""
-    Cancelled: bool=False
-    Virtual: bool=False
-    # A convention's display name comes from the convention series table; a convention's page name is the name of the F3Page
+    def __init__(self, Text: str="", Link: str="", Lead: str="", Remainder: str="", Cancelled: bool=False, Virtual: bool=False):
+        self.Text: str=Text     # The name as given in a convention index table. Link brackets removed.
+        self.Link: str=Link            # The link to the convention page.  (This is a page name.)
+                                # If there is more than one link in the table entry, we ignore links to convention series pages
+        self.Lead:str=Lead
+        self.Remainder: str=Remainder
+        self.Cancelled: bool=Cancelled
+        self.Virtual: bool=Virtual
+        # A convention's display name comes from the convention series table; a convention's page name is the name of the F3Page`
+
 
     def __hash__(self):
         return hash(self.Text)+hash(self.Link)+hash(self.Lead)+hash(self.Remainder)+hash(self.Cancelled)+hash(self.Virtual)

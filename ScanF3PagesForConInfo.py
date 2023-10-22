@@ -27,6 +27,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
     # Build the main list of conventions by walking the convention index table on each of the conseries pages
     conventions: Conventions=Conventions()
     for page in fancyPagesDictByWikiname.values():
+        Log(f"Processing page: {page.Name}", Flush=True)
         if not page.IsConSeries:    # We could use conseries for this, but it would not be much faster and would result in an extra layer of indent.
             continue
 
@@ -58,6 +59,8 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
 
             # We have a convention table with the required minimum structure.  Walk it, extracting the individual conventions
             for row in table.Rows:
+                # if "Swancon 1" not in row[0]:
+                #     continue
                 LogSetHeader(f"Processing: {page.Name}  row: {row}")
                 # Skip rows with merged columns, and also rows where either the date cell or the convention name cell is empty
                 if len(row) < numcolumns or len(row[conColumn]) == 0 or len(row[dateColumn]) == 0:
@@ -71,7 +74,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                     if v2:
                         row[idx]=cell  # Update the cell with the virtual flag removed
                     virtual=virtual or v2
-                Log(f"{virtual=}", Print=False)
+                Log(f"{virtual=}", Flush=True)
 
                 location=""
                 if locColumn is not None:
@@ -104,27 +107,50 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                 # Note that we are disallowing the extreme case of three cons in one row!
 
                 if len(nameEntryList) == 0:
-                    Log(f"No names found in row: {row}")
+                    Log(f"No names found in row: {row}", Flush=True)
                     continue
 
                 if len(nameEntryList) == len(dateEntryList):
                     # Easy-peasy. N cons with N dates.
                     # Either a boring con that was simply held as scheduled or one which was renamed when it went to a new date.
+                    for i, date in enumerate(dateEntryList):
+                        if date.Cancelled:      # If the date is marked as cancelled, but not the name,copy the cancellation over
+                            nameEntryList[i].Cancelled=True
                     conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
+                    Log(f"Done processing (3): {row}", Flush=True)
+                    continue
 
                 if len(nameEntryList) == 1 and len(dateEntryList) > 1:
                     # This is the case of a convention which was postponed and perhaps cancelled, but retained the same name.  One con, two (or more) dates.
+
+                    # Are *all* the dates marked as cancelled?
+                    allGone=True
+                    for date in dateEntryList:
+                        if not date.Cancelled:
+                            AllGone=False
+                    if allGone:
+                        nameEntryList[0].Cancelled=True
+
                     for date in dateEntryList:
                         conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=date)])
+                    Log(f"Done processing (2): {row}", Flush=True)
                     continue
 
                 if len(nameEntryList) > 1 and len(dateEntryList) == 1:
                     # This is a case of a con with two or more names.  E.g., "[[DSC 35]] / MidSouthCon 17"
+                    if dateEntryList[0].Cancelled:
+                        for name in nameEntryList:
+                            name.Cancelled=True
                     conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
+                    Log(f"Done processing (1): {row}", Flush=True)
                     continue
 
                 # The leftovers will be uncommon, but we still do need to handle them.
-                LogError(f"ScanF3PagesForConInfo() Name/date combinations not yet handled: {page.Name}: {len(dateEntryList)=}  {len(nameEntryList)=}  {row=}")
+                Log(" ", Flush=True)
+                LogError(f"ScanF3PagesForConInfo() Name/date combinations not yet handled: {page.Name}:  row={row}") #{len(dateEntryList)=}  {len(nameEntryList)=}
+
+        Log("Completed conseries: "+page.Name, Flush=True)
+    Log("Completed run through of fancyPagesDictByWikiname.values()", Flush=True)
 
 
 
@@ -242,7 +268,7 @@ def ExtractDateInfo(datetext: str, name: str, row) -> list[FanzineDateRange]:
 
 def ExtractConNameInfo(nameText: str, conseries: list[str]) -> IndexTableNameEntry:
     # The output is a list of IndexTableEntrys and the display name
-    Log(f"ExtractConNameInfo2({nameText})")
+    Log(f"ExtractConNameInfo('{nameText})'")
 
     # Clean up the text
     # Convert the HTML characters some people have inserted into their ascii equivalents
@@ -355,13 +381,18 @@ def ExtractConNameInfo(nameText: str, conseries: list[str]) -> IndexTableNameEnt
 def SplitByTopLevelSlashes(nameTextCleaned) -> list[str]:
     # First, split the text into pieces by "/" *outside* of square brackets
     listofslashlocs=[-1]        # Starting point for the first range if there is one.
-    depth=0
+    depthSquare=0
+    depthPointy=0
     for i in range(len(nameTextCleaned)):
         if nameTextCleaned[i] == "[":
-            depth+=1
+            depthSquare+=1
         elif nameTextCleaned[i] == "]":
-            depth-=1
-        elif nameTextCleaned[i] == "/" and depth == 0:
+            depthSquare-=1
+        elif nameTextCleaned[i] == "<":
+            depthPointy-=1
+        elif nameTextCleaned[i] == ">":
+            depthPointy+=1
+        elif nameTextCleaned[i] == "/" and depthSquare == 0 and depthPointy == 0:
             listofslashlocs.append(i)
     names: list[str]=[]
     if len(listofslashlocs) == 1:

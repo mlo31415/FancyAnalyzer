@@ -173,7 +173,7 @@ def main():
                 f.write(f"{con.DateRange}||")
             else:
                 if currentDateRange != con.DateRange:
-                    f.write(f"{con.DateRange}||")
+                    f.write(f"{con.DateRange.DisplayDaterangeBare}||")
                     currentDateRange=con.DateRange
                 else:
                     f.write(" ||")
