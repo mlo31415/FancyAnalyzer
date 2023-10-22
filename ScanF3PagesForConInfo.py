@@ -116,6 +116,10 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                     for i, date in enumerate(dateEntryList):
                         if date.Cancelled:      # If the date is marked as cancelled, but not the name,copy the cancellation over
                             nameEntryList[i].Cancelled=True
+                    if virtual:
+                        for name in nameEntryList:
+                            if not name.Cancelled:
+                                name.Virtual=True
                     conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
                     Log(f"Done processing (3): {row}", Flush=True)
                     continue
@@ -131,6 +135,11 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                     if allGone:
                         nameEntryList[0].Cancelled=True
 
+                    if virtual:
+                        for name in nameEntryList:
+                            if not name.Cancelled:
+                                name.Virtual=True
+
                     for date in dateEntryList:
                         conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=date)])
                     Log(f"Done processing (2): {row}", Flush=True)
@@ -141,6 +150,12 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                     if dateEntryList[0].Cancelled:
                         for name in nameEntryList:
                             name.Cancelled=True
+
+                    if virtual:
+                        for name in nameEntryList:
+                            if not name.Cancelled:
+                                name.Virtual=True
+
                     conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
                     Log(f"Done processing (1): {row}", Flush=True)
                     continue
