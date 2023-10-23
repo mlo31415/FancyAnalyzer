@@ -387,7 +387,7 @@ def ExtractConNameInfo(nameText: str, conseries: list[str]) -> IndexTableNameEnt
             # Suppress links to conseries pages
             if link2 in conseries:
                 link2=""
-            entryList.Append(IndexTableSingleNameEntry(Link=link2, Text=text2, Lead=lead2, Remainder=remainder2, Cancelled=cancelled, Virtual=v))
+            entryList.Append(IndexTableSingleNameEntry(PageName=link2, Text=text2, Lead=lead2, Remainder=remainder2, Cancelled=cancelled, Virtual=v))
 
     return entryList
 

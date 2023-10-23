@@ -27,7 +27,7 @@ class Conventions:
 
     def __setitem__(self, index: str, val: ConInstanceInfo):
         self._conDict[index].append(val)
-        self._setOfCIIs.add(val)
+        self._setOfCIIs.add(val.PageName)
 
     def __contains__(self, item: ConInstanceInfo) -> bool:
         return item in self._conDict.keys()
@@ -38,13 +38,13 @@ class Conventions:
     # Add entries to the conlist, but filter out duplicate entries
     def Append(self, cii: ConInstanceInfo) -> None:
 
-        if cii not in self._setOfCIIs:
+        if cii.PageName not in self._setOfCIIs:
             # This is a new name: Just append it
-            self[cii.DisplayNameText]=cii
+            self[cii.PageName]=cii
             return
 
         if not cii.LocalePage.IsEmpty:
-            hits=[y for x in self._conDict.values() for y in x if cii == y]
+            hits=[y for x in self._conDict.values() for y in x if cii.PageName == y.PageName]
             if hits[0].LocalePage != cii.LocalePage:
                 Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
                 Log("            duplicate - "+str(cii), isError=True, Print=False)
@@ -58,9 +58,9 @@ class Conventions:
 
 ###################################################################################
 class IndexTableSingleNameEntry:
-    def __init__(self, Text: str="", Link: str="", Lead: str="", Remainder: str="", Cancelled: bool=False, Virtual: bool=False):
+    def __init__(self, Text: str="", PageName: str= "", Lead: str= "", Remainder: str= "", Cancelled: bool=False, Virtual: bool=False):
         self.Text: str=Text     # The name as given in a convention index table. Link brackets removed.
-        self.Link: str=Link            # The link to the convention page.  (This is a page name.)
+        self.PageName: str=PageName            # The link to the convention page.  (This is a page name.)
                                 # If there is more than one link in the table entry, we ignore links to convention series pages
         self.Lead:str=Lead
         self.Remainder: str=Remainder
@@ -70,20 +70,20 @@ class IndexTableSingleNameEntry:
 
 
     def __hash__(self):
-        return hash(self.Text)+hash(self.Link)+hash(self.Lead)+hash(self.Remainder)+hash(self.Cancelled)+hash(self.Virtual)
+        return hash(self.Text)+hash(self.PageName)+hash(self.Lead)+hash(self.Remainder)+hash(self.Cancelled)+hash(self.Virtual)
 
 
     def HasLink(self) -> bool:
-        return self.Link != "" or self.Text != ""
+        return self.PageName != "" or self.Text != ""
 
     @property
     def BracketContents(self) -> str:
         s=""
-        if self.Link != "":
-            s+=self.Link
-        if self.Link != "" and self.Text != "" and self.Link != self.Text:
+        if self.PageName != "":
+            s+=self.PageName
+        if self.PageName != "" and self.Text != "" and self.PageName != self.Text:
             s+="|"
-        if self.Text != "" and self.Text != self.Link:
+        if self.Text != "" and self.Text != self.PageName:
             s+=self.Text
         return s
 
@@ -109,17 +109,27 @@ class IndexTableNameEntry:
                 h+=entry.__hash__()
         return h
 
+    # This should be the name of the conpage or empty string
+    @property
+    def PageName(self) -> str:
+        numlinks=sum([x.PageName != "" for x in self._listOfEntries])
+        if numlinks == 0:
+            return ""
+
+        return [x.PageName for x in self._listOfEntries if x.PageName != ""][0]
+
+
     @property
     def DisplayNameMarkup(self) -> str:
         # Construct the display name
         displayName=""
-        numlinks=sum([x.Link != "" for x in self._listOfEntries])
+        numlinks=sum([x.PageName != "" for x in self._listOfEntries])
         if numlinks > 0:
             # We want to extract the first link, attach it to the first entry, and zero-out all the other links.
-            link=[x.Link for x in self._listOfEntries if x.Link != ""][0]
+            link=[x.PageName for x in self._listOfEntries if x.PageName != ""][0]
             for entry in self._listOfEntries:
-                entry.Link=""
-            self._listOfEntries[0].Link=link
+                entry.PageName=""
+            self._listOfEntries[0].PageName=link
 
         if len(self._listOfEntries) == 1:
             displayName+=self._listOfEntries[0].Lead
@@ -185,6 +195,8 @@ class IndexTableNameEntry:
         return displayName.strip()
 
 
+
+
 ###################################################################################
 class IndexTableDateEntry:
     def __init__(self, Dates: list[FanzineDateRange]=None ):
@@ -224,19 +236,19 @@ class IndexTableDateEntry:
 # A class to hold a wiki link of the form [[<link>|<text>]] with the link being optional
 # It may have been surrounded by <s></s>
 class ConInstanceLink:
-    Link: str=""        # The link if different from the display text, else the empty string
+    PageName: str=""        # The link if different from the display text, else the empty string
     Text: str=""        # The display text. This will always be present
     Cancelled: bool=False
 
     def __str__(self) -> str:
-        return f"{self.Text} {'Link='+self.Link if self.Link != '' else ''}   {'<cancelled>' if self.Cancelled else ''}"
+        return f"{self.Text} {'Link='+self.PageName if self.PageName != '' else ''}   {'<cancelled>' if self.Cancelled else ''}"
 
 
     def __lt__(self, val: ConInstanceLink) -> bool:
         return self.Text < val.Text
 
     def __hash__(self):
-        return self.Link.__hash__()+self.Text.__hash__()+self.Cancelled.__hash__()
+        return self.PageName.__hash__()+self.Text.__hash__()+self.Cancelled.__hash__()
 
 
 ###################################################################################
@@ -306,43 +318,6 @@ class ConInstanceInfo:
         return self._Names[0].Virtual
 
 
-
-    # @property
-    # def Text(self) -> str:
-    #     assert False
-    #     if len(self._CIL) == 0:
-    #         return ""
-    #     nl=self._CIL[0].Text
-    #     if len(self._CIL) > 1:
-    #         for i in range(1,len(self._CIL)):
-    #             nl=nl+" / "+self._CIL[i].Text
-    #     return nl
-    # @Text.setter
-    # def Text(self, val: Union[str, List[str]]) -> None:
-    #     assert False
-    #     if type(val) == str:
-    #         val=[val]
-    #     self._NameInSeriesList=val
-    #     assert False    # Should never do a set
-
-    #
-    # @property
-    # def Link(self) -> str:
-    #     assert False
-    #     if len(self._CIL) == 0:
-    #         return ""
-    #     if self._CIL[0].Link == "":    # If the link was not set, it's a simple link and just use the displayed text
-    #         return self._CIL[0].Text
-    #     return self._CIL[0].Link
-    # @Link.setter
-    # def Link(self, val: Union[str, List[str]]) -> None:
-    #     assert False
-    #     if type(val) == str:
-    #         val=[val]
-    #     self._Link=val
-    #     assert False    # Should never do a set
-
-
     # The name of the series this con is a member of
     @property
     def SeriesName(self) -> str:
@@ -372,22 +347,9 @@ class ConInstanceInfo:
         assert False
 
 
+    # Just the simple name.  For now, it will be the link
+    @property
+    def PageName(self) -> str:
+        return self._Names.PageName
 
-    # # The name displayed as a properly linked wiki entry
-    # # [[link|text]]
-    # @property
-    # def LinkedName(self) -> str:
-    #     assert False
-    #     if len(self._CIL) == 0:
-    #         return ""
-    #     # If there is more than one linked name, create a single name using "/" between the names
-    #     out="[["
-    #     for i in range(len(self._CIL)):
-    #         if i > 0:
-    #             out+="]] / [["
-    #         link=self._CIL[i].Link
-    #         if link != "":
-    #             out+=link+"|"
-    #         out+=self._CIL[i].Text
-    #     out+="]]"
-    #     return out
+

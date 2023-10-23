@@ -68,7 +68,7 @@ class LocalePage:
         if self.IsRedirect:
             return "[["+self.PageName+"]]"
         # Oops
-        return f"LocalePage.Link({self}) failure"
+        return f"LocalePage.PageName({self}) failure"
 
     @property
     def IsEmpty(self) -> bool:

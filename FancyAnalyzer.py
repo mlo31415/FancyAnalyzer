@@ -180,8 +180,8 @@ def main():
 
             # Format the convention name and location for tabular output
             nameText=con.DisplayNameMarkup
-            if not con.Virtual and len(con.LocalePage.Link) > 0:
-                nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.Link)})</small>"
+            if not con.Virtual and len(con.LocalePage.PageName) > 0:
+                nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.PageName)})</small>"
             f.write(nameText+"\n")
 
             lastcon=con
@@ -251,8 +251,8 @@ def main():
 
             localeText=""
             if not con.Virtual:
-                if len(con.LocalePage.Link) > 0:
-                    localeText=StripWikiBrackets(con.LocalePage.Link)
+                if len(con.LocalePage.PageName) > 0:
+                    localeText=StripWikiBrackets(con.LocalePage.PageName)
 
             f.write(f"{nameText}{seriesText}&nbsp;&nbsp;&nbsp;{dateText}&nbsp;&nbsp;&nbsp;{localeText}\n")
 
