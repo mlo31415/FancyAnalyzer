@@ -38,7 +38,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
             numcolumns=len(table.Headers)
 
             # We require that we have convention and date columns, though we allow alternative column names
-            conColumn=CrosscheckListElement(["Convention", "Convention Name", "Name"], table.Headers)
+            conColumn=CrosscheckListElement(["Convention", "Convention Name", "Name", "Con"], table.Headers)
             if conColumn is None:
                 Log(f"***Can't find Convention column in table {index+1} of {len(page.Tables)} on page {page.Name}", isError=True, Print=False)
                 continue
