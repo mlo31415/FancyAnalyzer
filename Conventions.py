@@ -134,6 +134,8 @@ class IndexTableNameEntry:
             if self._listOfEntries[0].Cancelled:
                 displayName+="</s>"
             displayName+=self._listOfEntries[0].Remainder
+            if self._listOfEntries[0].Virtual:
+                displayName+=" (virtual)"
         else:
             first=True
             for el in self._listOfEntries:
