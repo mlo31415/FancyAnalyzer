@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from typing import Union
+from collections import defaultdict
+from dataclasses import dataclass
 
 from FanzineIssueSpecPackage import FanzineDateRange
 from LocalePage import LocalePage, LocaleHandling
+from HelpersPackage import CompressWhitespace
 
-from collections import defaultdict
-from dataclasses import dataclass
 from Log import Log
 
 ###################################################################################
@@ -156,6 +157,9 @@ class IndexTableNameEntry:
                 displayName+=el.Remainder
                 if el.Cancelled:
                     displayName+="</s>"
+                if el.Virtual:
+                    displayName+=" (virtual)"
+                displayName=CompressWhitespace(displayName)
 
         return displayName
 
