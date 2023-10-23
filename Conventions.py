@@ -20,7 +20,7 @@ class Conventions:
         # This is a dictionary of all conventions with the convention name as the key.
         self._conDict: defaultdict[str, list[ConInstanceInfo]]=defaultdict(list)
         # Searching for duplicates in the obvious way used to be O(N**2), where N gets to be ~10,000.  Using the set is O(N) and significantly faster.
-        self._setOfCIIs: set[ConInstanceInfo]=set()
+        self._setOfCIIs: set[str]=set()
 
     def __getitem__(self, index: str) -> list[ConInstanceInfo]:
         return self._conDict[index]
