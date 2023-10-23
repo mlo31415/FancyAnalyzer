@@ -83,6 +83,20 @@ def main():
         with open("fancyPagesDictByWikiname.json", "w+", encoding='utf-8') as f:
             f.write(jsonpickle.encode(fancyPagesDictByWikiname))
 
+    # ...
+    # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
+    # Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
+    # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
+    Log("***Create inverse redirects tables", timestamp=True)
+    redirects: dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
+    inverseRedirects:dict[str, list[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
+    for fancyPage in fancyPagesDictByWikiname.values():
+        if fancyPage.Redirect != "":
+            redirects[fancyPage.Name]=fancyPage.Redirect
+            inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
+            if fancyPage.Redirect != fancyPage.Redirect:
+                inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
+
 
     Log("Writing: Redirects to Wikidot pages.txt", timestamp=True)
     with open("Redirects to Wikidot pages.txt", "w+", encoding='utf-8') as f:
@@ -101,6 +115,8 @@ def main():
     # Mine the F3Pages for convention data
     Log("***Analyzing convention series tables", Clear=True, timestamp=True)
     conventions=ScanF3PagesForConInfo(fancyPagesDictByWikiname)
+
+
 
     ###############################################################################
     # Reports #####################################################################
@@ -260,20 +276,6 @@ def main():
         f.write("{{conrunning}}\n[[Category:List]]\n")
 
 
-    # ...
-    # OK, now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
-    # Build up a dictionary of redirects.  It is indexed by the canonical name of a page and the value is the canonical name of the ultimate redirect
-    # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
-    Log("***Create inverse redirects tables", timestamp=True)
-    redirects: dict[str, str]={}            # Key is the name of a redirect; value is the ultimate destination
-    inverseRedirects:dict[str, list[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
-    for fancyPage in fancyPagesDictByWikiname.values():
-        if fancyPage.Redirect != "":
-            redirects[fancyPage.Name]=fancyPage.Redirect
-            inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
-            if fancyPage.Redirect != fancyPage.Redirect:
-                inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
-
     # Analyze the Locales
     # Create a list of things that redirect to a LocalePage, but are not tagged as a locale.
     Log("***Look for things that redirect to a LocalePage, but are not tagged as a Locale", timestamp=True)
@@ -287,15 +289,6 @@ def main():
                                 if "-" not in inverse:                  # If there's a hyphen, it's probably a Wikidot redirect
                                     if inverse[1:] != inverse[1:].lower() and " " in inverse:   # There's a capital letter after the 1st and also a space
                                         f.write(f"{fancyPage.Name} is pointed to by {inverse} which is not a LocalePage\n")
-
-
-    ###################################################
-    # Now we have a dictionary of all the pages on Fancy 3, which contains all of their outgoing links
-    # Build up an inverse list of all the pages that redirect *to* a given page, also indexed by the page's canonical name. The value here is a list of canonical names.
-    inverseRedirects: dict[str, list[str]]=defaultdict(list)     # Key is the name of a destination page, value is a list of names of pages that redirect to it
-    for fancyPage in fancyPagesDictByWikiname.values():
-        if fancyPage.Redirect != "":
-            inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
     # Create a dictionary of page references for people pages.
     # The key is a page's canonical name; the value is a list of pages at which they are referenced.
