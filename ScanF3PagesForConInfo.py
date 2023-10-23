@@ -7,6 +7,7 @@ from HelpersPackage import CrosscheckListElement, ScanForBracketedText
 from FanzineIssueSpecPackage import FanzineDateRange
 from LocalePage import LocaleHandling
 from Conventions import Conventions, IndexTableSingleNameEntry, IndexTableNameEntry, ConInstanceInfo
+import F3Page
 
 
 ###########
@@ -19,7 +20,7 @@ from Conventions import Conventions, IndexTableSingleNameEntry, IndexTableNameEn
 #       The convention (e.g., Boskone 23, Westercon 18)
 #       IndexTableEntry: Something to handle the fact that some conventions are members of two or more conseries and some conventions
 #           have been scheduled, moved and cancelled.
-def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
+def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page]) -> Conventions:
 
     # Build a list of Con series pages.  We'll use this later to check links when analyzing con index table entries
     conseries: list[str]=[page.Name for page in fancyPagesDictByWikiname.values() if page.IsConSeries]
@@ -83,8 +84,16 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                 # ............................................
                 # Now handle the names and dates columns.  Get the corresponding convention name(s) and dates.
                 nameEntryList=ExtractConNameInfo(row[conColumn], conseries)
-                x=nameEntryList.DisplayNameMarkup
                 dateEntryList=ExtractDateInfo(row[dateColumn], page.Name, row)      #TODO: Really should return a IndexTableDateEntry(() object
+
+                # Update nameEntryList to deal with those convention index tables whoch point to a convention via a redirect.
+                for nameentry in nameEntryList:
+                    if nameentry.PageName in fancyPagesDictByWikiname.keys():
+                        if fancyPagesDictByWikiname[nameentry.PageName].Redirect != "":
+                            nameentry.PageName=fancyPagesDictByWikiname[nameentry.PageName].Redirect
+                    else:
+                        LogError(f"ScanF3PagesForConInfo(): {nameentry.PageName} on page {page.Name} not found in fancyPagesDictByWikiname")
+
 
                 # Now for the hard work of making sense of this...
                 # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:
@@ -186,7 +195,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
             if not loc.IsEmpty:
                 if page.Name not in conventions:
-                    f.write(f"{page.Name} not in conventions\n")
+                    f.write(f"{page.Name} not in `conventions`\n")
                     continue
                 for con in conventions[page.Name]:
                     con.LocalePage=loc        #TODO: We really ought to locate the specific con in the list
