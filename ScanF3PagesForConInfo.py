@@ -425,12 +425,11 @@ def SplitByTopLevelSlashes(nameTextCleaned) -> list[str]:
     return names
 
 
-
 #---------------------------------------------------------------------------
 # Scan for a virtual flag
 # Return True/False and the remaining text after the V-flag is removed
 def ScanForVirtual(s: str) -> tuple[bool, str]:
-    pattern = "\((:?virtual|online|held online|moved online|virtual convention)\)"
+    pattern = "\(?(:?virtual|\(online\)|held online|moved online|virtual convention)\)?"        # The () around online are because we do not want to match online w?o parens
 
     # First look for one of the alternatives (contained in parens) *anywhere* in the text
     newval = re.sub(pattern, "", s, flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
