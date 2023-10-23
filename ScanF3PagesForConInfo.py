@@ -20,7 +20,7 @@ import F3Page
 #       The convention (e.g., Boskone 23, Westercon 18)
 #       IndexTableEntry: Something to handle the fact that some conventions are members of two or more conseries and some conventions
 #           have been scheduled, moved and cancelled.
-def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page]) -> Conventions:
+def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects: dict[str, str]) -> Conventions:
 
     # Build a list of Con series pages.  We'll use this later to check links when analyzing con index table entries
     conseries: list[str]=[page.Name for page in fancyPagesDictByWikiname.values() if page.IsConSeries]
@@ -86,14 +86,10 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page]) -> Conven
                 nameEntryList=ExtractConNameInfo(row[conColumn], conseries)
                 dateEntryList=ExtractDateInfo(row[dateColumn], page.Name, row)      #TODO: Really should return a IndexTableDateEntry(() object
 
-                # Update nameEntryList to deal with those convention index tables whoch point to a convention via a redirect.
+                # Update nameEntryList to deal with those convention index tables which point to a convention via a redirect.
                 for nameentry in nameEntryList:
-                    if nameentry.PageName in fancyPagesDictByWikiname.keys():
-                        if fancyPagesDictByWikiname[nameentry.PageName].Redirect != "":
-                            nameentry.PageName=fancyPagesDictByWikiname[nameentry.PageName].Redirect
-                    else:
-                        LogError(f"ScanF3PagesForConInfo(): {nameentry.PageName} on page {page.Name} not found in fancyPagesDictByWikiname")
-
+                    if nameentry.PageName in redirects:
+                        nameentry.PageName=redirects[nameentry.PageName]
 
                 # Now for the hard work of making sense of this...
                 # This is really complicated since there are (too) many cases and many flavors to the cases.  The cases:

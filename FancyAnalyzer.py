@@ -114,7 +114,7 @@ def main():
 
     # Mine the F3Pages for convention data
     Log("***Analyzing convention series tables", Clear=True, timestamp=True)
-    conventions=ScanF3PagesForConInfo(fancyPagesDictByWikiname)
+    conventions=ScanF3PagesForConInfo(fancyPagesDictByWikiname, redirects)
 
 
 
