@@ -187,6 +187,9 @@ def main():
 
             # Format the convention name and location for tabular output
             nameText=con.DisplayNameMarkup
+
+            if con.Virtual:
+                nameText=f"''{nameText}''"
             if not con.Virtual and len(con.LocalePage.PageName) > 0:
                 nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.PageName)})</small>"
             f.write(nameText+"\n")
