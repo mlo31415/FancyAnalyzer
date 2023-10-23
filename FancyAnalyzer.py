@@ -126,15 +126,6 @@ def main():
         for key, val in LocaleHandling().probableLocales.items():
             f.write(str(key)+"\n")
 
-    # Normalize convention locations to the standard City, ST form.
-    # Log("***Normalizing con locations")
-    # for con in conventions.values():
-    #     loc=LocaleHandling().ScanConPageforLocale(con.Loc, con.Text)    # TODO: What the hell is this doing??
-    #     if len(loc) > 1:
-    #         Log("  In "+con.Text+"  found more than one location: "+str(loc))
-    #     if len(loc) > 0:
-    #         con.Loc=loc[0]    # Nasty code to get one element from the set
-
 
     Log("Writing: Con DateRange oddities.txt", timestamp=True)
     oddities=[y for x in conventions.values() for y in x if y.DateRange.IsOdd()]
