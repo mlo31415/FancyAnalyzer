@@ -191,7 +191,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
             if not loc.IsEmpty:
                 if page.Name not in conventions:
-                    f.write(f"{page.Name} not in `conventions`\n")
+                    f.write(f"{page.Name} not in conventions\n")
                     continue
                 for con in conventions[page.Name]:
                     con.LocalePage=loc        #TODO: We really ought to locate the specific con in the list
