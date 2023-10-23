@@ -180,12 +180,8 @@ def main():
 
             # Format the convention name and location for tabular output
             nameText=con.DisplayNameMarkup
-
-            if con.Virtual:
-                nameText=f"''{nameText} (virtual)''"
-            else:
-                if len(con.LocalePage.Link) > 0:
-                    nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.Link)})</small>"
+            if not con.Virtual and len(con.LocalePage.Link) > 0:
+                nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.Link)})</small>"
             f.write(nameText+"\n")
 
             lastcon=con
@@ -241,11 +237,6 @@ def main():
 
             # Format the convention name and location for tabular output
             nameText=con.DisplayNameMarkup
-            if con.Cancelled:           #TODO: Can we move these lines into ConInstanceInfo?
-                nameText=f"<s>{nameText}</s>"
-            if con.Virtual:
-                nameText=f"''{nameText} (virtual)''"
-
             seriesText=""
             # We want to add series info to conventions where the series is not in the convention name (e.g., Eastercons)
             # The series name may have different capitalization (ignore) and may have some sort of designator in parens at the end (e.g., Unicon (MD)).  Ignore that.
