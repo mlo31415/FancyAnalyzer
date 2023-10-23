@@ -36,26 +36,23 @@ class Conventions:
         return self._conDict.values()
 
     # Add entries to the conlist, but filter out duplicate entries
-    def Append(self, ciilist: ConInstanceInfo|list[ConInstanceInfo]) -> None:
-        if type(ciilist) is ConInstanceInfo:
-            ciilist=[ciilist]
+    def Append(self, cii: ConInstanceInfo) -> None:
 
-        for cii in ciilist:
-            if cii not in self._setOfCIIs:
-                # This is a new name: Just append it
-                self[cii.DisplayNameText]=cii
-                return
+        if cii not in self._setOfCIIs:
+            # This is a new name: Just append it
+            self[cii.DisplayNameText]=cii
+            return
 
-            if not cii.LocalePage.IsEmpty:
-                hits=[y for x in self._conDict.values() for y in x if cii == y]
-                if hits[0].LocalePage != cii.LocalePage:
-                    Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
-                    Log("            duplicate - "+str(cii), isError=True, Print=False)
-                    # Name exists.  But maybe we have some new information on it?
-                    # If there are two sources for the convention's location and one is empty, use the other.
-                    if hits[0].LocalePage.IsEmpty:
-                        hits[0].LocalePage=cii.LocalePage
-                        Log("   ...Locale has been updated", isError=True, Print=False)
+        if not cii.LocalePage.IsEmpty:
+            hits=[y for x in self._conDict.values() for y in x if cii == y]
+            if hits[0].LocalePage != cii.LocalePage:
+                Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
+                Log("            duplicate - "+str(cii), isError=True, Print=False)
+                # Name exists.  But maybe we have some new information on it?
+                # If there are two sources for the convention's location and one is empty, use the other.
+                if hits[0].LocalePage.IsEmpty:
+                    hits[0].LocalePage=cii.LocalePage
+                    Log("   ...Locale has been updated", isError=True, Print=False)
         return
 
 

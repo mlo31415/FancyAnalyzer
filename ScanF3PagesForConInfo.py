@@ -120,7 +120,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                         for name in nameEntryList:
                             if not name.Cancelled:
                                 name.Virtual=True
-                    conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
+                    conventions.Append(ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0]))
                     Log(f"Done processing (3): {row}", Flush=True)
                     continue
 
@@ -141,7 +141,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                                 name.Virtual=True
 
                     for date in dateEntryList:
-                        conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=date)])
+                        conventions.Append(ConInstanceInfo(Names=nameEntryList, Location=location, Date=date))
                     Log(f"Done processing (2): {row}", Flush=True)
                     continue
 
@@ -156,7 +156,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname) -> Conventions:
                             if not name.Cancelled:
                                 name.Virtual=True
 
-                    conventions.Append([ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0])])
+                    conventions.Append(ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0]))
                     Log(f"Done processing (1): {row}", Flush=True)
                     continue
 
