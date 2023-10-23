@@ -195,7 +195,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
                     continue
                 for con in conventions[page.Name]:
                     con.LocalePage=loc        #TODO: We really ought to locate the specific con in the list
-                Log(f" {page.Name=}  gets loc{{loc=}}", Flush=True)
+                Log(f" {page.Name=}  gets {loc=}", Flush=True)
                 continue
 
             # If it doesn't have a Locale, we search through its text for something that looks like a placename.
@@ -221,27 +221,35 @@ def ExtractDateInfo(datetext: str, name: str, row) -> list[FanzineDateRange]:
 
     Log(f"ExtractDateInfo({row})")
 
+    dateTextCleaned=datetext
+
+    # First, deal with annoying use of templates
+    if "{{" in dateTextCleaned:
+        dateTextCleaned=re.sub("{{([^}]*?)\|(.*?)}}", r"\2", dateTextCleaned)
+
     # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
-    datetext=re.sub("\(.*\)\s?$", "", datetext)  # TODO: Note that this is greedy. Is that the correct thing to do?
+    dateTextCleaned=re.sub("\(.*\)\s?$", "", dateTextCleaned)  # TODO: Note that this is greedy. Is that the correct thing to do?
     # Convert the HTML whitespace characters some people have inserted into their ascii equivalents and then compress all spans of whitespace into a single space.
+
+
     # Remove leading and trailing spaces
-    datetext=CompressWhitespace(datetext).strip()
+    dateTextCleaned=CompressWhitespace(dateTextCleaned).strip()
     # Now look for dates. There are many cases to consider:
     # 1: date                    A simple date (note that there will never be two simple dates in a dates cell)
     # 2: <s>date</s>             A canceled con's date
     # 3: <s>date</s> date        A rescheduled con's date
     # 4: <s>date</s> <s>date</s> A rescheduled and then cancelled con's dates
     # 5: <s>date</s> <s>date</s> date    A twice-rescheduled con's dates
-    # m=re.match("^(:?(<s>.+?</s>)\s*)*(.*)$", datetext)
+    # m=re.match("^(:?(<s>.+?</s>)\s*)*(.*)$", dateTextCleaned)
     pat="<s>.+?</s>"
-    ds=re.findall(pat, datetext)
+    ds=re.findall(pat, dateTextCleaned)
     if len(ds) > 0:
-        datetext=re.sub(pat, "", datetext).strip()
-    if len(datetext) > 0:
-        ds.append(datetext)
+        dateTextCleaned=re.sub(pat, "", dateTextCleaned).strip()
+    if len(dateTextCleaned) > 0:
+        ds.append(dateTextCleaned)
     ds=[x for x in ds if x != ""]  # Remove empty matches
     if len(ds) == 0:
-        Log(f"Date error: {datetext}")
+        Log(f"Date error: {dateTextCleaned}")
         return []
     # Examine the dates in turn
     dates: list[FanzineDateRange]=[]
@@ -254,7 +262,7 @@ def ExtractDateInfo(datetext: str, name: str, row) -> list[FanzineDateRange]:
         if not dr.IsEmpty():
             dates.append(dr)
     if len(dates) == 0:
-        Log(f"***No dates found - {name}:  {datetext=}  {row=}", isError=True)
+        Log(f"***No dates found - {name}:  {dateTextCleaned=}  {row=}", isError=True)
     elif len(dates) == 1:
         Log(f"{name}  row: {row}: 1 date: {dates[0]}", Print=False)
     else:
