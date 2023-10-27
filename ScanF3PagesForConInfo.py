@@ -64,7 +64,8 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
                 #     continue
                 Log(f"Processing: {page.Name}  row: {row}")
                 # Skip rows with merged columns, and also rows where either the date cell or the convention name cell is empty
-                if len(row) < numcolumns or len(row[conColumn]) == 0 or len(row[dateColumn]) == 0:
+                if len(row) < numcolumns or conColumn >= numcolumns or dateColumn>= numcolumns or len(row[conColumn]) == 0 or len(row[dateColumn]) == 0:
+                    Log(f"Problem with row: {len(row)=}, {numcolumns=}, {conColumn=}, {dateColumn=}")
                     continue
 
                 # Check the row for (virtual) in any of several form. If found, set the virtual flag and remove the text from the line
