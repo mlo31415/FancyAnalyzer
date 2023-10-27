@@ -154,7 +154,7 @@ class IndexTableNameEntry:
                     displayName+="<s>"
                 displayName+=el.Lead
                 bc=el.BracketContents
-                if bc is not "":
+                if bc != "":
                     #displayName+=el.Lead
                     if not bracketsStarted:
                         displayName+="[["
