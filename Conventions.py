@@ -8,7 +8,7 @@ from FanzineIssueSpecPackage import FanzineDateRange
 from LocalePage import LocalePage, LocaleHandling
 from HelpersPackage import CompressWhitespace
 
-from Log import Log
+from Log import LogError
 
 ###################################################################################
 # This class implements a smart list of convention instances with useful information about them stored in a ConInstanceInfo structure
@@ -46,13 +46,13 @@ class Conventions:
         if not cii.LocalePage.IsEmpty:
             hits=[y for x in self._conDict.values() for y in x if cii.PageName == y.PageName]
             if hits[0].LocalePage != cii.LocalePage:
-                Log("AppendCon:  existing:  "+str(hits[0]), isError=True, Print=False)
-                Log("            duplicate - "+str(cii), isError=True, Print=False)
+                LogError("AppendCon:  existing:  "+str(hits[0]), Print=False)
+                LogError("            duplicate - "+str(cii), Print=False)
                 # Name exists.  But maybe we have some new information on it?
                 # If there are two sources for the convention's location and one is empty, use the other.
                 if hits[0].LocalePage.IsEmpty:
                     hits[0].LocalePage=cii.LocalePage
-                    Log("   ...Locale has been updated", isError=True, Print=False)
+                    LogError("   ...Locale has been updated", Print=False)
         return
 
 
