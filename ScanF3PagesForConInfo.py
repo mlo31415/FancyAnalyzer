@@ -62,7 +62,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
             for row in table.Rows:
                 # if "Swancon 1" not in row[0]:
                 #     continue
-                LogSetHeader(f"Processing: {page.Name}  row: {row}")
+                Log(f"Processing: {page.Name}  row: {row}")
                 # Skip rows with merged columns, and also rows where either the date cell or the convention name cell is empty
                 if len(row) < numcolumns or len(row[conColumn]) == 0 or len(row[dateColumn]) == 0:
                     continue
