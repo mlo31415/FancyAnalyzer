@@ -402,7 +402,7 @@ class LocaleHandling:
     # Locate a locale by looking for occurances of "in" followed by a known locale
     # We only search the first 500 characters
     # We also accept the very specific pattern of " in [[Xxxxxx, XX]]"
-    def ScanConPageforLocale2(self, s: str) -> LocalePage:
+    def ScanConPageforLocale(self, s: str) -> LocalePage:
 
         # Look for " in [[Xxxxxx, XX]]"
         m=re.match(r" in \[\[([A-Z][a-z]+, [A-Z]{2})]]", s)

@@ -200,7 +200,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
 
             # If it doesn't have a Locale, we search through its text for something that looks like a placename.
             #TODO: Shouldn't we move this upwards and store the derived location in otherwise-empty page.Locales?
-            locale=LocaleHandling().ScanConPageforLocale2(page.Source)
+            locale=LocaleHandling().ScanConPageforLocale(page.Source)
             if locale is not None:
                 # Find the convention in the conventions dictionary and add the location if appropriate.
                 if page.Name in conventions:
