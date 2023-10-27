@@ -5,8 +5,8 @@ from collections import defaultdict
 import re
 
 from F3Page import F3Page
-from Log import Log
-from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets, CompressAllWhitespace, CompressAllWhitespaceAndRemovePunctuation
+from Log import Log, LogError
+from HelpersPackage import SplitOnSpan, WikidotCanonicizeName, StripWikiBrackets, CompressAllWhitespaceAndRemovePunctuation
 
 
 ############################################################################################
@@ -119,7 +119,7 @@ class LocalePage:
             return self.Redirect    #TODO: should go to redirect's LocalePage to see if it has some other preferred name?
 
         # Looks like an error
-        Log(f"@@@LocalePage '{self.PageName}' is not tagged as Locale, but is not in Wikidot format either", Print=False, isError=True)
+        LogError(f"@@@LocalePage '{self.PageName}' is not tagged as Locale, but is not in Wikidot format either", Print=False)
         if self.PageName != "":
             return self.PageName
 

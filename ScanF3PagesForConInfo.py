@@ -41,12 +41,12 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
             # We require that we have convention and date columns, though we allow alternative column names
             conColumn=CrosscheckListElement(["Convention", "Convention Name", "Name", "Con"], table.Headers)
             if conColumn is None:
-                Log(f"***Can't find Convention column in table {index+1} of {len(page.Tables)} on page {page.Name}", isError=True, Print=False)
+                LogError(f"***Can't find Convention column in table {index+1} of {len(page.Tables)} on page {page.Name}", Print=False)
                 continue
 
             dateColumn=CrosscheckListElement(["Date", "Dates"], table.Headers)
             if dateColumn is None:
-                Log(f"***Can't find dates column in table {index+1} of {len(page.Tables)} on page {page.Name}", isError=True, Print=False)
+                LogError(f"***Can't find dates column in table {index+1} of {len(page.Tables)} on page {page.Name}",  Print=False)
                 continue
 
             # We don't log a missing location column because that is common and not an error -- if we don't find one here,
@@ -231,7 +231,6 @@ def ExtractDateInfo(datetext: str, name: str, row) -> list[FanzineDateRange]:
     dateTextCleaned=re.sub("\(.*\)\s?$", "", dateTextCleaned)  # TODO: Note that this is greedy. Is that the correct thing to do?
     # Convert the HTML whitespace characters some people have inserted into their ascii equivalents and then compress all spans of whitespace into a single space.
 
-
     # Remove leading and trailing spaces
     dateTextCleaned=CompressWhitespace(dateTextCleaned).strip()
     # Now look for dates. There are many cases to consider:
@@ -258,11 +257,11 @@ def ExtractDateInfo(datetext: str, name: str, row) -> list[FanzineDateRange]:
         dr=FanzineDateRange().Match(s)
         dr.Cancelled=c
         if dr.Duration() > 7:
-            Log(f"??? convention has long duration: {dr}", isError=True)
+            LogError(f"??? convention has long duration: {dr}")
         if not dr.IsEmpty():
             dates.append(dr)
     if len(dates) == 0:
-        Log(f"***No dates found - {name}:  {dateTextCleaned=}  {row=}", isError=True)
+        LogError(f"***No dates found - {name}:  {dateTextCleaned=}  {row=}")
     elif len(dates) == 1:
         Log(f"{name}  row: {row}: 1 date: {dates[0]}", Print=False)
     else:
