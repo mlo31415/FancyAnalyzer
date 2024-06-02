@@ -32,6 +32,9 @@ class Conventions:
     def __contains__(self, item: ConInstanceInfo) -> bool:
         return item in self._conDict.keys()
 
+    def __len__(self) -> int:
+        return len(self._conDict)
+
     def values(self):
         return self._conDict.values()
 
