@@ -1,7 +1,7 @@
 import re
 
 from Log import Log, LogSetHeader, LogError
-from HelpersPackage import CompressWhitespace, ConvertHTMLishCharacters, RemoveTopBracketedText, FindAnyBracketedText
+from HelpersPackage import CompressWhitespace, ConvertHTMLishCharacters, RemoveTopBracketedText, FindNextBracketedText
 from HelpersPackage import CrosscheckListElement, ScanForBracketedText
 
 from FanzineIssueSpecPackage import FanzineDateRange
@@ -376,7 +376,7 @@ def ExtractConNameInfo(nameText: str, conseries: list[str]) -> IndexTableNameEnt
             name2, c2=RemoveTopBracketedText(name2, "s")
             # Now we must have something of the form "abc <s>[[xxx|yyy]]</s> def" where any of the elements may be missing as long as at least one of the alphabetic elements exists
             if "<s>" in name2:      #Detect and remove any <s>
-                lead2, _, content2, remainder2=FindAnyBracketedText(name2)
+                lead2, _, content2, remainder2=FindNextBracketedText(name2)
                 c2=True
                 name2=lead2+" "+content2+" "+remainder2
             # Now we have "abc [[xxx|yyy]] def".  Parse it.
