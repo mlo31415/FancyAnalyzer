@@ -32,9 +32,8 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
         if not page.IsConSeries:    # We could use conseries for this, but it would not be much faster and would result in an extra layer of indent.
             continue
 
-        Log("Processing conseries: "+page.Name)
-
         # Sometimes there will be multiple tables in a con series index page. It's hard to tell which is for what, so we check each of them.
+        numcons=len(conventions)
         for index, table in enumerate(page.Tables):
             numcolumns=len(table.Headers)
 
@@ -113,7 +112,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
                 # Note that we are disallowing the extreme case of three cons in one row!
 
                 if len(nameEntryList) == 0:
-                    Log(f"No names found in row: {row}", Flush=True)
+                    #Log(f"No names found in row: {row}", Flush=True)
                     continue
 
                 if len(nameEntryList) == len(dateEntryList):
@@ -127,7 +126,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
                             if not name.Cancelled:
                                 name.Virtual=True
                     conventions.Append(ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0]))
-                    Log(f"Done processing (3): {row}", Flush=True)
+                    #Log(f"Done processing (3): {row}", Flush=True)
                     continue
 
                 if len(nameEntryList) == 1 and len(dateEntryList) > 1:
@@ -148,7 +147,7 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
 
                     for date in dateEntryList:
                         conventions.Append(ConInstanceInfo(Names=nameEntryList, Location=location, Date=date))
-                    Log(f"Done processing (2): {row}", Flush=True)
+                    #Log(f"Done processing (2): {row}", Flush=True)
                     continue
 
                 if len(nameEntryList) > 1 and len(dateEntryList) == 1:
@@ -163,14 +162,14 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
                                 name.Virtual=True
 
                     conventions.Append(ConInstanceInfo(Names=nameEntryList, Location=location, Date=dateEntryList[0]))
-                    Log(f"Done processing (1): {row}", Flush=True)
+                    #Log(f"Done processing (1): {row}", Flush=True)
                     continue
 
                 # The leftovers will be uncommon, but we still do need to handle them.
                 Log(" ", Flush=True)
                 LogError(f"ScanF3PagesForConInfo() Name/date combinations not yet handled: {page.Name}:  row={row}") #{len(dateEntryList)=}  {len(nameEntryList)=}
 
-        Log("Completed conseries: "+page.Name, Flush=True)
+        Log(f"Completed conseries: {page.Name} num={len(conventions)-numcons}", Flush=True)
     Log("Completed run through of fancyPagesDictByWikiname.values()", Flush=True)
 
 
