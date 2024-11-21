@@ -225,10 +225,10 @@ def ExtractDateInfo(datetext: str, name: str, row) -> list[FanzineDateRange]:
 
     # First, deal with annoying use of templates
     if "{{" in dateTextCleaned:
-        dateTextCleaned=re.sub("{{([^}]*?)\|(.*?)}}", r"\2", dateTextCleaned)
+        dateTextCleaned=re.sub(r"{{([^}]*?)\|(.*?)}}", r"\2", dateTextCleaned)
 
     # Ignore anything in trailing parenthesis. (e.g, "(Easter weekend)", "(Memorial Day)")
-    dateTextCleaned=re.sub("\(.*\)\s?$", "", dateTextCleaned)  # TODO: Note that this is greedy. Is that the correct thing to do?
+    dateTextCleaned=re.sub(r"\(.*\)\s?$", "", dateTextCleaned)  # TODO: Note that this is greedy. Is that the correct thing to do?
     # Convert the HTML whitespace characters some people have inserted into their ascii equivalents and then compress all spans of whitespace into a single space.
 
     # Remove leading and trailing spaces
@@ -310,7 +310,7 @@ def ExtractConNameInfo(nameText: str, conseries: list[str]) -> IndexTableNameEnt
 
     # First, deal with annoying use of templates
     if "{{" in nameTextCleaned:
-        nameTextCleaned=re.sub("{{([^}]*?)\|(.*?)}}", r"\2", nameTextCleaned)
+        nameTextCleaned=re.sub(r"{{([^}]*?)\|(.*?)}}", r"\2", nameTextCleaned)
 
     # Look for virtual or online and remove it if found
     # We are assuming that virtual conventions are not cancelled and replaced by some other convention.  E.g., (virtual) applies to the last con in a list.
@@ -436,7 +436,7 @@ def SplitByTopLevelSlashes(nameTextCleaned) -> list[str]:
 # Scan for a virtual flag
 # Return True/False and the remaining text after the V-flag is removed
 def ScanForVirtual(s: str) -> tuple[bool, str]:
-    pattern = "\(?(:?virtual|\(online\)|held online|moved online|virtual convention)\)?"        # The () around online are because we do not want to match online w?o parens
+    pattern = r"\(?(:?virtual|\(online\)|held online|moved online|virtual convention)\)?"        # The () around online are because we do not want to match online w?o parens
 
     # First look for one of the alternatives (contained in parens) *anywhere* in the text
     newval = re.sub(pattern, "", s, flags=re.IGNORECASE)  # Check w/parens 1st so that if parens exist, they get removed.
@@ -444,7 +444,7 @@ def ScanForVirtual(s: str) -> tuple[bool, str]:
         return True, newval.strip()
 
     # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
-    newval = re.sub("\s*" + pattern + "\s*$", "", s, flags=re.IGNORECASE)       #TODO: Is this pattern anchored to the start of the text? Should it be?
+    newval = re.sub(r"\s*" + pattern + r"\s*$", "", s, flags=re.IGNORECASE)       #TODO: Is this pattern anchored to the start of the text? Should it be?
     if s != newval:
         return True, newval.strip()
 
