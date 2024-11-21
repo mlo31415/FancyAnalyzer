@@ -4,7 +4,7 @@ from Log import Log, LogSetHeader, LogError
 from HelpersPackage import CompressWhitespace, ConvertHTMLishCharacters, RemoveTopBracketedText, FindNextBracketedText
 from HelpersPackage import CrosscheckListElement, ScanForBracketedText
 
-from FanzineIssueSpecPackage import FanzineDateRange
+from FanzineDateTime import FanzineDateRange
 from LocalePage import LocaleHandling
 from Conventions import Conventions, IndexTableSingleNameEntry, IndexTableNameEntry, ConInstanceInfo
 import F3Page

@@ -4,7 +4,7 @@ from typing import Union
 from collections import defaultdict
 from dataclasses import dataclass
 
-from FanzineIssueSpecPackage import FanzineDateRange
+from FanzineDateTime import FanzineDateRange
 from LocalePage import LocalePage, LocaleHandling
 from HelpersPackage import CompressWhitespace
 
