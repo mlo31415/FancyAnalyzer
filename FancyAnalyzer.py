@@ -251,7 +251,7 @@ def main():
             # We want to add series info to conventions where the series is not in the convention name (e.g., Eastercons)
             # The series name may have different capitalization (ignore) and may have some sort of designator in parens at the end (e.g., Unicon (MD)).  Ignore that.
             sn=con.SeriesName.lower()
-            sn=re.sub("\(.*\)\s*$", "", sn)     #TODO: Does this work at all?
+            sn=re.sub(r"\(.*\)\s*$", "", sn)     #TODO: Does this work at all?
             if sn not in nameText.lower() and sn != "onesie conventions":
                 seriesText=f" ([[{con.SeriesName}]])"
 
@@ -354,7 +354,7 @@ def main():
 
     # Ambiguous names will often end with something in parenthesis which needs to be removed for this particular file
     def RemoveTrailingParens(ss: str) -> str:
-        return re.sub("\s\(.*\)$", "", ss)       # Delete any trailing ()
+        return re.sub(r"\s\(.*\)$", "", ss)       # Delete any trailing ()
 
 
     # Some names are not worth adding to the list of people names.  Try to detect them.
