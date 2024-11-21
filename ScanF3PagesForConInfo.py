@@ -444,7 +444,7 @@ def ScanForVirtual(s: str) -> tuple[bool, str]:
         return True, newval.strip()
 
     # Now look for alternatives by themselves.  So we don't pick up junk, we require that the non-parenthesized alternatives be alone in the cell
-    newval = re.sub("\s*" + pattern + "\s*$", "", s, flags=re.IGNORECASE)       #TODO: Is this patteren anchored to the start of the text? Shoudl it be?
+    newval = re.sub("\s*" + pattern + "\s*$", "", s, flags=re.IGNORECASE)       #TODO: Is this pattern anchored to the start of the text? Should it be?
     if s != newval:
         return True, newval.strip()
 
