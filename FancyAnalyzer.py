@@ -614,7 +614,7 @@ def main():
                     nclubs+=1
                 if fancyPage.IsConInstance:
                     nconinstances+=1
-        f.write("Unique (ignoring redirects)\n")
+        f.write("Unique pages (not counting redirects)\n")
         f.write(f"  Total pages: {npages}\n")
         f.write(f"  All people: {npeople}\n")
         f.write(f"  Fans: {nfans}\n")
