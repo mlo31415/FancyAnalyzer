@@ -450,7 +450,7 @@ class LocaleHandling:
         out: list[LocalePage]=[]
         found=False
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m1=re.search("[A-Z][a-zé,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
+        m1=re.search(r"[A-Z][a-zé,]+\s+", s1)  # Search for an upper-case word.  This may be the start of ...in City, State...
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m1 is not None:
             rslts=self.ScanForCityST(s1, pagename)
@@ -459,7 +459,7 @@ class LocaleHandling:
                 out.extend(self.AppendLocale(rslts, pagename))
 
         if not found:
-            m2=re.search("\[\[[A-Z][a-zé.,-]+", s)  # Search for '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
+            m2=re.search(r"\[\[[A-Z][a-zé.,-]+", s)  # Search for '[[' and then an upper-case word.  This may be the start of ...in [[City, Country]]...
             # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
             if m2 is not None:
                 rslts=self.ScanForCityCountry(s)
@@ -491,14 +491,14 @@ class LocaleHandling:
         # \[*  and  \]*             Lets us ignore spans of [[brackets]]
         # The "[^a-zéA-Z]"           Prohibits another letter immediately following the putative 2-UC state
         s1=s.replace("[", "").replace("]", "")  # Remove brackets
-        m=re.search("([A-Z][a-zé-]+\s+)?([A-Z][a-zé-]+\s+)?([A-Z][a-zé-]+,?\s+)([A-Z]{2})[^a-zéA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
+        m=re.search(r"([A-Z][a-zé-]+\s+)?([A-Z][a-zé-]+\s+)?([A-Z][a-zé-]+,?\s+)([A-Z]{2})[^a-zéA-Z]", " "+s1+" ")  # The added spaces are so that there is at least one character before and after any possible locale
         # Note: we only want to look at the first hit; later ones are far too likely to be accidents.
         if m is not None and len(m.groups()) > 1:
             groups=[x for x in m.groups() if x is not None]
 
             city=" ".join(groups[0:-1]) # It's assumed to be possible-multi-word-city state-country, where state-country is a single token
             city=city.replace(",", " ")  # Get rid of any commas after city
-            city=re.sub("\s+", " ", city).strip()  # Multiple spaces go to single space and trim the result
+            city=re.sub(r"\s+", " ", city).strip()  # Multiple spaces go to single space and trim the result
             city=city.split()       # Split it back up into tokens
 
             state=groups[-1].strip()
@@ -566,7 +566,7 @@ class LocaleHandling:
                    "Israel", "Italy", "Netherlands", "Norway", "Sweden", "Finland", "Japan", "France",
                    "Poland", "Russia", "Scotland", "Wales", "New Zealand", "Zealand"}
         s1=s.replace("[", "").replace("]", "")  # Remove all brackets
-        splt=SplitOnSpan(",.\s", s1)  # Split on spans of comma, period, and space which should leave a list of word tokens
+        splt=SplitOnSpan(r",.\s", s1)  # Split on spans of comma, period, and space which should leave a list of word tokens
         countriesfound=[x for x in splt if x in countries]
 
         if len(countriesfound) == 0:
@@ -641,12 +641,12 @@ class LocaleHandling:
         # ending with an optional "]]"
 
         # We special-case names like "St. Paul" and "Ft. Bragg" because in general we want to terminate city names on "."
-        lst=re.findall("(?:\[\[)?([SF]t\.\s+(?:[A-Z][A-Za-zé]+,?\s*)+)(?:]])?", s)
+        lst=re.findall(r"(?:\[\[)?([SF]t\.\s+(?:[A-Z][A-Za-zé]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
 
-        lst=re.findall("(?:\[\[)?((?:[A-Z][A-Za-zé-]+,?\s*)+)(?:]])?", s)
+        lst=re.findall(r"(?:\[\[)?((?:[A-Z][A-Za-zé-]+,?\s*)+)(?:]])?", s)
         # We return either the first match if there is one or an empty string
         if len(lst) > 0:
             return [lst[0]]
