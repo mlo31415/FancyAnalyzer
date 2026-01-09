@@ -378,7 +378,7 @@ def ExtractConNameInfo(nameText: str, conseries: list[str]) -> IndexTableNameEnt
                 c2=True
                 name2=lead2+" "+content2+" "+remainder2
             # Now we have "abc [[xxx|yyy]] def".  Parse it.
-            m=re.match(r"^(.*?)\[\[(.*?)\]\](.*)$", name2)
+            m=re.match(r"^(.*?)\[\[(.*?)]](.*)$", name2)
             if m is not None:
                 lead2=m.groups()[0]
                 text2=link2=m.groups()[1]
