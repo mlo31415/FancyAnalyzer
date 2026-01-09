@@ -99,12 +99,12 @@ def main():
 
 
     Log("Writing: Redirects to Wikidot pages.txt", timestamp=True)
-    with open("Redirects to Wikidot pages.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Redirects to Wikidot pages.txt", "w+", encoding='utf-8') as f:
         for key, val in fancyPagesDictByWikiname.items():
             for link in val.OutgoingReferences:
                 if link.LinkWikiName in fancyPagesDictByWikiname.keys():
                     if fancyPagesDictByWikiname[link.LinkWikiName].IsWikidotRedirectPage:
-                        if "-" not in fancyPagesDictByWikiname[link.LinkWikiName].Name:    # Ignore single word rediorects since they're the same for both Wikidot and Mediawiki
+                        if "-" in fancyPagesDictByWikiname[link.LinkWikiName].Name:    # Ignore single word redirects since they're the same for both Wikidot and Mediawiki
                             print(f"Page '{key}' has a pointer to Wikidot redirect page '{link.LinkWikiName}'", file=f)
 
 
@@ -122,14 +122,14 @@ def main():
     # Reports #####################################################################
     ###############################################################################
     Log("Writing: Places that are not tagged as Locales.txt", timestamp=True)
-    with open("Places that are not tagged as Locales.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Places that are not tagged as Locales.txt", "w+", encoding='utf-8') as f:
         for key, val in LocaleHandling().probableLocales.items():
             f.write(str(key)+"\n")
 
 
     Log("Writing: Con DateRange oddities.txt", timestamp=True)
     oddities=[y for x in conventions.values() for y in x if y.DateRange.IsOdd()]
-    with open("Con DateRange oddities.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Con DateRange oddities.txt", "w+", encoding='utf-8') as f:
         for con in oddities:
             f.write(str(con)+"\n")
 
@@ -142,7 +142,7 @@ def main():
 
     # ...
     Log("Writing: Convention timeline (Fancy).txt", timestamp=True)
-    with open("Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Convention timeline (Fancy).txt", "w+", encoding='utf-8') as f:
         f.write("This is a chronological list of SF conventions automatically extracted from Fancyclopedia 3\n\n")
         f.write("If a convention is missing from the list, we may not know about it or it may have been added only recently, (this list was generated ")
         f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
@@ -229,7 +229,7 @@ def main():
     currentCons.sort(key=lambda x: x.DateRange)
 
     Log("Writing: Current Conventions (Fancy).txt", timestamp=True)
-    with open("Current Conventions (Fancy).txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Current Conventions (Fancy).txt", "w+", encoding='utf-8') as f:
         f.write("This is a list of current SF conventions automatically extracted from Fancyclopedia 3\n\n")
         f.write("If a convention is missing from the list, it may have been added only recently, (this list was generated ")
         f.write(datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST)")
@@ -273,7 +273,7 @@ def main():
     # Analyze the Locales
     # Create a list of things that redirect to a LocalePage, but are not tagged as a locale.
     Log("***Look for things that redirect to a LocalePage, but are not tagged as a Locale", timestamp=True)
-    with open("Untagged locales.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Untagged locales.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             if fancyPage.IsLocale:                        # We only care about locales
                 if fancyPage.Redirect == "":        # We don't care about redirects
@@ -306,7 +306,7 @@ def main():
     #     **<canonical name>
     #     ...
     Log("Writing: Referring pages for People.txt", timestamp=True)
-    with open("Referring pages for People.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Referring pages for People.txt", "w+", encoding='utf-8') as f:
         for person, referringpagelist in peopleReferences.items():
             f.write(f"**{person}\n")
             for pagename in referringpagelist:
@@ -320,7 +320,7 @@ def main():
     # ...
     # Now dump the inverse redirects to a file
     Log("Writing: Redirects.txt", timestamp=True)
-    with open("Redirects.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Redirects.txt", "w+", encoding='utf-8') as f:
         for redirect, pages in inverseRedirects.items():
             f.write(f"**{redirect}\n")
             for page in pages:
@@ -329,7 +329,7 @@ def main():
     # Next, a list of redirects with a missing target
     Log("Writing: Redirects with missing target.txt", timestamp=True)
     allFancy3Pagenames=set([WindowsFilenameToWikiPagename(n) for n in allFancy3PagesFnames])
-    with open("Redirects with missing target 2.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Redirects with missing target 2.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             dest=fancyPage.Redirect
             if dest != "" and dest not in allFancy3Pagenames:
@@ -338,7 +338,7 @@ def main():
 
     # List pages which are not referred to anywhere and which are not redirects
     Log("Writing: Pages never referred to.txt", timestamp=True)
-    with open("Pages never referred to.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Pages never referred to.txt", "w+", encoding='utf-8') as f:
         alloutgoingrefs=set([x.LinkWikiName for y in fancyPagesDictByWikiname.values() for x in y.OutgoingReferences])
         alloutgoingrefsF3name=[]
         for x in alloutgoingrefs:
@@ -373,7 +373,7 @@ def main():
     peopleNames: list[str]=[]
     # Go through the list of all the pages labelled as Person
     # Build a list of people's names
-    with open("Peoples rejected names.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Peoples rejected names.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             if fancyPage.IsPerson:
                 peopleNames.append(RemoveTrailingParens(fancyPage.Name))
@@ -395,7 +395,7 @@ def main():
 
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
     Log("Writing: Peoples names.txt", timestamp=True)
-    with open("Peoples names.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Peoples names.txt", "w+", encoding='utf-8') as f:
         peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
         for name in peopleNames:
             f.write(name+"\n")
@@ -405,7 +405,7 @@ def main():
     #   <redirected page. -> <people page>
     # A people page is a page tagged as a person which is not a redirect
     Log("Writing: Peoples Canonical Names.txt", timestamp=True)
-    with open("People Canonical Names.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/People Canonical Names.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             if fancyPage.IsRedirectpage:    # If a redirect page
                 if not fancyPage.IsWikidot:  # Which is not a remnant Wikidot redirect page
@@ -449,14 +449,14 @@ def main():
     tagcounts, tagsetcounts=ComputeTagCounts(fancyPagesDictByWikiname, ignoredTags)
 
     Log("Writing: Counts for individual tags.txt", timestamp=True)
-    with open("Tag counts.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Tag counts.txt", "w+", encoding='utf-8') as f:
         tagcountslist=[(key, val) for key, val in tagcounts.items()]
         tagcountslist.sort(key=lambda elem: elem[1], reverse=True)
         for tag, count in tagcountslist:
             f.write(f"{tag}: {count}\n")
 
     Log("Writing: Counts for tagsets.txt", timestamp=True)
-    with open("Tagset counts.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Tagset counts.txt", "w+", encoding='utf-8') as f:
         tagsetcountslist=[(key, val) for key, val in tagsetcounts.items()]
         tagsetcountslist.sort(key=lambda elem: elem[1], reverse=True)
         for tagset, count in tagsetcountslist:
@@ -468,7 +468,7 @@ def main():
     tagcounts, tagsetcounts=ComputeTagCounts(fancyPagesDictByWikiname, ignoredTags)
 
     Log("Writing: Counts for tagsets without country.txt", timestamp=True)
-    with open("Tagset counts without country.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Tagset counts without country.txt", "w+", encoding='utf-8') as f:
         for tagset, count in tagsetcounts.items():
             f.write(f"{tagset}: {count}\n")
 
@@ -496,7 +496,7 @@ def main():
                 tagsetcounts[str(ts)]+=1
 
     Log("Writing: Counts for tagpowersets.txt", timestamp=True)
-    with open("Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Tagpowerset counts.txt", "w+", encoding='utf-8') as f:
         for tagset, count in tagsetcounts.items():
             f.write(f"{tagset}: {count}\n")
 
@@ -504,7 +504,7 @@ def main():
     # We want apazine and clubzine to be used in addition to fanzine.  Make a list of
     # First make a list of all the pages labelled as "fan" or "pro"
     Log("Writing: Apazines and clubzines that aren't fanzines.txt", timestamp=True)
-    with open("Apazines and clubzines that aren't fanzines.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Apazines and clubzines that aren't fanzines.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             # Then all the redirects to one of those pages.
             if ("Apazine" in fancyPage.Tags or "Clubzine" in fancyPage.Tags) and "Fanzine" not in fancyPage.Tags:
@@ -514,7 +514,7 @@ def main():
     ##################
     # Make a list of all all-upper-case pages which are not tagged initialism.
     Log("Writing: Uppercase names which aren't marked as Initialisms.txt", timestamp=True)
-    with open("Uppercase names which aren't marked as initialisms.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Uppercase names which aren't marked as initialisms.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             # A page might be an initialism if ALL alpha characters are upper case
             if fancyPage.Name == fancyPage.Name.upper():
@@ -553,7 +553,7 @@ def main():
         if not found:
             f.write("(none found)\n")
 
-    with open("Tagging oddities.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Tagging oddities.txt", "w+", encoding='utf-8') as f:
         f.write("-------------------------------------------------------\n")
         f.write("Fans, Pros, and Mundanes who are not also tagged person\n")
         WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: ("Pro" in fp.Tags or "Mundane" in fp.Tags or "Fan" in fp.Tags) and "Person" not in fp.Tags, f)
@@ -582,7 +582,7 @@ def main():
     ##################
     # Make a list of all Mundanes
     Log("Writing: Mundanes.txt", timestamp=True)
-    with open("Mundanes.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Mundanes.txt", "w+", encoding='utf-8') as f:
         for fancyPage in fancyPagesDictByWikiname.values():
             # Then all the redirects to one of those pages.
             if fancyPage.IsMundane:
@@ -591,7 +591,7 @@ def main():
     ##################
     # Compute some special statistics to display at fanac.org
     Log(f"Writing: Statistics.txt", timestamp=True)
-    with open("Statistics.txt", "w+", encoding='utf-8') as f:
+    with open("Reports/Statistics.txt", "w+", encoding='utf-8') as f:
         npages=0            # Number of real (non-redirect) pages
         npeople=0           # Number of people
         nfans=0
