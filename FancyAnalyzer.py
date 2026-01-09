@@ -42,6 +42,7 @@ def main():
     allFancy3PagesFnames = [f[:-4] for f in os.listdir(fancySitePath) if  f.endswith(".txt")]
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("index_")]     # Drop index pages
     allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.endswith(".js")]     # Drop javascript page
+    allFancy3PagesFnames = [f for f in allFancy3PagesFnames if not f.startswith("Error 20")]     # Drop Certain puzzling empty error(?) files
 
     # The following lines are for debugging and are used to select a subset of the pages for greater speed
     #allFancy3PagesFnames= [f for f in allFancy3PagesFnames if f[0] in "A"]        # Just to cut down the number of pages for debugging purposes
