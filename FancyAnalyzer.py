@@ -99,14 +99,14 @@ def main():
                 inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
 
-    Log("Writing: Redirects to Wikidot pages.txt", timestamp=True)
-    with open("Reports/Redirects to Wikidot pages.txt", "w+", encoding='utf-8') as f:
+    Log("Writing: Redirects to possible Wikidot pages.txt", timestamp=True)
+    with open("Reports/Redirects to possible Wikidot pages.txt", "w+", encoding='utf-8') as f:
         for key, val in fancyPagesDictByWikiname.items():
             for link in val.OutgoingReferences:
                 if link.LinkWikiName in fancyPagesDictByWikiname.keys():
                     if fancyPagesDictByWikiname[link.LinkWikiName].IsWikidotRedirectPage:
                         if "-" in fancyPagesDictByWikiname[link.LinkWikiName].Name:    # Ignore single word redirects since they're the same for both Wikidot and Mediawiki
-                            print(f"Page '{key}' has a pointer to Wikidot redirect page '{link.LinkWikiName}'", file=f)
+                            print(f"Page '{key}' has a pointer to a possible Wikidot redirect page '{link.LinkWikiName}'", file=f)
 
 
     # Build a locale database
