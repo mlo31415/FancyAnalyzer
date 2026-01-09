@@ -35,6 +35,10 @@ class Conventions:
     def __len__(self) -> int:
         return len(self._conDict)
 
+    @property
+    def Names(self) -> list[str]:
+        return [x for x in self._conDict.keys()]
+
     def values(self):
         return self._conDict.values()
 
