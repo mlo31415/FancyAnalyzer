@@ -29,7 +29,7 @@ class Conventions:
         self._conDict[index].append(val)
         self._setOfCIIs.add(val.PageName)
 
-    def __contains__(self, item: ConInstanceInfo) -> bool:
+    def __contains__(self, item: str) -> bool:
         return item in self._conDict.keys()
 
     def __len__(self) -> int:
