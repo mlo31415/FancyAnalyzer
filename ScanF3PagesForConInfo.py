@@ -1,13 +1,13 @@
 import re
 
-from Log import Log, LogSetHeader, LogError
+from Log import Log, LogError
 from HelpersPackage import CompressWhitespace, ConvertHTMLishCharacters, RemoveTopBracketedText, FindNextBracketedText
 from HelpersPackage import CrosscheckListElement, ScanForBracketedText
 
 from FanzineDateTime import FanzineDateRange
 from LocalePage import LocaleHandling
 from Conventions import Conventions, IndexTableSingleNameEntry, IndexTableNameEntry, ConInstanceInfo
-import F3Page
+from F3Page import F3Page
 
 
 ###########
@@ -171,7 +171,6 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
 
         Log(f"Completed conseries: {page.Name} num={len(conventions)-numcons}", Flush=True)
     Log("Completed run through of fancyPagesDictByWikiname.values()", Flush=True)
-
 
 
     # The basic convention data has been mined from the convention series pages.
