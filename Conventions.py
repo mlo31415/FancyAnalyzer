@@ -271,7 +271,10 @@ class ConInstanceInfo:
     # The property Link will always return the actual page referred to
     def __init__(self, Names: IndexTableNameEntry=IndexTableNameEntry(), Location: str="", Date: FanzineDateRange=FanzineDateRange(), SeriesName: str= ""):
         self._Names=Names
-        self._localePage: LocalePage=LocaleHandling().LocaleFromName(Location)
+        loc=Location.replace("[[", "").replace("]]", "").strip()
+        self._localePage: LocalePage=LocaleHandling().LocaleFromName(loc)
+        if self._localePage.IsEmpty and loc:
+            self._localePage=LocalePage(NonPageName=loc)
         self._Date=Date
         self._seriesName=SeriesName
 
@@ -303,7 +306,10 @@ class ConInstanceInfo:
     @LocalePage.setter
     def LocalePage(self, val: Union[str, LocalePage]):
         if type(val) is str:
-            val=LocaleHandling().LocaleFromName(val)  #()
+            loc=val.replace("[[", "").replace("]]", "").strip()
+            val=LocaleHandling().LocaleFromName(loc)
+            if val.IsEmpty and loc:
+                val=LocalePage(NonPageName=loc)
         self._localePage=val
 
 

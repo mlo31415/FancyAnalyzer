@@ -191,8 +191,8 @@ def main():
 
             if con.Virtual:
                 nameText=f"''{nameText}''"
-            if not con.Virtual and len(con.LocalePage.PageName) > 0:
-                nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.PageName)})</small>"
+            if not con.Virtual and not con.LocalePage.IsEmpty:
+                nameText+=f"&nbsp;&nbsp;&nbsp;<small>({StripWikiBrackets(con.LocalePage.PreferredName)})</small>"
             f.write(nameText+"\n")
 
             lastcon=con
@@ -261,9 +261,8 @@ def main():
                 dateText=f"<s>{dateText}</s>"
 
             localeText=""
-            if not con.Virtual:
-                if len(con.LocalePage.PageName) > 0:
-                    localeText=StripWikiBrackets(con.LocalePage.PageName)
+            if not con.Virtual and not con.LocalePage.IsEmpty:
+                localeText=StripWikiBrackets(con.LocalePage.PreferredName)
 
             f.write(f"{nameText}{seriesText}&nbsp;&nbsp;&nbsp;{dateText}&nbsp;&nbsp;&nbsp;{localeText}\n")
 
