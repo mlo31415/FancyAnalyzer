@@ -408,7 +408,8 @@ def main():
             d="????" if death is None else str(death)
             return f"({b} -- {d})"
 
-        # Collect birth and death entries separately
+        # Collect birth and death entries separately.
+        # Template values trump header values; header fills in when template is absent.
         # Tuple: (year, pagename, sortname, birth, death)
         # sortname is the display name with trailing parens removed, used only for sorting
         born_entries: list[tuple[int, str, str, int|None, int|None]]=[]
@@ -417,11 +418,11 @@ def main():
         for page in fancyPagesDictByWikiname.values():
             if not page.IsPerson or page.IsRedirectpage:
                 continue
-            b=page.BirthYear
-            d=page.DeathYear
+            b=page.BirthYear if page.BirthYear is not None else page.HeaderBirthYear
+            d=page.DeathYear if page.DeathYear is not None else page.HeaderDeathYear
             if b is None and d is None:
                 continue
-            sortname=RemoveTrailingParens(page.DisplayTitle)
+            sortname=RemoveTrailingParens(page.DisplayTitle if page.DisplayTitle else page.Name)
             if b is not None:
                 born_entries.append((b, page.Name, sortname, b, d))
             if d is not None:
@@ -447,6 +448,48 @@ def main():
                     f.write(f"=== {heading} ===\n")
                     for pagename, b, d in entries:
                         f.write(f"* [[{pagename}]] {_date_str(b, d)}\n")
+            f.write("\n")
+
+    # Report discrepancies between top-of-page header dates and template dates
+    Log("Writing: Birth and death date discrepancies.txt", timestamp=True)
+    with open("Reports/Birth and death date discrepancies.txt", "w+", encoding='utf-8') as f:
+        disc_entries: list[tuple[str, str, list[str]]]=[]   # (sortname, pagename, [messages])
+
+        for page in fancyPagesDictByWikiname.values():
+            if not page.IsPerson or page.IsRedirectpage:
+                continue
+            tb=page.BirthYear
+            td=page.DeathYear
+            hb=page.HeaderBirthYear
+            hd=page.HeaderDeathYear
+            # Skip pages with no date information at all
+            if tb is None and td is None and hb is None and hd is None:
+                continue
+            msgs: list[str]=[]
+            # Birth discrepancies
+            if hb is not None and tb is None:
+                msgs.append(f"Birth year {hb} in header but not in template")
+            elif tb is not None and hb is None:
+                msgs.append(f"Birth year {tb} in template but not in header")
+            elif tb is not None and hb is not None and tb != hb:
+                msgs.append(f"Birth year mismatch: template={tb}, header={hb}")
+            # Death discrepancies
+            if hd is not None and td is None:
+                msgs.append(f"Death year {hd} in header but not in template")
+            elif td is not None and hd is None:
+                msgs.append(f"Death year {td} in template but not in header")
+            elif td is not None and hd is not None and td != hd:
+                msgs.append(f"Death year mismatch: template={td}, header={hd}")
+
+            if msgs:
+                sortname=RemoveTrailingParens(page.DisplayTitle if page.DisplayTitle else page.Name)
+                disc_entries.append((sortname, page.Name, msgs))
+
+        disc_entries.sort(key=lambda e: _lastname_key(e[0]))
+        for sortname, pagename, msgs in disc_entries:
+            f.write(f"[[{pagename}]]\n")
+            for msg in msgs:
+                f.write(f"  {msg}\n")
             f.write("\n")
 
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
