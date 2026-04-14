@@ -393,6 +393,62 @@ def main():
     # De-dupe it
     peopleNames=list(set(peopleNames))
 
+    # Create and write out a report of fan/pro birth and death dates.
+    Log("Writing: Fan and Pro birth and death dates.txt", timestamp=True)
+    with open("Reports/Fan and Pro birth and death dates.txt", "w+", encoding='utf-8') as f:
+
+        def _lastname_key(name: str) -> str:
+            parts=name.split()
+            if not parts:
+                return name
+            return parts[-1][0].upper()+parts[-1][1:]+","+" ".join(parts[:-1])
+
+        def _date_str(birth: int|None, death: int|None) -> str:
+            b="????" if birth is None else str(birth)
+            d="????" if death is None else str(death)
+            return f"({b} -- {d})"
+
+        # Collect birth and death entries separately
+        # Tuple: (year, pagename, sortname, birth, death)
+        # sortname is the display name with trailing parens removed, used only for sorting
+        born_entries: list[tuple[int, str, str, int|None, int|None]]=[]
+        died_entries: list[tuple[int, str, str, int|None, int|None]]=[]
+
+        for page in fancyPagesDictByWikiname.values():
+            if not page.IsPerson or page.IsRedirectpage:
+                continue
+            b=page.BirthYear
+            d=page.DeathYear
+            if b is None and d is None:
+                continue
+            sortname=RemoveTrailingParens(page.DisplayTitle)
+            if b is not None:
+                born_entries.append((b, page.Name, sortname, b, d))
+            if d is not None:
+                died_entries.append((d, page.Name, sortname, b, d))
+
+        # Sort each list: primary by year, secondary alphabetically by last name of display name
+        born_entries.sort(key=lambda e: (e[0], _lastname_key(e[2])))
+        died_entries.sort(key=lambda e: (e[0], _lastname_key(e[2])))
+
+        # Merge into a dict keyed by year, preserving Born/Died distinction
+        by_year: dict[int, dict[str, list[tuple[str, int|None, int|None]]]]=defaultdict(lambda: {"Born": [], "Died": []})
+        for year, pagename, sortname, b, d in born_entries:
+            by_year[year]["Born"].append((pagename, b, d))
+        for year, pagename, sortname, b, d in died_entries:
+            by_year[year]["Died"].append((pagename, b, d))
+
+        for year in sorted(by_year.keys()):
+            sections=by_year[year]
+            f.write(f"== {year} ==\n")
+            for heading in ("Born", "Died"):
+                entries=sections[heading]
+                if entries:
+                    f.write(f"=== {heading} ===\n")
+                    for pagename, b, d in entries:
+                        f.write(f"* [[{pagename}]] {_date_str(b, d)}\n")
+            f.write("\n")
+
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
     Log("Writing: Peoples names.txt", timestamp=True)
     with open("Reports/Peoples names.txt", "w+", encoding='utf-8') as f:
