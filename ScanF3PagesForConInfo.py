@@ -5,7 +5,7 @@ from HelpersPackage import CompressWhitespace, ConvertHTMLishCharacters, RemoveT
 from HelpersPackage import CrosscheckListElement, ScanForBracketedText
 
 from FanzineDateTime import FanzineDateRange
-from LocalePage import LocaleHandling
+from LocalePage import LocaleHandling, LocalePage
 from Conventions import Conventions, IndexTableSingleNameEntry, IndexTableNameEntry, ConInstanceInfo
 from F3Page import F3Page
 
@@ -188,6 +188,8 @@ def ScanF3PagesForConInfo(fancyPagesDictByWikiname: dict[str, F3Page], redirects
 
             # If the page has a Locale set, it overrides any internal data
             loc=LocaleHandling().LocaleFromName(page.LocaleStr)
+            if loc.IsEmpty and page.LocaleStr:
+                loc=LocalePage(NonPageName=page.LocaleStr)
             if not loc.IsEmpty:
                 if page.Name not in conventions:
                     f.write(f"{page.Name} not in conventions\n")
