@@ -512,7 +512,6 @@ def main():
                     redirect=fancyPage.Redirect
                     if redirect in fancyPagesDictByWikiname:    # Points to a page that exists
                         redirectPage=fancyPagesDictByWikiname[redirect]
-                        redirectPage=fancyPagesDictByWikiname[redirect]
                         if redirectPage.IsPerson:   # Which is a person page or...
                             if fancyPage.IsPerson or not \
                                 (fancyPage.IsAPA or fancyPage.IsLocale or fancyPage.IsClub or fancyPage.IsFanzine or fancyPage.IsPublisher or fancyPage.IsStore or
