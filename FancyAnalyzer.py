@@ -357,6 +357,17 @@ def main():
     def RemoveTrailingParens(ss: str) -> str:
         return re.sub(r"\s\(.*\)$", "", ss)       # Delete any trailing ()
 
+    def _lastname_key(name: str) -> str:
+        parts=name.split()
+        if not parts:
+            return name
+        return parts[-1][0].upper()+parts[-1][1:]+","+" ".join(parts[:-1])
+
+    def _date_str(birth: int|None, death: int|None) -> str:
+        b="????" if birth is None else str(birth)
+        d="????" if death is None else str(death)
+        return f"({b} -- {d})"
+
 
     # Some names are not worth adding to the list of people names.  Try to detect them.
     def IsInterestingName(p: str) -> bool:
@@ -397,17 +408,6 @@ def main():
     # Create and write out a report of fan/pro birth and death dates.
     Log("Writing: Fan and Pro birth and death dates.txt", timestamp=True)
     with open("Reports/Fan and Pro birth and death dates.txt", "w+", encoding='utf-8') as f:
-
-        def _lastname_key(name: str) -> str:
-            parts=name.split()
-            if not parts:
-                return name
-            return parts[-1][0].upper()+parts[-1][1:]+","+" ".join(parts[:-1])
-
-        def _date_str(birth: int|None, death: int|None) -> str:
-            b="????" if birth is None else str(birth)
-            d="????" if death is None else str(death)
-            return f"({b} -- {d})"
 
         # Collect birth and death entries separately.
         # Template values trump header values; header fills in when template is absent.
@@ -496,7 +496,7 @@ def main():
     # Create and write out a file of peoples' names. They are taken from the titles of pages marked as fan or pro
     Log("Writing: Peoples names.txt", timestamp=True)
     with open("Reports/Peoples names.txt", "w+", encoding='utf-8') as f:
-        peopleNames.sort(key=lambda p: p.split()[-1][0].upper()+p.split()[-1][1:]+","+" ".join(p.split()[0:-1]))    # Invert so that last name is first and make initial letter UC.
+        peopleNames.sort(key=lambda p: _lastname_key(p))    # Invert so that last name is first and make initial letter UC.
         for name in peopleNames:
             f.write(name+"\n")
 
