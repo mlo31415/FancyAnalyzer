@@ -95,8 +95,9 @@ def main():
         if fancyPage.Redirect != "":
             redirects[fancyPage.Name]=fancyPage.Redirect
             inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
-            if fancyPage.Redirect != fancyPage.Redirect:
-                inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
+            # Apparently meaningless code.
+            # if fancyPage.Redirect != fancyPage.Redirect:
+            #     inverseRedirects[fancyPage.Redirect].append(fancyPage.Name)
 
 
     Log("Writing: Redirects to possible Wikidot pages.txt", timestamp=True)
