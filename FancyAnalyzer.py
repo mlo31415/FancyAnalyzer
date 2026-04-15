@@ -526,7 +526,7 @@ def main():
                "Choice", "Iframe", "Active", "Inactive", "IA", "Map", "Mapped", "Nocountry", "Noend", "Validated"}
     countryTags={"US", "UK", "Australia", "Ireland", "Europe", "Asia", "Canada"}
     ignoredTags=adminTags.copy()
-    ignoredTags.union({"Fancy1", "Fancy2"})
+    ignoredTags=ignoredTags.union({"Fancy1", "Fancy2"})
 
     def ComputeTagCounts(pageDict: dict[str, F3Page], ignoredTags: set) -> tuple[dict[str, int], dict[str, int]]:
         tagcounts: dict[str, int]=defaultdict(int)
