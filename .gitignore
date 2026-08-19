@@ -1,0 +1,16 @@
+# Whitelist approach: ignore EVERYTHING, then re-include only the source files we want tracked.
+# This keeps PyCharm's .idea/, __pycache__/, the shared-package symlinks (HelpersPackage.py, Log.py,
+# PDFHelpers.py, Locale.py, FanzineDateTime.py, FanzineIssueSpecPackage.py), the generated Reports/,
+# the big fancyPagesDictByWikiname.json, and the mklinks*.bat files out of git automatically -- so
+# PyCharm's Commit no longer offers them.
+#
+# To track a new file, add another "!name" line for it below.
+*
+!.gitignore
+!ConInstanceInfo.py
+!Conventions.py
+!F3Page.py
+!F3Reference.py
+!FancyAnalyzer.py
+!LocalePage.py
+!ScanF3PagesForConInfo.py
