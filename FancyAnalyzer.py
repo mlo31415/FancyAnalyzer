@@ -687,42 +687,98 @@ def main():
             if fancyPage.IsMundane:
                 f.write(f"{fancyPage.Name}: {fancyPage.Tags}\n")
 
+    # Whether a page carries any "page-type" tag (Person, Fanzine, con, award, etc.).  Used for the Statistics
+    # "Other" count and for the "no page-type tag" report below.  IsFan is omitted since every Fan is also a Person.
+    def HasAnyPageTypeTag(fp: F3Page) -> bool:
+        return (fp.IsPerson or fp.IsFanzine or fp.IsAPA or fp.IsClub or fp.IsConInstance or fp.IsConSeries
+                or fp.IsConrunning or fp.HasTag("Award") or fp.IsLocale or fp.IsNickname or fp.IsFiction
+                or fp.IsStore or fp.IsBook or fp.IsPublisher or fp.IsCatchphrase or fp.IsMundane)
+
     ##################
     # Compute some special statistics to display at fanac.org
     Log(f"Writing: Statistics.txt", timestamp=True)
     with open("Reports/Statistics.txt", "w+", encoding='utf-8') as f:
+        # Count the non-redirect pages in each page-type category.  NOTE: these categories are tag-based and
+        # OVERLAP -- a page can carry several type tags (e.g. every Fan is also a Person), so they intentionally
+        # sum to more than the total.  "Other" counts pages carrying none of these type tags (general/topic/
+        # list/meta pages).
         npages=0            # Number of real (non-redirect) pages
-        npeople=0           # Number of people
-        nfans=0
-        nconinstances=0     # Number of convention instances
-        nfanzines=0         # Number of fanzines of all sorts
-        napas=0             # Number of APAs
-        nclubs=0            # Number of clubs
+        npeople=0
+        nfans=0             # A subset of npeople
+        nfanzines=0         # Fanzines of all sorts
+        napas=0
+        nclubs=0
+        nconinstances=0     # Convention instances
+        nconseries=0        # Convention series
+        nconrunning=0
+        nawards=0
+        nlocales=0
+        nnicknames=0
+        nfiction=0
+        nstores=0
+        nbooks=0
+        npublishers=0
+        ncatchphrases=0
+        nmundanes=0
+        nother=0            # Non-redirect pages with none of the type tags below
         for fancyPage in fancyPagesDictByWikiname.values():
-            if not fancyPage.IsRedirectpage:
-                npages+=1
-                if fancyPage.IsPerson:
-                    npeople+=1
-                if fancyPage.IsFan:
-                    nfans+=1
-                if fancyPage.IsFanzine:
-                    nfanzines+=1
-                if fancyPage.IsAPA:
-                    napas+=1
-                if fancyPage.IsClub:
-                    nclubs+=1
-                if fancyPage.IsConInstance:
-                    nconinstances+=1
+            if fancyPage.IsRedirectpage:
+                continue
+            npages+=1
+            if fancyPage.IsPerson:      npeople+=1
+            if fancyPage.IsFan:         nfans+=1
+            if fancyPage.IsFanzine:     nfanzines+=1
+            if fancyPage.IsAPA:         napas+=1
+            if fancyPage.IsClub:        nclubs+=1
+            if fancyPage.IsConInstance: nconinstances+=1
+            if fancyPage.IsConSeries:   nconseries+=1
+            if fancyPage.IsConrunning:  nconrunning+=1
+            if fancyPage.HasTag("Award"): nawards+=1     # No IsAward property, so test the tag directly
+            if fancyPage.IsLocale:      nlocales+=1
+            if fancyPage.IsNickname:    nnicknames+=1
+            if fancyPage.IsFiction:     nfiction+=1
+            if fancyPage.IsStore:       nstores+=1
+            if fancyPage.IsBook:        nbooks+=1
+            if fancyPage.IsPublisher:   npublishers+=1
+            if fancyPage.IsCatchphrase: ncatchphrases+=1
+            if fancyPage.IsMundane:     nmundanes+=1
+            # "Other" = a non-redirect page carrying none of the page-type tags
+            if not HasAnyPageTypeTag(fancyPage):
+                nother+=1
         f.write("Unique pages (not counting redirects)\n")
         f.write(f"  Total pages: {npages}\n")
-        f.write(f"  All people: {npeople}\n")
-        f.write(f"  Fans: {nfans}\n")
-        f.write(f"  Fanzines: {nfanzines}\n")
-        f.write(f"  APAs: {napas}\n")
-        f.write(f"  Club: {nclubs}\n")
-        f.write(f"  Conventions: {nconinstances}\n")
+        f.write("\n")
+        f.write("  Page-type categories (these overlap, so they add up to more than the total):\n")
+        f.write(f"    All people: {npeople}\n")
+        f.write(f"      of which Fans: {nfans}\n")
+        f.write(f"    Fanzines: {nfanzines}\n")
+        f.write(f"    APAs: {napas}\n")
+        f.write(f"    Clubs: {nclubs}\n")
+        f.write(f"    Convention instances: {nconinstances}\n")
+        f.write(f"    Convention series: {nconseries}\n")
+        f.write(f"    Conrunning: {nconrunning}\n")
+        f.write(f"    Awards: {nawards}\n")
+        f.write(f"    Locales: {nlocales}\n")
+        f.write(f"    Nicknames: {nnicknames}\n")
+        f.write(f"    Fiction: {nfiction}\n")
+        f.write(f"    Stores: {nstores}\n")
+        f.write(f"    Books: {nbooks}\n")
+        f.write(f"    Publishers: {npublishers}\n")
+        f.write(f"    Catchphrases: {ncatchphrases}\n")
+        f.write(f"    Mundanes: {nmundanes}\n")
+        f.write(f"    Other (no page-type tag): {nother}\n")
 
+    ##################
+    # List the pages that are missing tags, to help find data that needs tagging
+    Log("Writing: Pages with no tags.txt", timestamp=True)
+    with open("Reports/Pages with no tags.txt", "w+", encoding='utf-8') as f:
+        f.write("Non-redirect pages with no tags at all\n")
+        WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: not fp.IsRedirectpage and len(fp.Tags) == 0, f)
 
+    Log("Writing: Pages with no page-type tag.txt", timestamp=True)
+    with open("Reports/Pages with no page-type tag.txt", "w+", encoding='utf-8') as f:
+        f.write("Non-redirect pages that have tags but none identifying a page type (Person, Fanzine, con, award, etc.)\n")
+        WriteSelectedTags(fancyPagesDictByWikiname, lambda fp: not fp.IsRedirectpage and not HasAnyPageTypeTag(fp), f)
 
 
 
