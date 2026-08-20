@@ -571,6 +571,36 @@ def main():
         for tagset, count in tagsetcounts.items():
             f.write(f"{tagset}: {count}\n")
 
+    ##################
+    # Count fans (people pages tagged Fan) by country.
+    # fanCountryTags extends the module's countryTags (defined above) with the other country tags that actually
+    # appear on fan pages; edit it to add countries as the wiki grows.  A fan tagged with more than one country is
+    # counted under each, so the per-country counts can add up to more than the number of fans.
+    Log("Writing: Fan counts by country.txt", timestamp=True)
+    fanCountryTags=countryTags | {"Germany", "NZ", "Netherlands", "Sweden", "France", "Venezuela", "ROW"}
+    countryAliases={"USA": "US"}    # normalize obvious variant spellings to their canonical tag
+    fanCountryCounts: dict[str, int]=defaultdict(int)
+    nfanpages=0
+    nmulticountry=0
+    nnocountry=0
+    for fp in fancyPagesDictByWikiname.values():
+        if fp.IsRedirectpage or not fp.IsFan:
+            continue
+        nfanpages+=1
+        countries={countryAliases.get(t, t) for t in fp.Tags} & fanCountryTags
+        if not countries:
+            nnocountry+=1
+        else:
+            if len(countries) > 1:
+                nmulticountry+=1
+            for c in countries:
+                fanCountryCounts[c]+=1
+    with open("Reports/Fan counts by country.txt", "w+", encoding='utf-8') as f:
+        f.write(f"Fans (people pages tagged Fan) by country -- {nfanpages} fans total\n")
+        f.write(f"(A fan with more than one country tag is counted under each; {nmulticountry} fans have multiple country tags.)\n\n")
+        for country, count in sorted(fanCountryCounts.items(), key=lambda kv: (-kv[1], kv[0])):
+            f.write(f"  {country}: {count}\n")
+        f.write(f"  (no country tag): {nnocountry}\n")
 
     ##################
     # Now do it again, but this time look at all subsets of the tags (again, ignoring the admin tags)
