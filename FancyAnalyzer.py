@@ -1,7 +1,12 @@
 import os
 import re
+import sys
+import threading
+import queue
 from datetime import datetime
 from collections import defaultdict
+import tkinter as tk
+from tkinter import scrolledtext
 
 
 import jsonpickle
@@ -33,7 +38,9 @@ def main():
     # <name>.xml is xml containing meta date. The metadata we need is the tags
     # If there are attachments, they're in a folder named <name>. We don't need to look at that in this program
     fancySitePath=r"C:\Users\mlo\Documents\usr\Fancyclopedia\Python\site"   # Location of a local copy of the site maintained by FancyDownloader
-    LogOpen("Log.txt", "Error Log.txt")
+    # Write the logs next to the executable, using the standard names.
+    exeDir=os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else os.path.dirname(os.path.abspath(__file__))
+    LogOpen(os.path.join(exeDir, "Log - FancyAnalyzer.log"), os.path.join(exeDir, "Log - FancyAnalyzer - Error.log"))
 
     # Create a list of the pages on the site by looking for .txt files and dropping the extension
     Log("***Querying the local copy of Fancy 3 to create a list of all Fancyclopedia pages", timestamp=True)
@@ -76,7 +83,7 @@ def main():
             l=len(fancyPagesDictByWikiname)
             if l%1000 == 0:     # Print only when divisible by 1000
                 if l>1000:
-                    Log("--", noNewLine=l%20000 != 0)  # Add a newline only when divisible by 20,000
+                    Log("--", noNewLine=l%12000 != 0)  # Add a newline only when divisible by 12,000
                 Log(str(l), noNewLine=True)
         Log(f"   {len(fancyPagesDictByWikiname)} semi-unique links found")
 
@@ -812,6 +819,94 @@ def main():
 
 
 
+# ------------------------------------------------------------------------------------------------
+# Live log window.  RunWithLogWindow() runs the work function in a background (daemon) thread while a
+# scrollable, minimizable Tk window shows everything it prints.  The Cancel button aborts the run and
+# closes the app; when the work finishes the window is raised to the front and the button becomes Close.
+class _StdoutTee:
+    # Writes to the original stream (the console) AND queues the text for the log window.
+    def __init__(self, original, q: queue.Queue):
+        self.original=original
+        self.queue=q
+    def write(self, text: str):
+        if self.original is not None:
+            try:
+                self.original.write(text)
+            except Exception:
+                pass
+        self.queue.put(text)
+    def flush(self):
+        if self.original is not None:
+            try:
+                self.original.flush()
+            except Exception:
+                pass
+
+
+def RunWithLogWindow(work) -> None:
+    q: queue.Queue=queue.Queue()
+    sys.stdout=_StdoutTee(sys.stdout, q)
+    sys.stderr=_StdoutTee(sys.stderr, q)
+
+    root=tk.Tk()
+    root.title("FancyAnalyzer")
+    root.geometry("900x600")
+
+    done=threading.Event()
+
+    def close():
+        if done.is_set():
+            root.destroy()      # work already finished -- exit cleanly
+        else:
+            os._exit(1)         # still running -- hard-abort the whole app (the worker is a daemon thread)
+    button=tk.Button(root, text="Cancel", command=close, width=12)
+    button.pack(side="bottom", pady=4)
+    root.protocol("WM_DELETE_WINDOW", close)
+
+    box=scrolledtext.ScrolledText(root, wrap="word", font=("Consolas", 9))
+    box.pack(side="top", fill="both", expand=True)
+    box.configure(state="disabled")
+
+    def poll():
+        # Drain queued output into the widget (on the Tk main thread); auto-scroll only if already at the bottom.
+        chunks=[]
+        try:
+            while True:
+                chunks.append(q.get_nowait())
+        except queue.Empty:
+            pass
+        if chunks:
+            atBottom=box.yview()[1] >= 0.999
+            box.configure(state="normal")
+            box.insert("end", "".join(chunks))
+            box.configure(state="disabled")
+            if atBottom:
+                box.see("end")
+        if done.is_set() and q.empty():
+            # Finished: bring the window to the front and switch Cancel -> Close.
+            button.config(text="Close")
+            root.title("FancyAnalyzer -- finished")
+            root.deiconify()
+            root.lift()
+            root.attributes("-topmost", True)
+            root.after(700, lambda: root.attributes("-topmost", False))
+            return          # stop polling
+        root.after(100, poll)
+
+    def worker():
+        try:
+            work()
+        except Exception:
+            import traceback
+            traceback.print_exc()   # captured by the tee -> shown in the window
+        finally:
+            done.set()
+
+    threading.Thread(target=worker, daemon=True).start()
+    root.after(100, poll)
+    root.mainloop()
+
+
 if __name__ == "__main__":
-    main()
+    RunWithLogWindow(main)
 
